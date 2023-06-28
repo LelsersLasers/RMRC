@@ -1,3 +1,19 @@
+# Running
+
+Should be able to just `./run_all.sh` from this directory.
+
+## Issues
+
+- Realsense cameras sometimes don't connect
+    - Solution?
+        - Keep rerunning script and/or rebooting until it works
+- Don't press control-c while the script is running
+    - It must finish to correctly close all the background realsense nodes/etc that it started
+    - If this happens, just reboot to be able to run the script again
+- Finishes/exits but then prints a couple more lines starting with `escalating to SIGTERM` or similar
+    - Once it says `done` you can press control-c to get back to the terminal prompt
+    - (The script already finished and closed all of the background proccesses)
+
 # Cameras
 
 To get camera ids/symlinks (should be stable): `ls /dev/v4l/by-id`
