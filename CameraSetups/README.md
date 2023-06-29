@@ -4,6 +4,8 @@ Should be able to just `./run_all.sh` from this directory.
 
 ## Issues
 
+- If something doesn't work
+    - Try closing rviz and rerunning the script
 - Realsense cameras sometimes don't connect
     - Try lower power mode (15W 6 core instead of 20W)
         - Allows more power for the cameras
@@ -63,7 +65,8 @@ roslaunch launch_ir.launch
 
 ### Issues
 
-If the ir camera is having issues/the window is doing the weird see through thing, make sure the black piece is fully fully pushed into the board.
+- If the ir camera is having issues/the window is doing the weird see through thing, make sure the black piece is fully fully pushed into the board.
+- The first time info is requested from it it does not work
 
 # RVIZ
 
