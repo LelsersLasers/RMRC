@@ -15,6 +15,7 @@ printInColor "(note: this script doesn't play super nice with control-c)\n"
 
 # request info from ir camera
 # it never works the first time, so this is the first time so it works in rviz
+printInColor "Starting fake ir camera request"
 timeout 5 gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003001e-5119-3038-3532-373600000000-video-index0 ! videoconvert ! xvimagesink
 
 
