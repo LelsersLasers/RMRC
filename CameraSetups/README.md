@@ -7,6 +7,8 @@ Should be able to just `./run_all.sh` from this directory.
 - Realsense cameras sometimes don't connect
     - Solution?
         - Keep rerunning script and/or rebooting until it works
+    - Try lower power mode (15W 6 core)
+    -     - Allows more power for the cameras
 - Don't press control-c while the script is running
     - It must finish to correctly close all the background realsense nodes/etc that it started
     - If this happens, just reboot to be able to run the script again
