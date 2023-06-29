@@ -17,6 +17,8 @@ Should be able to just `./run_all.sh` from this directory.
 - Finishes/exits but then prints a couple more lines starting with `escalating to SIGTERM` or similar
     - Once it says `done` you can press control-c to get back to the terminal prompt
     - (The script already finished and closed all of the background proccesses)
+- IR camera doesn't load
+    - Rerun script should work the second time
 
 # Cameras
 
@@ -43,11 +45,13 @@ roslaunch launch_t265_d435i.launch
 
 Note: assumes `device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_200901010001-video-index0`
 ```
+unset GSCAM_CONFIG
 export GSCAM_CONFIG="gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_200901010001-video-index0 ! videoconvert ! ffmpegcolorspace"
 rosrun gscam gscam
 ```
 Or:
 ```
+unset GSCAM_CONFIG
 roslaunch launch_c270.launch
 ```
 
@@ -55,11 +59,13 @@ roslaunch launch_c270.launch
 
 Note: assumes `device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003001e-5119-3038-3532-373600000000-video-index0`
 ```
+unset GSCAM_CONFIG
 export GSCAM_CONFIG="gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003001e-5119-3038-3532-373600000000-video-index0 ! videoconvert ! ffmpegcolorspace"
 rosrun gscam gscam
 ```
 Or
 ```
+unset GSCAM_CONFIG
 roslaunch launch_ir.launch
 ```
 
