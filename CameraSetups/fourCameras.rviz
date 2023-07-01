@@ -56,7 +56,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /t265/fisheye1/image_raw
+      Image Topic: /t265/fisheye2/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
