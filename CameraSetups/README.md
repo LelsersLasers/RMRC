@@ -2,6 +2,8 @@
 
 Should be able to just `./run_all.sh` from this directory.
 
+Launchs all 4 cameras and closes on K is pressed.
+
 ## Issues
 
 - If something doesn't work

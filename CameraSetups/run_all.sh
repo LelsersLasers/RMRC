@@ -4,7 +4,6 @@
 BLUE='\033[0;34m'
 NC='\033[0m' # no color
 printInColor() {
-
     echo -e "${BLUE} $1 ${NC}"
 }
 
@@ -55,22 +54,16 @@ sleep 9
 # end: ir --------------------------------------------------------------------#
 
 
-# start: rviz ----------------------------------------------------------------#
-# printInColor "Starting RVIZ (try to close it by the 'X' rather than control-c)"
-# rviz -d fourCameras.rviz
-# printInColor "Closing RVIZ"
+# start: wait for quit requested ---------------------------------------------#
 printInColor "Finished startup Press K to exit"
 while true; do 
 read -rsn1 input
 if [ "$input" = "k" ]; then
     printInColor "K key pressed"
     break
-
 fi
 done 
-
-
-# end: rviz ------------------------------------------------------------------#
+# end: wait for quit requested -----------------------------------------------#
 
 
 # start: cleanup -------------------------------------------------------------#
