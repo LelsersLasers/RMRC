@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Prints my output in blue so it can be seen easier and different from the outputs from the commands
+BLUE='\033[0;34m'
+NC='\033[0m' # no color
 printInColor() {
-    BLUE='\033[0;34m'
-    NC='\033[0m' # no color
 
     echo -e "${BLUE} $1 ${NC}"
 }
@@ -56,11 +56,20 @@ sleep 9
 
 
 # start: rviz ----------------------------------------------------------------#
-printInColor "Starting RVIZ (try to close it by the 'X' rather than control-c)"
-rviz -d fourCameras.rviz
-printInColor "Closing RVIZ"
+# printInColor "Starting RVIZ (try to close it by the 'X' rather than control-c)"
+# rviz -d fourCameras.rviz
+# printInColor "Closing RVIZ"
+printInColor "Finished startup Press K to exit"
+while true; do 
+read -rsn1 input
+if [ "$input" = "k" ]; then
+    printInColor "K key pressed"
+    break
 
-sleep 2
+fi
+done 
+
+
 # end: rviz ------------------------------------------------------------------#
 
 
