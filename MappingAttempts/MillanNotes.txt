@@ -1,0 +1,34 @@
+rviz point cloud launch:
+	- roslaunch point_cloud.launch
+	- no data avalible solved with lower fps???
+
+
+
+roslaunch point_cloud.launch
+
+
+rostopic echo /t265/odom/sample -n1
+
+
+
+
+rosrun tf static_transform_publisher 0 0 0 0 -1.5707963267948966 1.5707963267948966 map camera_link 10
+
+
+
+
+
+
+
+
+~/realsense2_camera/launch
+	- demos_*.launch
+		- Works for both (including tracking camera)
+	- rs_t265.launch
+		- seems to work?
+	- The rest don't work
+roslaunch occupancy
+	- occupancy.launch ('o.l')
+		- Creates a roslaunch server
+	- cameras.launch
+		- 'yellow text' but 'works' when 'o.l' is live
