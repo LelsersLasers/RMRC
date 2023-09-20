@@ -1,0 +1,1 @@
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="046d", ATTR{idProduct}=="0825", SYMLINK+="camera-c270", OWNER="student", GROUP="student", MODE="0664"

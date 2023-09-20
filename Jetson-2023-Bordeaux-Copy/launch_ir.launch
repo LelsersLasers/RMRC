@@ -1,0 +1,12 @@
+<launch>
+  <!-- Set this to your camera's name -->
+  <arg name="cam_name" value="ir" />
+
+  <!-- Start the GSCAM node -->
+  <env name="GSCAM_CONFIG" value="v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! ffmpegcolorspace" />
+  <node pkg="gscam" type="gscam" name="$(arg cam_name)">
+    <param name="camera_name" value="$(arg cam_name)" />
+    <remap from="camera/image_raw" to="$(arg cam_name)/image_raw" />
+  </node>
+  
+</launch>

@@ -1,0 +1,15 @@
+<launch>
+  <!-- Set this to your camera's name -->
+  <arg name="cam_name" value="c270" />
+
+  <!-- Start the GSCAM node -->
+  <!-- <env name="GSCAM_CONFIG" value="v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_200901010001-video-index0 ! videoconvert ! ffmpegcolorspace" /> -->
+
+	<env name="GSCAM_CONFIG" value="v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_200901010001-video-index0 ! videoconvert ! video/x-raw, width=640, height=480, framerate=30/1 ! ffmpegcolorspace" />
+
+  <node pkg="gscam" type="gscam" name="$(arg cam_name)">
+    <param name="camera_name" value="$(arg cam_name)" />
+    <remap from="camera/image_raw" to="$(arg cam_name)/image_raw" />
+  </node>
+
+</launch>
