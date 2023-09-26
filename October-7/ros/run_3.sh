@@ -8,7 +8,7 @@ printInColor() {
 }
 
 
-printInColor "STARTING!"
+printInColor "STARTING! Will take ~20 seconds to launch everything."
 printInColor "(note: this script doesn't play super nice with control-c)\n"
 
 
@@ -20,30 +20,36 @@ printInColor "(note: this script doesn't play super nice with control-c)\n"
 # timeout 3 gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! xvimagesink
 
 
-# start: webcam 1 ------------------------------------------------------------#
-printInColor "Starting webcam 1"
-
-gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_2D4AA0A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! xvimagesink &
-
+# start: webcam1 ------------------------------------------------------------- #
+printInColor "Starting webcam1"
 sleep 1
-# end: webcam 1 --------------------------------------------------------------#
+
+unset GSCAM_CONFIG
+roslaunch launch_webcam1.launch &
+
+sleep 5
+# end: webcam1 --------------------------------------------------------------- #
 
 
-# start: webcam 2 ------------------------------------------------------------#
-printInColor "Starting webcam 1"
-
-gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_348E60A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! xvimagesink &
-
+# start: webcam2 ------------------------------------------------------------- #
+printInColor "Starting webcam2"
 sleep 1
-# end: webcam 2 --------------------------------------------------------------#
+
+unset GSCAM_CONFIG
+roslaunch launch_webcam2.launch &
+
+sleep 2
+# end: webcam2 --------------------------------------------------------------- #
 
 
 # start: ir ------------------------------------------------------------------#
 printInColor "Starting launching ir"
-
-gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! xvimagesink &
-
 sleep 1
+
+unset GSCAM_CONFIG
+roslaunch launch_ir.launch &
+
+sleep 2
 # end: ir --------------------------------------------------------------------#
 
 
@@ -72,7 +78,7 @@ sleep 1
 # Take output of running background jobs and pass them to kill
 jobs -p | xargs kill
 
-sleep 5 # give time for the procceses to end
+sleep 10 # give time for the procceses to end
 
 echo -e "${BLUE}"
 jobs
