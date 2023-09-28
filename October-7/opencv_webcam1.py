@@ -14,7 +14,7 @@ def screenshot():
 	img = cv2.imread(FILENAME)
 	
 	if img is None:
-		raise FileNotFoundError(f"Could not find/load {FILENAME}. Is the video capture running? Did you use {SAVE_KEY} to save the image?}")
+		raise FileNotFoundError(f"Could not find/load {FILENAME}. Is the video capture running? Did you use {SAVE_KEY} to save the image?")
 	
 	return img
 
