@@ -6,9 +6,6 @@ import time
 SAVE_KEY = 'g'
 FILENAME = "screencapture.jpg"
 
-print(f"Press '{SAVE_KEY}' to save the current frame.")
-print("Press 'q' to close.")
-
 
 def screenshot():
 	img = cv2.imread(FILENAME)
@@ -20,7 +17,10 @@ def screenshot():
 
 
 def main():
-	cap = cv2.VideoCapture(cap_args)
+	print(f"Press '{SAVE_KEY}' to save the current frame.")
+	print("Press 'q' to close.")
+
+	cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
 
 	if not cap.isOpened():
 		raise RuntimeError("Can't open camera. Are the cap_args set right? Is the camera plugged in?")
