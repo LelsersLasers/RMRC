@@ -22,7 +22,7 @@
 ## October-7/opencv_webcam1.py
 
 - Runs camera feed in openCV and saves frame to disk
-- Hazmat code should be adjusted to use file from disk instead of returned from from `screenshot()`
+- `screenshot()` reads from file instead of camera feed
 - Runs hazmat code on Jetson
 
 ## Literally screenshot

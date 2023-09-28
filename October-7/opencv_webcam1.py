@@ -4,36 +4,45 @@ import cv2
 import time
 
 SAVE_KEY = 'g'
+FILENAME = "screencapture.jpg"
 
 print(f"Press '{SAVE_KEY}' to save the current frame.")
-print("Press 'q' to quit.")
+print("Press 'q' to close.")
 
 
+def screenshot():
+	img = cv2.imread(FILENAME)
+	return img
 
-cap = cv2.VideoCapture(cap_args)
 
-if not cap.isOpened():
-	print("Can't open camera.")
-	quit()
+def main():
+	cap = cv2.VideoCapture(cap_args)
 
-time.sleep(1)
+	if not cap.isOpened():
+		print("Can't open camera.")
+		quit()
 
-while True:
-	ret, frame = cap.read()
-	if not ret or frame is None:
-		print("Exiting ...")
-		break
+	time.sleep(1)
 
-	cv2.imshow("Camera feed", frame)
+	while True:
+		ret, frame = cap.read()
+		if not ret or frame is None:
+			print("Exiting ...")
+			break
 
-	if SAVE_KEY is not None and (cv2.waitKey(1) & 0xFF) == ord(SAVE_KEY):
-		output_path = "screencapture.jpg"
-		cv2.imwrite(output_path, frame)
-		print(f"Saved the image as {output_path}")
+		cv2.imshow("Camera feed", frame)
 
-	if (cv2.waitKey(1) & 0xFF) == ord('q'):
-		break
+		if SAVE_KEY is not None and (cv2.waitKey(1) & 0xFF) == ord(SAVE_KEY):
+			cv2.imwrite(FILENAME, frame)
+			print(f"Saved the image as {FILENAME}")
 
-cap.release()
-cv2.destroyAllWindows()
+		if (cv2.waitKey(1) & 0xFF) == ord('q'):
+			break
+
+	cap.release()
+	cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+	main()
 
