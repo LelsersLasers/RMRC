@@ -23,8 +23,7 @@ def main():
 	cap = cv2.VideoCapture(cap_args)
 
 	if not cap.isOpened():
-		print("Can't open camera.")
-		quit()
+		raise RuntimeError("Can't open camera. Are the cap_args set right? Is the camera plugged in?")
 
 	time.sleep(1)
 
