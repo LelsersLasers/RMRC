@@ -194,7 +194,7 @@ def hazmat_main():
 
         cv2.rectangle(img, (x1, y1), (x2, y2), (225,0,0), 4)
 
-        corner = (x1, y1 + 25)
+        corner = (x1 + 5, y1 + 15)
 
         cv2.putText(
             img,
