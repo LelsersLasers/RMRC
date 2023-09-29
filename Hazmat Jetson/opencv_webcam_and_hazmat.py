@@ -227,7 +227,7 @@ def main():
 
 
         print("\n")
-        print(found_this_frame)
+        print([x[0] for x in found_this_frame])
         print(all_found)
         print("FPS: %.2f" % (1 / delta))
 

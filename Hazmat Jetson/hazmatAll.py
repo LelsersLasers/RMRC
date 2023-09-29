@@ -125,18 +125,27 @@ def processScreenshot(img, val):
         #     text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         if text != "":
             # print(f"Image to string for image {i}: {text}")
-            myDict.update({text:i})
+            myDict.update({text: (x1, y1, x2, y2)})
 
     # print(myDict)
     words = ["explosive", "blasting agent", "non flammable gas", "inhalation hazard", "infectious substance", "flammable liquid", 
     "spontaneously combustible", "dangerous when wet", "oxidizer", "organic peroxide", "poison", "corrosive", "flammable gas"]
-    correct = []
+    # correct = []
+    correct_tups = []
     for key in myDict:  
         word = key
         closest, distance = checkList(word, words)
         ratio = distance/len(closest)
         if ratio <= 0.55:
-            correct.append(closest)
+            # correct.append(closest)
+
+            x1, y1, x2, y2  = myDict[key]
+            
+            tup = (closest, x1, y1, x2, y2)
+
+            # correct.append(closest)
+            correct_tups.append(tup)
+
             # print(f"for image #{myDict[key]}")
             # print(f"the starting word is {key}", end="")
             # print()
@@ -144,8 +153,18 @@ def processScreenshot(img, val):
             # # print(f"the distance is {distance}")
             # # print(f"ratio: {ratio}")
             # print()
-    correct = list(set(correct))
-    return correct
+    # correct = list(set(correct))
+    # return correct
+    correct_tups = remove_dups(correct_tups, lambda x: x[0])
+    return correct_tups
+
+
+def remove_dups(list, comp):
+    new_list = []
+    for item in list:
+        if comp(item) not in [comp(x) for x in new_list]:
+            new_list.append(item)
+    return new_list
 
 def findMax(list):
     return max(list, key=len)
@@ -161,32 +180,31 @@ def hazmat_main():
     received = []
     threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170] 
     count = 0
-    allReceived = []
-    for i in threshVals:
-        received = processScreenshot(img, threshVals[count])
-        print(f"for threshVal of {threshVals[count]}: {received}")
-        count += 1
-        allReceived.append(received)
+    found_this_frame = []
+    for threshVal in threshVals:
+        received_tups = processScreenshot(img, threshVal)
+        # print(f"for threshVal of {threshVal}: {received}")
 
-    # find trial with the most hazmat labels recorded
-    longest = findMax(allReceived)
-    print(f"\n\nThe maximum amount of labels detected is {len(longest)}. Labels:")
-    for i in longest:
-        print(i)
-    print("")
+        for r in received_tups:
+            found_this_frame.append(r)
 
+    found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
 
-    y = 5
+    print(f"\nFound {len(found_this_frame)} hazmat labels:")
 
     fontScale = 0.5
     fontColor = (0, 0, 255)
     thickness = 1
     lineType = 2
 
-    for text in longest:
-        # put text on top left of window, moving down
-        corner = (5, y)
-        y += 20
+    for found in found_this_frame:
+        text, x1, y1, x2, y2 = found
+
+        print(text)
+
+        cv2.rectangle(img, (x1, y1), (x2, y2), (225,0,0), 2)
+
+        corner = (x1, y1 - 5)
 
         cv2.putText(
             img,
@@ -198,6 +216,8 @@ def hazmat_main():
             thickness,
             lineType,
         )
+        
+    print("")
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
