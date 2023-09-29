@@ -12,13 +12,6 @@ import pytesseract
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--debug", required=False, help="show debug windows", action="store_true")
-# ap.add_argument(
-#     "-n",
-#     "--number",
-#     required=False,
-#     help="number of hazmat labels you see",
-#     default=None,
-# )
 args = vars(ap.parse_args())
 
 
