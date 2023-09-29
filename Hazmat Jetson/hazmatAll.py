@@ -10,12 +10,18 @@ import mahotas
 import pytesseract
 import cv2
 
-# ap = argparse.ArgumentParser()
-# ap.add_argument("-i", "--image", required = True,
-#     help = "Path to the image")
-# args = vars(ap.parse_args())
+ap = argparse.ArgumentParser()
+ap.add_argument("-d", "--debug", required=False, help="show debug windows", action="store_true")
+# ap.add_argument(
+#     "-n",
+#     "--number",
+#     required=False,
+#     help="number of hazmat labels you see",
+#     default=None,
+# )
+args = vars(ap.parse_args())
 
-# img = cv2.imread(args["image"])
+
 def processScreenshot(img, val):
 
     cv2.imwrite("picamera_img.jpg", img)
@@ -33,7 +39,8 @@ def processScreenshot(img, val):
 
     img = cv2.bitwise_not(binary)
 
-    cv2.imshow('Inverted Binary Image', img)
+    if args["debug"]:
+        cv2.imshow('Inverted Binary Image', img)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(img, (5, 5), 0)
@@ -63,7 +70,10 @@ def processScreenshot(img, val):
                     # print("Ratio:", ratio)
                     img = cv2.drawContours(img, [cnt], -1, (255,0,0), 3)
                     cv2.putText(img, 'Square', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
-                    cv2.imshow("squares", img)
+
+                    if args["debug"]:
+                        cv2.imshow("squares", img)
+                    
                     cropped = img[y:y+h, x:x+w]
                     cropped = cv2.bitwise_and(cropped, img[y:y+h, x:x+w])
                     rows, cols = cropped.shape[:2]
@@ -107,7 +117,8 @@ def processScreenshot(img, val):
         y2 = int(height/2 + (height*0.25))
         cv2.rectangle(image, (x1, y1), (x2, y2), (225,0,0), 2)
         onlyText = image[y1:y2, x1:x2]
-        cv2.imshow(f"image {i}", onlyText)
+        if args["debug"]:
+            cv2.imshow(f"image {i}", onlyText)
         text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         text = removeSpecialCharacter(text)
         # if text == "":
@@ -139,31 +150,58 @@ def processScreenshot(img, val):
 def findMax(list):
     return max(list, key=len)
 
-def main():
+def hazmat_main():
     # Capture the screenshot
-    expected = int(input("Enter number of hazmat labels you see: "))
+    # expected = int(input("Enter number of hazmat labels you see: "))
     img = screenshot()
+
+    # if args["debug"]:
     cv2.imshow("hazmat image", img)
-    cv2.waitKey(3000)
 
     received = []
     threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170] 
     count = 0
-    breakOrNot = False
     allReceived = []
     for i in threshVals:
         received = processScreenshot(img, threshVals[count])
         print(f"for threshVal of {threshVals[count]}: {received}")
         count += 1
         allReceived.append(received)
-    #find trial with the most hazmat labels recorded
+
+    # find trial with the most hazmat labels recorded
     longest = findMax(allReceived)
-    print(f"the maximum amount of labels detected is {len(longest)}")
+    print(f"\n\nThe maximum amount of labels detected is {len(longest)}. Labels:")
     for i in longest:
         print(i)
+    print("")
 
+
+    y = 5
+
+    fontScale = 0.5
+    fontColor = (0, 0, 255)
+    thickness = 1
+    lineType = 2
+
+    for text in longest:
+        # put text on top left of window, moving down
+        corner = (5, y)
+        y += 20
+
+        cv2.putText(
+            img,
+            text,
+            corner,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale,
+            fontColor,
+            thickness,
+            lineType,
+        )
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     
 
 if __name__ == "__main__":
-    main()
-    cv2.waitKey(0)
+    hazmat_main()
