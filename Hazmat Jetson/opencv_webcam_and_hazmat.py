@@ -10,6 +10,8 @@ import argparse
 import mahotas
 import pytesseract
 
+TOGGLE_KEY = 'g'
+
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--debug", required=False, help="show debug windows", action="store_true")
 args = vars(ap.parse_args())
@@ -159,11 +161,27 @@ def remove_dups(list, comp):
 def findMax(list):
     return max(list, key=len)
 
+# ENUM
+class Mode:
+    Normal = 0
+    Hazmat = 1
+
+    def toggle(state):
+        if state == Mode.Normal:
+            return Mode.Hazmat
+        elif state == Mode.Hazmat:
+            return Mode.Normal
+        else:
+            raise ValueError("Invalid mode")
+
 
 def main():
     print("Press 'q' to close.")
 
+    mode = Mode.Hazmat
+
     cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
+    # cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
         raise RuntimeError("Can't open camera. Are the cap_args set right? Is the camera plugged in?")
@@ -181,47 +199,49 @@ def main():
         if not ret or frame is None:
             print("Exiting ...")
             break
-          
-        threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170] 
-        found_this_frame = []
-        for threshVal in threshVals:
-            received_tups = processScreenshot(frame, threshVal)
-            # print(f"for threshVal of {threshVal}: {received}")
+        
+        if mode == Mode.Hazmat:
+            threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170] 
+            found_this_frame = []
+            for threshVal in threshVals:
+                received_tups = processScreenshot(frame, threshVal)
+                # print(f"for threshVal of {threshVal}: {received}")
 
-            for r in received_tups:
-                found_this_frame.append(r)
-                all_found.append(r[0])
+                for r in received_tups:
+                    found_this_frame.append(r)
+                    all_found.append(r[0])
 
-        found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
-        all_found = list(set(all_found))
-
-
-        fontScale = 0.5
-        fontColor = (0, 0, 255)
-        thickness = 1
-        lineType = 2
-
-        for found in found_this_frame:
-            text, x1, y1, x2, y2 = found
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (225,0,0), 2)
-
-            corner = (x1, y1 - 5)
-
-            cv2.putText(
-                frame,
-                text,
-                corner,
-                cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale,
-                fontColor,
-                thickness,
-                lineType,
-            )
+            found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
+            all_found = list(set(all_found))
 
 
-        print("\n")
-        print([x[0] for x in found_this_frame])
-        print(all_found)
+            fontScale = 0.5
+            fontColor = (0, 0, 255)
+            thickness = 1
+            lineType = 2
+
+            for found in found_this_frame:
+                text, x1, y1, x2, y2 = found
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (225,0,0), 2)
+
+                corner = (x1, y1 - 5)
+
+                cv2.putText(
+                    frame,
+                    text,
+                    corner,
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale,
+                    fontColor,
+                    thickness,
+                    lineType,
+                )
+
+
+            print("\n")
+            print([x[0] for x in found_this_frame])
+            print(all_found)
+        
         print("FPS: %.2f" % (1 / delta))
 
 
@@ -231,9 +251,11 @@ def main():
 
         cv2.imshow("Camera feed + auto hazmat", frame)
 
-
-        if (cv2.waitKey(1) & 0xFF) == ord('q'):
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
             break
+        elif key == ord(TOGGLE_KEY):
+            mode = Mode.toggle(mode)
 
 
 
