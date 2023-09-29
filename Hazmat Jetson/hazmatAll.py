@@ -167,9 +167,6 @@ def hazmat_main():
     # expected = int(input("Enter number of hazmat labels you see: "))
     img = screenshot()
 
-    # if args["debug"]:
-    cv2.imshow("hazmat image", img)
-
     received = []
     threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170] 
     count = 0
@@ -195,7 +192,7 @@ def hazmat_main():
 
         print(text, "\t", x1, y1, x2, y2)
 
-        cv2.rectangle(img, (x1, y1), (x2, y2), (225,0,0), 2)
+        cv2.rectangle(img, (x1, y1), (x2, y2), (225,0,0), 4)
 
         corner = (x1, y1 - 5)
 
@@ -211,6 +208,9 @@ def hazmat_main():
         )
         
     print("")
+
+    cv2.imshow("hazmat image", img)
+
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
