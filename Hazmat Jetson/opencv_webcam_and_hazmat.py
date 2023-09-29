@@ -11,6 +11,7 @@ import mahotas
 import pytesseract
 
 TOGGLE_KEY = 'g'
+CLEAR_KEY = 'c'
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--debug", required=False, help="show debug windows", action="store_true")
@@ -173,15 +174,25 @@ class Mode:
             return Mode.Normal
         else:
             raise ValueError("Invalid mode")
+        
+    def to_str(state):
+        if state == Mode.Normal:
+            return "Normal"
+        elif state == Mode.Hazmat:
+            return "Hazmat"
+        else:
+            raise ValueError("Invalid mode")
 
 
 def main():
     print("Press 'q' to close.")
+    print(f"Press '{TOGGLE_KEY}' to toggle running hazmat detection.")
+    print(f"Press '{CLEAR_KEY}' to clear all found hazmat labels.")
 
     mode = Mode.Hazmat
 
-    cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
-    # cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
+    cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
         raise RuntimeError("Can't open camera. Are the cap_args set right? Is the camera plugged in?")
@@ -242,7 +253,7 @@ def main():
             print([x[0] for x in found_this_frame])
             print(all_found)
         
-        print("FPS: %.2f" % (1 / delta))
+        print("FPS: %.1f (Mode: %s)" % ((1 / delta), Mode.to_str(mode)))
 
 
         t1 = time.time()
@@ -256,6 +267,8 @@ def main():
             break
         elif key == ord(TOGGLE_KEY):
             mode = Mode.toggle(mode)
+        elif key == ord(CLEAR_KEY):
+            all_found = []
 
 
 

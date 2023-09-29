@@ -193,7 +193,7 @@ def hazmat_main():
     for found in found_this_frame:
         text, x1, y1, x2, y2 = found
 
-        print(text)
+        print(text, "\t", x1, y1, x2, y2)
 
         cv2.rectangle(img, (x1, y1), (x2, y2), (225,0,0), 2)
 
