@@ -307,9 +307,9 @@ def main(mut_state):
         delta = t1 - t0
         t0 = t1
 
-        cv2.imshow("Camera feed", frame)
-        if mut_state["hazmat_frame"] is not None:
-            cv2.imshow("Hazmat feed", mut_state["hazmat_frame"])
+        hazmat_frame = mut_state["hazmat_frame"] if mut_state["hazmat_frame"] is not None else np.zeros_like(frame)
+        frame_combined = cv2.hconcat([frame, hazmat_frame])
+        cv2.imshow("Camera and hazmat", frame_combined)
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord(QUIT_KEY):
