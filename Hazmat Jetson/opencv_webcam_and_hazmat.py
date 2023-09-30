@@ -198,58 +198,70 @@ def hazmat_main(mut_state):
     delta = 1 / 10
 
     all_found = []
+    frame = None
 
     while not mut_state["quit"]:
-        if mut_state["run_hazmat"] and mut_state["frame"] is not None:
-            if mut_state["clear_all_found"]:
-                all_found = []
-                mut_state["clear_all_found"] = False
-
+        if mut_state["frame"] is not None:
             mut_state["hazmat_running"] = True
             frame = mut_state["frame"]
             mut_state["hazmat_running"] = False
-            mut_state["frame"] = None
 
-            threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
-            found_this_frame = []
-            for threshVal in threshVals:
-                received_tups = processScreenshot(frame, threshVal)
+            if mut_state["run_hazmat"]:
 
-                for r in received_tups:
-                    found_this_frame.append(r)
-                    all_found.append(r[0])
 
-            found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
-            all_found = list(set(all_found))
 
-            fontScale = 0.5
-            fontColor = (0, 0, 255)
-            thickness = 1
-            lineType = 2
 
-            for found in found_this_frame:
-                text, cnt = found
+                if mut_state["clear_all_found"]:
+                    all_found = []
+                    mut_state["clear_all_found"] = False
 
-                img = cv2.drawContours(img, [cnt], -1, (255, 0, 0), 3)
-                x, y, w, h = cv2.boundingRect(cnt)
+                mut_state["hazmat_running"] = True
+                frame = mut_state["frame"]
+                mut_state["hazmat_running"] = False
+                mut_state["frame"] = None
 
-                cv2.rectangle(img, (x, y), (x + w, y + h), (225, 0, 0), 4)
+                threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
+                found_this_frame = []
+                for threshVal in threshVals:
+                    received_tups = processScreenshot(frame, threshVal)
 
-                corner = (x + 5, y + 15)
+                    for r in received_tups:
+                        found_this_frame.append(r)
+                        all_found.append(r[0])
 
-                cv2.putText(
-                    img,
-                    text,
-                    corner,
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale,
-                    fontColor,
-                    thickness,
-                    lineType,
-                )
+                found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
+                all_found = list(set(all_found))
 
-            print([x[0] for x in found_this_frame])
-            print(all_found)
+                fontScale = 0.5
+                fontColor = (0, 0, 255)
+                thickness = 1
+                lineType = 2
+
+                for found in found_this_frame:
+                    text, cnt = found
+
+                    frame = cv2.drawContours(frame, [cnt], -1, (255, 0, 0), 3)
+                    x, y, w, h = cv2.boundingRect(cnt)
+
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (225, 0, 0), 4)
+
+                    corner = (x + 5, y + 15)
+
+                    cv2.putText(
+                        frame,
+                        text,
+                        corner,
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        fontScale,
+                        fontColor,
+                        thickness,
+                        lineType,
+                    )
+
+                print([x[0] for x in found_this_frame])
+                print(all_found)
+
+            cv2.imshow("Hazmat output", frame)
 
         t1 = time.time()
         delta = t1 - t0
