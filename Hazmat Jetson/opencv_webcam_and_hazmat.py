@@ -9,9 +9,28 @@ import numpy as np
 import argparse
 import mahotas
 import pytesseract
+import threading
+
+class CustomThread(threading.Thread):
+    def __init__(self, args, start_fn):
+        threading.Thread.__init__(self)
+        self.args = args
+        self.start_fn = start_fn
+
+    def run(self):
+        self.start_fn(self.args)
 
 TOGGLE_KEY = 'g'
 CLEAR_KEY = 'c'
+
+MUT_STATE = {
+    'frame': None,
+    'hazmat_running': False,
+    'run_hazmat': False,
+    'quit': False,
+    'clear_all_found': False,
+    'hazmat_delta': 1 / 10,
+}
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--debug", required=False, help="show debug windows", action="store_true")
@@ -19,6 +38,8 @@ args = vars(ap.parse_args())
 
 
 def processScreenshot(img, val):
+
+    cv2.imwrite("picamera_img.jpg", img)
 
     # CHANGE THRESHOLD AS NEEDED
     lowerThresh = np.array([0, 0, 0])  # lower thresh for black
@@ -34,7 +55,7 @@ def processScreenshot(img, val):
     img = cv2.bitwise_not(binary)
 
     if args["debug"]:
-        cv2.imshow('Inverted Binary Image', img)
+        cv2.imshow("Inverted Binary Image", img)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(img, (5, 5), 0)
@@ -46,108 +67,94 @@ def processScreenshot(img, val):
     thresh[thresh < 255] = 0
     thresh = cv2.bitwise_not(thresh)
 
-    ret,thresh = cv2.threshold(gray,50,255,0)
-    contours,hierarchy = cv2.findContours(thresh, 1, 2)
+    _, thresh = cv2.threshold(gray, 50, 255, 0)
+    contours, _ = cv2.findContours(thresh, 1, 2)
     # print("Number of contours detected:", len(contours))
 
     imageList = []
     for i, cnt in enumerate(contours):
-        x1,y1 = cnt[0][0]
-        approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+        x1, y1 = cnt[0][0]
+        approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
         if len(approx) == 4:
             x, y, w, h = cv2.boundingRect(cnt)
-            ratio = float(w)/h
+            ratio = float(w) / h
             if w > 63:
                 count = i
                 if ratio >= 0.8 and ratio <= 1.2:
-                    # print("Length of w:",w)
-                    # print("Ratio:", ratio)
-                    img = cv2.drawContours(img, [cnt], -1, (255,0,0), 3)
-                    cv2.putText(img, 'Square', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+                    img = cv2.drawContours(img, [cnt], -1, (255, 0, 0), 3)
+                    cv2.putText(
+                        img, "Square", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2
+                    )
 
                     if args["debug"]:
                         cv2.imshow("squares", img)
-                    
-                    cropped = img[y:y+h, x:x+w]
-                    cropped = cv2.bitwise_and(cropped, img[y:y+h, x:x+w])
+
+                    cropped = img[y : y + h, x : x + w]
+                    cropped = cv2.bitwise_and(cropped, img[y : y + h, x : x + w])
                     rows, cols = cropped.shape[:2]
-                    matrixCW45 = cv2.getRotationMatrix2D((cols/2, rows/2), -45, 1)
+                    matrixCW45 = cv2.getRotationMatrix2D((cols / 2, rows / 2), -45, 1)
                     cw45 = cv2.warpAffine(cropped, matrixCW45, (cols, rows))
-                    # cv2.imshow(f"45 cw {count}", cw45)
 
-                    #only need for testing purposes
-                    # matrix90 = cv2.getRotationMatrix2D((cols/2, rows/2), -90, 1)
-                    # cw90 = cv2.warpAffine(cropped, matrix90, (cols, rows))
-                    # cv2.imshow(f"90 cw {count}", cw90)
-
-                    matrixCCW45 = cv2.getRotationMatrix2D((cols/2, rows/2), 45, 1)
+                    matrixCCW45 = cv2.getRotationMatrix2D((cols / 2, rows / 2), 45, 1)
                     ccw45 = cv2.warpAffine(cropped, matrixCCW45, (cols, rows))
-                        # cv2.imshow(f"45 ccw {count}", ccw45)
 
-                        #only need for testing purposes
-                        # matrix270 = cv2.getRotationMatrix2D((cols/2, rows/2), 180, 1)
-                        # cw180 = cv2.warpAffine(cropped, matrix270, (cols, rows))
-                        # cv2.imshow(f"180 rotation {count}", cw180)
-
-                    matrixCCW135 = cv2.getRotationMatrix2D((cols/2, rows/2), 135, 1)
+                    matrixCCW135 = cv2.getRotationMatrix2D((cols / 2, rows / 2), 135, 1)
                     ccw135 = cv2.warpAffine(cropped, matrixCCW135, (cols, rows))
-                        # cv2.imshow(f"135 ccw {count}", ccw135)
 
-                    matrixCW135 = cv2.getRotationMatrix2D((cols/2, rows/2), -135, 1)
+                    matrixCW135 = cv2.getRotationMatrix2D((cols / 2, rows / 2), -135, 1)
                     cw135 = cv2.warpAffine(cropped, matrixCW135, (cols, rows))
-                        # cv2.imshow(f"135 cw {count}", cw135)
-                    imageList.append(cw45)
-                    imageList.append(ccw45)
-                    imageList.append(ccw135)
-                    imageList.append(cw135)  
-                    imageList.append(cropped)
-            
+
+                    imageList.append((cw45, count, cnt))
+                    imageList.append((ccw45, count, cnt))
+                    imageList.append((ccw135, count, cnt))
+                    imageList.append((cw135, count, cnt))
+                    imageList.append((cropped, count, cnt))
+
     myDict = {}
-    for i, image in enumerate(imageList):
+    for i, (image, count, cnt) in enumerate(imageList):
         width, height, _ = image.shape
+
+        # TODO: how do these calculations work???
         x1 = int(0)
-        y1 = int(height/2 - (height*0.15))
+        y1 = int(height / 2 - (height * 0.15))
         x2 = int(width)
-        y2 = int(height/2 + (height*0.25))
-        cv2.rectangle(image, (x1, y1), (x2, y2), (225,0,0), 2)
+        y2 = int(height / 2 + (height * 0.25))
+
         onlyText = image[y1:y2, x1:x2]
         if args["debug"]:
+            cv2.rectangle(image, (x1, y1), (x2, y2), (225, 0, 0), 2)
             cv2.imshow(f"image {i}", onlyText)
         text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         text = removeSpecialCharacter(text)
-        # if text == "":
-        #     text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         if text != "":
-            # print(f"Image to string for image {i}: {text}")
-            myDict.update({text:(x1, y1, x2, y2)})
+            myDict.update({text: (cnt)})
 
-    # print(myDict)
-    words = ["explosive", "blasting agent", "non flammable gas", "inhalation hazard", "infectious substance", "flammable liquid", 
-    "spontaneously combustible", "dangerous when wet", "oxidizer", "organic peroxide", "poison", "corrosive", "flammable gas"]
-    # correct = []
+    words = [
+        "explosive",
+        "blasting agent",
+        "non flammable gas",
+        "inhalation hazard",
+        "infectious substance",
+        "flammable liquid",
+        "spontaneously combustible",
+        "dangerous when wet",
+        "oxidizer",
+        "organic peroxide",
+        "poison",
+        "corrosive",
+        "flammable gas",
+    ]
+
     correct_tups = []
-    for key in myDict:  
+    for key in myDict:
         word = key
         closest, distance = checkList(word, words)
-        ratio = distance/len(closest)
+        ratio = distance / len(closest)
         if ratio <= 0.55:
-            x1, y1, x2, y2  = myDict[key]
-            
-            tup = (closest, x1, y1, x2, y2)
-
-            # correct.append(closest)
+            cnt = myDict[key]
+            tup = (closest, cnt)
             correct_tups.append(tup)
 
-
-            # print(f"for image #{myDict[key]}")
-            # print(f"the starting word is {key}", end="")
-            # print()
-            # print(f"the closest value is {closest}")
-            # # print(f"the distance is {distance}")
-            # # print(f"ratio: {ratio}")
-            # print()
-    # correct = list(set(correct))
-    # return correct
     correct_tups = remove_dups(correct_tups, lambda x: x[0])
     return correct_tups
 
@@ -184,39 +191,28 @@ class Mode:
             raise ValueError("Invalid mode")
 
 
-def main():
-    print("Press 'q' to close.")
-    print(f"Press '{TOGGLE_KEY}' to toggle running hazmat detection.")
-    print(f"Press '{CLEAR_KEY}' to clear all found hazmat labels.")
-
-    mode = Mode.Hazmat
-
-    # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
-    cap = cv2.VideoCapture(0)
-
-    if not cap.isOpened():
-        raise RuntimeError("Can't open camera. Are the cap_args set right? Is the camera plugged in?")
-
-    time.sleep(1)
-     
-    all_found = []
-
+def hazmat_main(mut_state):
     t0 = time.time()
     t1 = time.time()
     delta = 1 / 30
 
-    while True:
-        ret, frame = cap.read()
-        if not ret or frame is None:
-            print("Exiting ...")
-            break
-        
-        if mode == Mode.Hazmat:
+    all_found = []
+
+    while not mut_state["quit"]:
+        if mut_state['run_hazmat'] and mut_state['frame'] is not None:
+            if mut_state['clear_all_found']:
+                all_found = []
+                mut_state['clear_all_found'] = False
+
+            mut_state['hazmat_running'] = True
+            frame = mut_state['frame']
+            mut_state['hazmat_running'] = False
+            mut_state['frame'] = None
+
             threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170] 
             found_this_frame = []
             for threshVal in threshVals:
                 received_tups = processScreenshot(frame, threshVal)
-                # print(f"for threshVal of {threshVal}: {received}")
 
                 for r in received_tups:
                     found_this_frame.append(r)
@@ -225,20 +221,25 @@ def main():
             found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
             all_found = list(set(all_found))
 
-
             fontScale = 0.5
             fontColor = (0, 0, 255)
             thickness = 1
             lineType = 2
 
             for found in found_this_frame:
-                text, x1, y1, x2, y2 = found
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (225,0,0), 2)
+                text, cnt = found
 
-                corner = (x1, y1 - 5)
+                img = cv2.drawContours(img, [cnt], -1, (255, 0, 0), 3)
+                x, y, w, h = cv2.boundingRect(cnt)
+
+                print(text, "\t")
+
+                cv2.rectangle(img, (x, y), (x + w, y + h), (225, 0, 0), 4)
+
+                corner = (x + 5, y + 15)
 
                 cv2.putText(
-                    frame,
+                    img,
                     text,
                     corner,
                     cv2.FONT_HERSHEY_SIMPLEX,
@@ -252,8 +253,47 @@ def main():
             print("\n")
             print([x[0] for x in found_this_frame])
             print(all_found)
+
+        t1 = time.time()
+        delta = t1 - t0
+        t0 = t1
+
+        mut_state['hazmat_delta'] = delta
+
+
+def main(mut_state):
+    print("Press 'q' to close.")
+    print(f"Press '{TOGGLE_KEY}' to toggle running hazmat detection.")
+    print(f"Press '{CLEAR_KEY}' to clear all found hazmat labels.")
+
+    mode = Mode.Hazmat
+
+    # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
+    cap = cv2.VideoCapture(0)
+
+    if not cap.isOpened():
+        raise RuntimeError("Can't open camera. Are the cap_args set right? Is the camera plugged in?")
+
+    time.sleep(1)
+
+    t0 = time.time()
+    t1 = time.time()
+    delta = 1 / 30
+
+    while True:
+        ret, frame = cap.read()
+        if not ret or frame is None:
+            print("Exiting ...")
+            break
         
-        print("FPS: %.1f (Mode: %s)" % ((1 / delta), Mode.to_str(mode)))
+        if mode == Mode.Hazmat:
+            mut_state['run_hazmat'] = True
+            if not mut_state['hazmat_running']:
+                mut_state['frame'] = frame
+        else:
+            mut_state['run_hazmat'] = False
+        
+        print("FPS: %.1f\tHazmat FPS: %.2f\t(Mode: %s)" % ((1 / delta), (1 / mut_state["hazmat_delta"]), Mode.to_str(mode)))
 
 
         t1 = time.time()
@@ -264,12 +304,12 @@ def main():
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
+            mut_state['quit'] = True
             break
         elif key == ord(TOGGLE_KEY):
             mode = Mode.toggle(mode)
         elif key == ord(CLEAR_KEY):
-            all_found = []
-
+            mut_state['clear_all_found'] = True
 
 
     cap.release()
