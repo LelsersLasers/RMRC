@@ -208,17 +208,9 @@ def hazmat_main(mut_state):
 
             if mut_state["run_hazmat"]:
 
-
-
-
                 if mut_state["clear_all_found"]:
                     all_found = []
                     mut_state["clear_all_found"] = False
-
-                mut_state["hazmat_running"] = True
-                frame = mut_state["frame"]
-                mut_state["hazmat_running"] = False
-                mut_state["frame"] = None
 
                 threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
                 found_this_frame = []
