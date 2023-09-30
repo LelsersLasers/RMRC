@@ -95,22 +95,26 @@ def processScreenshot(img, val):
                     matrixCW135 = cv2.getRotationMatrix2D((cols/2, rows/2), -135, 1)
                     cw135 = cv2.warpAffine(cropped, matrixCW135, (cols, rows))
                         # cv2.imshow(f"135 cw {count}", cw135)
-                    imageList.append(cw45)
-                    imageList.append(ccw45)
-                    imageList.append(ccw135)
-                    imageList.append(cw135)  
-                    imageList.append(cropped)
+                    imageList.append((cw45, count, cnt))
+                    imageList.append((ccw45, count, cnt))
+                    imageList.append((ccw135, count, cnt))
+                    imageList.append((cw135, count, cnt))  
+                    imageList.append((cropped, count, cnt))
             
     myDict = {}
-    for i, image in enumerate(imageList):
+    for i, (image, count, cnt) in enumerate(imageList):
         width, height, _ = image.shape
+        
+        # TODO: how do these calculations work???
         x1 = int(0)
         y1 = int(height/2 - (height*0.15))
         x2 = int(width)
         y2 = int(height/2 + (height*0.25))
-        cv2.rectangle(image, (x1, y1), (x2, y2), (225,0,0), 2)
+
+
         onlyText = image[y1:y2, x1:x2]
         if args["debug"]:
+            cv2.rectangle(image, (x1, y1), (x2, y2), (225,0,0), 2)
             cv2.imshow(f"image {i}", onlyText)
         text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         text = removeSpecialCharacter(text)
@@ -118,7 +122,7 @@ def processScreenshot(img, val):
         #     text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         if text != "":
             # print(f"Image to string for image {i}: {text}")
-            myDict.update({text: (x1, y1, x2, y2)})
+            myDict.update({text: (cnt)})
 
     # print(myDict)
     words = ["explosive", "blasting agent", "non flammable gas", "inhalation hazard", "infectious substance", "flammable liquid", 
@@ -132,9 +136,9 @@ def processScreenshot(img, val):
         if ratio <= 0.55:
             # correct.append(closest)
 
-            x1, y1, x2, y2  = myDict[key]
+            cnt  = myDict[key]
             
-            tup = (closest, x1, y1, x2, y2)
+            tup = (closest, cnt)
 
             # correct.append(closest)
             correct_tups.append(tup)
@@ -188,13 +192,16 @@ def hazmat_main():
     lineType = 2
 
     for found in found_this_frame:
-        text, x1, y1, x2, y2 = found
+        text, cnt = found
 
-        print(text, "\t", x1, y1, x2, y2)
+        img = cv2.drawContours(img, [cnt], -1, (255,0,0), 3)
+        x, y, w, h = cv2.boundingRect(cnt)
 
-        cv2.rectangle(img, (x1, y1), (x2, y2), (225,0,0), 4)
+        print(text, "\t")
 
-        corner = (x1 + 5, y1 + 15)
+        cv2.rectangle(img, (x, y), (x+w, y+h), (225,0,0), 4)
+
+        corner = (x + 5, y + 15)
 
         cv2.putText(
             img,
