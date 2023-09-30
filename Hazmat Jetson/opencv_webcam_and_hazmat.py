@@ -32,6 +32,7 @@ MUT_STATE = {
     "quit": False,
     "clear_all_found": False,
     "hazmat_delta": 1 / 10,
+    "hazmat_frame": None,
 }
 
 ap = argparse.ArgumentParser()
@@ -253,7 +254,7 @@ def hazmat_main(mut_state):
                 print([x[0] for x in found_this_frame])
                 print(all_found)
 
-            cv2.imshow("Hazmat output", frame)
+            mut_state["hazmat_frame"] = frame
 
         t1 = time.time()
         delta = t1 - t0
@@ -293,12 +294,10 @@ def main(mut_state):
             print("Exiting ...")
             break
 
-        if mode == Mode.Hazmat:
-            mut_state["run_hazmat"] = True
-            if not mut_state["hazmat_running"]:
-                mut_state["frame"] = frame
-        else:
-            mut_state["run_hazmat"] = False
+        if not mut_state["hazmat_running"]:
+            mut_state["frame"] = frame
+
+        mut_state["run_hazmat"] = mode == Mode.Hazmat
 
         fps = -1 if delta == 0 else 1 / delta
         hazmat_fps = min(-1 if mut_state["hazmat_delta"] == 0 else 1 / mut_state["hazmat_delta"], 100)
@@ -309,6 +308,8 @@ def main(mut_state):
         t0 = t1
 
         cv2.imshow("Camera feed", frame)
+        if mut_state["hazmat_frame"] is not None:
+            cv2.imshow("Hazmat feed", mut_state["hazmat_frame"])
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord(QUIT_KEY):
