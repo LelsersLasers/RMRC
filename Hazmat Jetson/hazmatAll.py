@@ -15,9 +15,6 @@ args = vars(ap.parse_args())
 
 
 def processScreenshot(img, val):
-
-    cv2.imwrite("picamera_img.jpg", img)
-
     # CHANGE THRESHOLD AS NEEDED
     lowerThresh = np.array([0, 0, 0])  # lower thresh for black
     upperThresh = np.array([val, val, val])  # upper thresh for white

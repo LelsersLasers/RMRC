@@ -5,11 +5,12 @@ import cv2
 import time
 from levenshtein import *
 from cleanUp import *
-import numpy as np 
+import numpy as np
 import argparse
 import mahotas
 import pytesseract
 import threading
+
 
 class CustomThread(threading.Thread):
     def __init__(self, args, start_fn):
@@ -20,16 +21,17 @@ class CustomThread(threading.Thread):
     def run(self):
         self.start_fn(self.args)
 
-TOGGLE_KEY = 'g'
-CLEAR_KEY = 'c'
+QUIT_KEY = "q"
+TOGGLE_KEY = "g"
+CLEAR_KEY = "c"
 
 MUT_STATE = {
-    'frame': None,
-    'hazmat_running': False,
-    'run_hazmat': False,
-    'quit': False,
-    'clear_all_found': False,
-    'hazmat_delta': 1 / 10,
+    "frame": None,
+    "hazmat_running": False,
+    "run_hazmat": False,
+    "quit": False,
+    "clear_all_found": False,
+    "hazmat_delta": 1 / 10,
 }
 
 ap = argparse.ArgumentParser()
@@ -38,9 +40,6 @@ args = vars(ap.parse_args())
 
 
 def processScreenshot(img, val):
-
-    cv2.imwrite("picamera_img.jpg", img)
-
     # CHANGE THRESHOLD AS NEEDED
     lowerThresh = np.array([0, 0, 0])  # lower thresh for black
     upperThresh = np.array([val, val, val])  # upper thresh for white
@@ -166,8 +165,10 @@ def remove_dups(list, comp):
             new_list.append(item)
     return new_list
 
+
 def findMax(list):
     return max(list, key=len)
+
 
 # ENUM
 class Mode:
@@ -181,7 +182,7 @@ class Mode:
             return Mode.Normal
         else:
             raise ValueError("Invalid mode")
-        
+
     def to_str(state):
         if state == Mode.Normal:
             return "Normal"
@@ -194,22 +195,22 @@ class Mode:
 def hazmat_main(mut_state):
     t0 = time.time()
     t1 = time.time()
-    delta = 1 / 30
+    delta = 1 / 10
 
     all_found = []
 
     while not mut_state["quit"]:
-        if mut_state['run_hazmat'] and mut_state['frame'] is not None:
-            if mut_state['clear_all_found']:
+        if mut_state["run_hazmat"] and mut_state["frame"] is not None:
+            if mut_state["clear_all_found"]:
                 all_found = []
-                mut_state['clear_all_found'] = False
+                mut_state["clear_all_found"] = False
 
-            mut_state['hazmat_running'] = True
-            frame = mut_state['frame']
-            mut_state['hazmat_running'] = False
-            mut_state['frame'] = None
+            mut_state["hazmat_running"] = True
+            frame = mut_state["frame"]
+            mut_state["hazmat_running"] = False
+            mut_state["frame"] = None
 
-            threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170] 
+            threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
             found_this_frame = []
             for threshVal in threshVals:
                 received_tups = processScreenshot(frame, threshVal)
@@ -249,7 +250,6 @@ def hazmat_main(mut_state):
                     lineType,
                 )
 
-
             print("\n")
             print([x[0] for x in found_this_frame])
             print(all_found)
@@ -258,64 +258,81 @@ def hazmat_main(mut_state):
         delta = t1 - t0
         t0 = t1
 
-        mut_state['hazmat_delta'] = delta
+        mut_state["hazmat_delta"] = delta
 
 
 def main(mut_state):
-    print("Press 'q' to close.")
-    print(f"Press '{TOGGLE_KEY}' to toggle running hazmat detection.")
-    print(f"Press '{CLEAR_KEY}' to clear all found hazmat labels.")
-
-    mode = Mode.Hazmat
+    print("Starting camera...")
 
     # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
     cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
-        raise RuntimeError("Can't open camera. Are the cap_args set right? Is the camera plugged in?")
+        raise RuntimeError(
+            "Can't open camera. Are the cap_args set right? Is the camera plugged in?"
+        )
+
 
     time.sleep(1)
+
+
+    print(f"\nPress '{QUIT_KEY}' to quit.")
+    print(f"Press '{TOGGLE_KEY}' to toggle running hazmat detection.")
+    print(f"Press '{CLEAR_KEY}' to clear all found hazmat labels.\n")
 
     t0 = time.time()
     t1 = time.time()
     delta = 1 / 30
+
+    mode = Mode.Normal
 
     while True:
         ret, frame = cap.read()
         if not ret or frame is None:
             print("Exiting ...")
             break
-        
-        if mode == Mode.Hazmat:
-            mut_state['run_hazmat'] = True
-            if not mut_state['hazmat_running']:
-                mut_state['frame'] = frame
-        else:
-            mut_state['run_hazmat'] = False
-        
-        print("FPS: %.1f\tHazmat FPS: %.2f\t(Mode: %s)" % ((1 / delta), (1 / mut_state["hazmat_delta"]), Mode.to_str(mode)))
 
+        if mode == Mode.Hazmat:
+            mut_state["run_hazmat"] = True
+            if not mut_state["hazmat_running"]:
+                mut_state["frame"] = frame
+        else:
+            mut_state["run_hazmat"] = False
+
+        fps = 0 if delta == 0 else 1 / delta
+        hazmat_fps = 0 if mut_state["hazmat_delta"] == 0 else 1 / mut_state["hazmat_delta"]
+        print(f"FPS: {fps:.1f}\tHazmat FPS: {hazmat_fps:.1f}\t(Mode: {Mode.to_str(mode)})")
 
         t1 = time.time()
         delta = t1 - t0
         t0 = t1
 
-        cv2.imshow("Camera feed + auto hazmat", frame)
+        cv2.imshow("Camera feed", frame)
 
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            mut_state['quit'] = True
+        if key == ord(QUIT_KEY):
+            mut_state["quit"] = True
             break
         elif key == ord(TOGGLE_KEY):
             mode = Mode.toggle(mode)
         elif key == ord(CLEAR_KEY):
-            mut_state['clear_all_found'] = True
-
+            mut_state["clear_all_found"] = True
 
     cap.release()
     cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    main()
+    print("Starting hazmat thread...")
+    hazmat_thread = CustomThread(MUT_STATE, hazmat_main)
+    hazmat_thread.start()
 
+    print("Starting main thread...")
+    main(MUT_STATE)
+
+    print("Exiting...")
+
+    MUT_STATE["quit"] = True
+    hazmat_thread.join()
+
+    print("Done.")
