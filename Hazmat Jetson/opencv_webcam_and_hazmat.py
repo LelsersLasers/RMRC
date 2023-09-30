@@ -233,8 +233,6 @@ def hazmat_main(mut_state):
                 img = cv2.drawContours(img, [cnt], -1, (255, 0, 0), 3)
                 x, y, w, h = cv2.boundingRect(cnt)
 
-                print(text, "\t")
-
                 cv2.rectangle(img, (x, y), (x + w, y + h), (225, 0, 0), 4)
 
                 corner = (x + 5, y + 15)
@@ -250,7 +248,6 @@ def hazmat_main(mut_state):
                     lineType,
                 )
 
-            print("\n")
             print([x[0] for x in found_this_frame])
             print(all_found)
 
@@ -299,8 +296,8 @@ def main(mut_state):
         else:
             mut_state["run_hazmat"] = False
 
-        fps = 0 if delta == 0 else 1 / delta
-        hazmat_fps = 0 if mut_state["hazmat_delta"] == 0 else 1 / mut_state["hazmat_delta"]
+        fps = -1 if delta == 0 else 1 / delta
+        hazmat_fps = min(-1 if mut_state["hazmat_delta"] == 0 else 1 / mut_state["hazmat_delta"], 100)
         print(f"FPS: {fps:.1f}\tHazmat FPS: {hazmat_fps:.1f}\t(Mode: {Mode.to_str(mode)})")
 
         t1 = time.time()
