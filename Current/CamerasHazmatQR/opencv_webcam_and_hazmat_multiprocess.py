@@ -279,8 +279,8 @@ def hazmat_main(main_queue, hazmat_queue):
 def main(main_queue, hazmat_queue):
     print("Starting camera...")
 
-    cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
-    # cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
+    cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
         raise RuntimeError(
@@ -305,6 +305,7 @@ def main(main_queue, hazmat_queue):
     state_hazmat = START_STATE_HAZMAT
 
     last_hazmat_update = time.time()
+    hazmat_frame_orginal = None
 
     while True:
         ret, frame = cap.read()
@@ -315,10 +316,20 @@ def main(main_queue, hazmat_queue):
         try:
             state_hazmat = hazmat_queue.get_nowait()
             last_hazmat_update = time.time()
+            if state_hazmat["hazmat_frame"] is not None:
+                hazmat_frame = state_hazmat["hazmat_frame"]
+                hazmat_frame_orginal = hazmat_frame.copy()
+            else:
+                hazmat_frame = np.zeros_like(frame)
         except:
-            pass
+            if hazmat_frame_orginal is not None:
+                hazmat_frame = hazmat_frame_orginal.copy()
+            else:
+                hazmat_frame = np.zeros_like(frame)
 
         state_main["frame"] = frame
+        frame_to_pass_to_hazmat = frame.copy()
+
 
         state_main["run_hazmat"] = mode == Mode.Hazmat
 
@@ -329,8 +340,6 @@ def main(main_queue, hazmat_queue):
         t1 = time.time()
         delta = t1 - t0
         t0 = t1
-
-        hazmat_frame = state_hazmat["hazmat_frame"] if state_hazmat["hazmat_frame"] is not None else np.zeros_like(frame)
 
         # fps text (bottom left)
         font                   = cv2.FONT_HERSHEY_SIMPLEX
@@ -347,19 +356,17 @@ def main(main_queue, hazmat_queue):
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
         time_since_last_hazmat_update = time.time() - last_hazmat_update
-        start_angle = time_since_last_hazmat_update * 360
-        end_angle = start_angle + 60
-        cv2.ellipse(
+        ratio = min(time_since_last_hazmat_update / 5, 1)
+        w = ratio * (frame.shape[1] - 10)
+
+        cv2.line(
             hazmat_frame,
-            (15, 15),
-            (10, 10),
-            0,
-            start_angle,
-            end_angle,
+            (5, 5),
+            (5 + int(w), 5),
             (255, 255, 0),
-            2
+            3
         )
-        
+
 
         frame_combined = cv2.hconcat([frame, hazmat_frame])
 
@@ -375,6 +382,7 @@ def main(main_queue, hazmat_queue):
         elif key == ord(CLEAR_KEY):
             state_main["clear_all_found"] = True
 
+        state_main["frame"] = frame_to_pass_to_hazmat
         main_queue.put_nowait(state_main)
 
     cap.release()
