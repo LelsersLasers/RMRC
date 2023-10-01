@@ -205,7 +205,6 @@ def hazmat_main(main_queue, hazmat_queue):
     state_main = START_STATE_MAIN
     state_hazmat = START_STATE_HAZMAT
 
-    i = 0
     while not state_main["quit"]:
 
         try:
@@ -280,8 +279,8 @@ def hazmat_main(main_queue, hazmat_queue):
 def main(main_queue, hazmat_queue):
     print("Starting camera...")
 
-    # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
+    # cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
         raise RuntimeError(
@@ -305,6 +304,8 @@ def main(main_queue, hazmat_queue):
     state_main = START_STATE_MAIN
     state_hazmat = START_STATE_HAZMAT
 
+    last_hazmat_update = time.time()
+
     while True:
         ret, frame = cap.read()
         if not ret or frame is None:
@@ -313,6 +314,7 @@ def main(main_queue, hazmat_queue):
 
         try:
             state_hazmat = hazmat_queue.get_nowait()
+            last_hazmat_update = time.time()
         except:
             pass
 
@@ -321,15 +323,47 @@ def main(main_queue, hazmat_queue):
         state_main["run_hazmat"] = mode == Mode.Hazmat
 
         fps = -1 if delta == 0 else 1 / delta
-        hazmat_fps = min(-1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"], 100) # TODO
+        hazmat_fps = min(-1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"], 100)
         print(f"FPS: {fps:.1f}\tHazmat FPS: {hazmat_fps:.1f}\t(Mode: {Mode.to_str(mode)})")
 
         t1 = time.time()
         delta = t1 - t0
         t0 = t1
 
-        hazmat_frame = state_hazmat["hazmat_frame"] if state_hazmat["hazmat_frame"] is not None else np.zeros_like(frame) # TODO
+        hazmat_frame = state_hazmat["hazmat_frame"] if state_hazmat["hazmat_frame"] is not None else np.zeros_like(frame)
+
+        # fps text (bottom left)
+        font                   = cv2.FONT_HERSHEY_SIMPLEX
+        bottomLeftCornerOfText = (5, frame.shape[0] - 5)
+        fontScale              = 0.5
+        fontColor              = (0, 255, 0)
+        thickness              = 1
+        lineType               = 2
+
+        text                   = "FPS: %.1f" % fps
+        cv2.putText(frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
+
+        text                  = "Hazmat FPS: %.1f" % hazmat_fps
+        cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
+
+        time_since_last_hazmat_update = time.time() - last_hazmat_update
+        start_angle = time_since_last_hazmat_update * 360
+        end_angle = start_angle + 60
+        cv2.ellipse(
+            hazmat_frame,
+            (15, 15),
+            (10, 10),
+            0,
+            start_angle,
+            end_angle,
+            (255, 255, 0),
+            2
+        )
+        
+
         frame_combined = cv2.hconcat([frame, hazmat_frame])
+
+
         cv2.imshow("Camera and hazmat", frame_combined)
 
         key = cv2.waitKey(1) & 0xFF
