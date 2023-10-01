@@ -17,6 +17,8 @@ QUIT_KEY = "q"
 TOGGLE_KEY = "g"
 CLEAR_KEY = "c"
 
+CAMERA_WAKEUP_TIME = 1
+
 # What main thread sends
 START_STATE_MAIN = {
     "frame": None,
@@ -191,6 +193,8 @@ class Mode:
 
 
 def hazmat_main(main_queue, hazmat_queue):
+    time.sleep(CAMERA_WAKEUP_TIME)
+
     t0 = time.time()
     t1 = time.time()
     delta = 1 / 10
@@ -201,6 +205,7 @@ def hazmat_main(main_queue, hazmat_queue):
     state_main = START_STATE_MAIN
     state_hazmat = START_STATE_HAZMAT
 
+    i = 0
     while not state_main["quit"]:
 
         try:
@@ -264,6 +269,9 @@ def hazmat_main(main_queue, hazmat_queue):
         delta = t1 - t0
         t0 = t1
 
+        sleep_time = max(0.1 - delta, 0)
+        time.sleep(sleep_time)
+
         state_hazmat["hazmat_delta"] = delta
 
         hazmat_queue.put_nowait(state_hazmat)
@@ -272,8 +280,8 @@ def hazmat_main(main_queue, hazmat_queue):
 def main(main_queue, hazmat_queue):
     print("Starting camera...")
 
-    cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
-    # cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
+    cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
         raise RuntimeError(
@@ -281,7 +289,7 @@ def main(main_queue, hazmat_queue):
         )
 
 
-    time.sleep(1)
+    time.sleep(CAMERA_WAKEUP_TIME)
 
 
     print(f"\nPress '{QUIT_KEY}' to quit.")
@@ -347,17 +355,27 @@ if __name__ == "__main__":
 
     hazmat_thread = Process(target=hazmat_main, args=(main_queue, hazmat_queue))
 
+    hazmat_thread.start()
+
     print("Starting main thread...")
     main(main_queue, hazmat_queue)
 
     print("Exiting...")
 
     START_STATE_MAIN["quit"] = True
-    main_queue.put(START_STATE_MAIN)
+    main_queue.put_nowait(START_STATE_MAIN)
     
-    hazmat_thread.join()
+    hazmat_thread.terminate()
+    time.sleep(1) # wait for thread to terminate
+    hazmat_thread.close()
+
+    print("Closing queues...")
 
     main_queue.close()
     hazmat_queue.close()
+
+    # basically `allow_exit_without_flush`
+    main_queue.cancel_join_thread()
+    hazmat_queue.cancel_join_thread()
 
     print("Done.")
