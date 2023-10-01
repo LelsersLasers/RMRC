@@ -24,7 +24,7 @@ printInColor "(note: this script doesn't play super nice with control-c)\n"
 printInColor "Starting webcam 1"
 
 # gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_2D4AA0A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! xvimagesink &
-python3 opencv_webcam1.py &
+python3 webcam.py &
 
 sleep 1
 # end: webcam 1 --------------------------------------------------------------#
