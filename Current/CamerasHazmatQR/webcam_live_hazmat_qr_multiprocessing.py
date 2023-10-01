@@ -22,8 +22,10 @@ HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
 HAZMAT_MIN_DELAY = 0.1 # TODO?
-
 CAMERA_WAKEUP_TIME = 0.5
+HAZMAT_FRAME_SCALE = 0.5
+HAZMAT_DELAY_BAR_SCALE = 5 # in seconds
+QR_TIME_BAR_SCALE = 0.1 # in seconds
 
 # What main thread sends
 START_STATE_MAIN = {
@@ -212,6 +214,7 @@ def hazmat_main(main_queue, hazmat_queue):
 
         if state_main["frame"] is not None:
             frame = state_main["frame"]
+            frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
 
             if state_main["run_hazmat"]:
 
@@ -260,7 +263,8 @@ def hazmat_main(main_queue, hazmat_queue):
                     print([x[0] for x in found_this_frame])
                     print(all_found)
 
-            state_hazmat["hazmat_frame"] = frame
+            unscale = 1 / HAZMAT_FRAME_SCALE
+            state_hazmat["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
 
         t1 = time.time()
         delta = t1 - t0
@@ -360,6 +364,8 @@ def main(main_queue, hazmat_queue, debug):
             print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat}\tQR: {run_qr}")
 
         if run_qr:
+            start = time.time()
+
             qr_found_this_frame = qr_detect(frame)
             if len(qr_found_this_frame) > 0:
                 for qr in qr_found_this_frame:
@@ -368,6 +374,27 @@ def main(main_queue, hazmat_queue, debug):
 
                 print(qr_found_this_frame)
                 print(all_qr_found)
+
+            end = time.time()
+
+            ratio = min((end - start) / QR_TIME_BAR_SCALE, 1)
+            w = ratio * (frame.shape[1] - 10)
+
+            cv2.line(
+                frame,
+                (5, 5),
+                (5 + int(w), 5),
+                (0, 0, 255),
+                3
+            )
+        else:
+            cv2.line(
+                frame,
+                (5, 5),
+                (5, 5),
+                (255, 255, 0),
+                3
+            )
 
         t1 = time.time()
         delta = t1 - t0
@@ -388,7 +415,7 @@ def main(main_queue, hazmat_queue, debug):
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
         time_since_last_hazmat_update = time.time() - last_hazmat_update
-        ratio = min(time_since_last_hazmat_update / 5, 1)
+        ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
         w = ratio * (frame.shape[1] - 10)
 
         cv2.line(
