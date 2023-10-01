@@ -12,6 +12,7 @@ import pytesseract
 from multiprocessing import Process, Queue
 import pyzbar.pyzbar as pyzbar
 import urllib.parse
+import argparse
 
 
 QUIT_KEY = "q"
@@ -22,7 +23,7 @@ QR_CLEAR_KEY = "x"
 
 HAZMAT_MIN_DELAY = 0.1 # TODO?
 
-CAMERA_WAKEUP_TIME = 1
+CAMERA_WAKEUP_TIME = 0.5
 
 # What main thread sends
 START_STATE_MAIN = {
@@ -39,10 +40,6 @@ START_STATE_HAZMAT = {
     # "cleared_all_found": False,
 }
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-d", "--debug", required=False, help="show debug windows", action="store_true")
-args = vars(ap.parse_args())
-
 
 def processScreenshot(img, val):
     # CHANGE THRESHOLD AS NEEDED
@@ -58,8 +55,8 @@ def processScreenshot(img, val):
 
     img = cv2.bitwise_not(binary)
 
-    if args["debug"]:
-        cv2.imshow("Inverted Binary Image", img)
+    # if args["debug"]:
+    #     cv2.imshow("Inverted Binary Image", img)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(img, (5, 5), 0)
@@ -90,8 +87,8 @@ def processScreenshot(img, val):
                         img, "Square", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2
                     )
 
-                    if args["debug"]:
-                        cv2.imshow("squares", img)
+                    # if args["debug"]:
+                    #     cv2.imshow("squares", img)
 
                     cropped = img[y : y + h, x : x + w]
                     cropped = cv2.bitwise_and(cropped, img[y : y + h, x : x + w])
@@ -125,9 +122,9 @@ def processScreenshot(img, val):
         y2 = int(height / 2 + (height * 0.25))
 
         onlyText = image[y1:y2, x1:x2]
-        if args["debug"]:
-            cv2.rectangle(image, (x1, y1), (x2, y2), (225, 0, 0), 2)
-            cv2.imshow(f"image {i}", onlyText)
+        # if args["debug"]:
+        #     cv2.rectangle(image, (x1, y1), (x2, y2), (225, 0, 0), 2)
+        #     cv2.imshow(f"image {i}", onlyText)
         text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         text = removeSpecialCharacter(text)
         if text != "":
@@ -295,7 +292,7 @@ def qr_detect(frame):
     return links
 
 
-def main(main_queue, hazmat_queue):
+def main(main_queue, hazmat_queue, debug):
     print("Starting camera...")
 
     # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
@@ -312,7 +309,9 @@ def main(main_queue, hazmat_queue):
 
     print(f"\nPress '{QUIT_KEY}' to quit.")
     print(f"Press '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
-    print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.\n")
+    print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
+    print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
+    print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.\n")
 
     t0 = time.time()
     t1 = time.time()
@@ -356,7 +355,9 @@ def main(main_queue, hazmat_queue):
 
         fps = -1 if delta == 0 else 1 / delta
         hazmat_fps = min(-1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"], 100)
-        print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat}\tQR: {run_qr}")
+
+        if debug:
+            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat}\tQR: {run_qr}")
 
         if run_qr:
             qr_found_this_frame = qr_detect(frame)
@@ -425,10 +426,11 @@ def main(main_queue, hazmat_queue):
     cv2.destroyAllWindows()
 
 
+ap = argparse.ArgumentParser()
+ap.add_argument("-d", "--debug", required=False, help="show debug prints", action="store_true")
+args = vars(ap.parse_args())
+
 if __name__ == "__main__":
-    # TODO: argparse `-d` flag to show print statements
-
-
     print("Starting hazmat thread...")
 
     main_queue = Queue()
@@ -439,7 +441,7 @@ if __name__ == "__main__":
     hazmat_thread.start()
 
     print("Starting main thread...")
-    main(main_queue, hazmat_queue)
+    main(main_queue, hazmat_queue, args["debug"])
 
     print("Exiting...")
 

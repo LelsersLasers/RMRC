@@ -2,7 +2,7 @@
 from __future__ import print_function
 from levenshtein import *
 from cleanUp import *
-from opencv_webcam1 import *
+from webcam import *
 import numpy as np
 import argparse
 import mahotas
