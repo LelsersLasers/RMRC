@@ -299,8 +299,8 @@ def qr_detect(frame):
 def main(main_queue, hazmat_queue, debug):
     print("Starting camera...")
 
-    # cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
+    # cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
         raise RuntimeError(
