@@ -42,15 +42,18 @@ def main():
 
         cv2.imshow("Camera feed", frame)
 
-        if SAVE_KEY is not None and (cv2.waitKey(1) & 0xFF) == ord(SAVE_KEY):
+        key = cv2.waitKey(1) & 0xFF
+
+        if SAVE_KEY is not None and key == ord(SAVE_KEY):
             cv2.imwrite(FILENAME, frame)
             print(f"Saved the image as {FILENAME}")
-            proc = subprocess.run(["python3", "hazmat.py"], capture_output=True)
+            # proc = subprocess.run(["python3", "hazmat.py"], capture_output=True)
+            proc = subprocess.run(["python3", "hazmat.py"], stdout=subprocess.PIPE)
             print(proc.stdout)
             
 
 
-        if (cv2.waitKey(1) & 0xFF) == ord("q"):
+        if key == ord("q"):
             break
 
     cap.release()
