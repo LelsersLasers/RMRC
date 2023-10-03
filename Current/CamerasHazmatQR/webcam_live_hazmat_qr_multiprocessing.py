@@ -295,11 +295,13 @@ def qr_detect(frame):
     return links
 
 
-def main(main_queue, hazmat_queue, debug):
+def main(main_queue, hazmat_queue, debug, video_capture_zero):
     print("Starting camera...")
 
-    cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
-    # cap = cv2.VideoCapture(0)
+    if video_capture_zero:
+        cap = cv2.VideoCapture(0)
+    else:
+        cap = cv2.VideoCapture(cap_args, cv2.CAP_GSTREAMER)
 
     if not cap.isOpened():
         raise RuntimeError(
@@ -456,6 +458,7 @@ def main(main_queue, hazmat_queue, debug):
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--debug", required=False, help="show debug prints", action="store_true")
+ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
 args = vars(ap.parse_args())
 
 if __name__ == "__main__":
@@ -469,7 +472,7 @@ if __name__ == "__main__":
     hazmat_thread.start()
 
     print("Starting main thread...")
-    main(main_queue, hazmat_queue, args["debug"])
+    main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"])
 
     print("Exiting...")
 
