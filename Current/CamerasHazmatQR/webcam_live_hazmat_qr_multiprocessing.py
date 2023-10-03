@@ -22,8 +22,8 @@ QR_CLEAR_KEY = "x"
 
 HAZMAT_MIN_DELAY = 0.1 # TODO?
 CAMERA_WAKEUP_TIME = 0.5
-HAZMAT_FRAME_SCALE = 0.5
-HAZMAT_DELAY_BAR_SCALE = 8 # in seconds
+HAZMAT_FRAME_SCALE = 1
+HAZMAT_DELAY_BAR_SCALE = 10 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 
 # What main thread sends
