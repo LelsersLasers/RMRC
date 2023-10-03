@@ -51,7 +51,7 @@ def main():
             # proc = subprocess.run(["python3", "hazmat.py"], capture_output=True)
             # proc = subprocess.run(["python3", "hazmat.py"], stdout=subprocess.PIPE)
             # print(proc.stdout.decode("utf-8"))
-            hazmat.main()
+            hazmat.hazmat_main()
             
 
 
