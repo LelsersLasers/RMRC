@@ -11,7 +11,6 @@ import mahotas
 import pytesseract
 from multiprocessing import Process, Queue
 import pyzbar.pyzbar as pyzbar
-import urllib.parse
 import argparse
 
 
@@ -290,8 +289,7 @@ def qr_detect(frame):
         cv2.polylines(frame, [np.array(points, np.int32)], True, (0, 255, 0), 3)
 
         x, y, _, _ = decoded_object.rect
-        escaped_data = urllib.parse.quote(link) # TODO
-        cv2.putText(frame, escaped_data, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+        cv2.putText(frame, link, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
 
     return links
 
