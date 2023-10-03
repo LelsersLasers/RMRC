@@ -3,7 +3,8 @@ cap_args = "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_2D4AA0A0-video
 
 import cv2
 import time
-import subprocess
+# import subprocess
+import hazmat
 
 SAVE_KEY = "g"
 FILENAME = "screencapture.jpg"
@@ -46,10 +47,11 @@ def main():
 
         if SAVE_KEY is not None and key == ord(SAVE_KEY):
             cv2.imwrite(FILENAME, frame)
-            print(f"Saved the image as {FILENAME}")
+            print(f"Saved the image as {FILENAME}. Starting running hazmat detection...")
             # proc = subprocess.run(["python3", "hazmat.py"], capture_output=True)
-            proc = subprocess.run(["python3", "hazmat.py"], stdout=subprocess.PIPE)
-            print(proc.stdout)
+            # proc = subprocess.run(["python3", "hazmat.py"], stdout=subprocess.PIPE)
+            # print(proc.stdout.decode("utf-8"))
+            hazmat.main()
             
 
 
