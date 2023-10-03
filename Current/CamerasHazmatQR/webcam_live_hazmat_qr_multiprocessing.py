@@ -23,7 +23,7 @@ QR_CLEAR_KEY = "x"
 HAZMAT_MIN_DELAY = 0.1 # TODO?
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 0.5
-HAZMAT_DELAY_BAR_SCALE = 5 # in seconds
+HAZMAT_DELAY_BAR_SCALE = 8 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 
 # What main thread sends
@@ -211,14 +211,15 @@ def hazmat_main(main_queue, hazmat_queue):
         except:
             pass
 
+        if clear_all_found:
+            all_found = []
+            print("Cleared all found hazmat labels.")
+
         if state_main["frame"] is not None:
             frame = state_main["frame"]
             frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
 
             if state_main["run_hazmat"]:
-
-                if clear_all_found:
-                    all_found = []
 
                 threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
                 found_this_frame = []
@@ -438,14 +439,16 @@ def main(main_queue, hazmat_queue, debug):
             run_hazmat.toggle()
         elif key == ord(QR_TOGGLE_KEY):
             run_qr.toggle()
-        elif key == ord(HAZMAT_CLEAR_KEY):
-            state_main["clear_all_found"] = True
         elif key == ord(QR_CLEAR_KEY):
             all_qr_found = []
 
+        if key == ord(HAZMAT_CLEAR_KEY):
+            state_main["clear_all_found"] = True
+        else:
+            state_main["clear_all_found"] = False
+
         state_main["frame"] = frame_to_pass_to_hazmat
         main_queue.put_nowait(state_main)
-        state_main["clear_all_found"] = False
 
     cap.release()
     cv2.destroyAllWindows()
