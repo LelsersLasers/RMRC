@@ -43,8 +43,8 @@ sleep 1
 # start: ir ------------------------------------------------------------------#
 printInColor "Starting launching ir"
 
-# gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! xvimagesink &
-bash run_ir.sh &
+gst-launch-1.0 v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! xvimagesink &
+# bash run_ir.sh &
 
 sleep 1
 # end: ir --------------------------------------------------------------------#
