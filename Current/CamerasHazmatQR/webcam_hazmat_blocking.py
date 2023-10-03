@@ -48,9 +48,6 @@ def main():
         if SAVE_KEY is not None and key == ord(SAVE_KEY):
             cv2.imwrite(FILENAME, frame)
             print(f"Saved the image as {FILENAME}. Starting running hazmat detection...")
-            # proc = subprocess.run(["python3", "hazmat.py"], capture_output=True)
-            # proc = subprocess.run(["python3", "hazmat.py"], stdout=subprocess.PIPE)
-            # print(proc.stdout.decode("utf-8"))
             hazmat.hazmat_main()
             
 
