@@ -7,7 +7,7 @@ import argparse
 MAIN_FILE = "states/state.json"
 SERVER_FILE = "states/server_state.json"
 
-FILE_DELAY = 0.1
+FILE_DELAY = 0.0
 
 MAIN_STATE = {
     "frame": "",

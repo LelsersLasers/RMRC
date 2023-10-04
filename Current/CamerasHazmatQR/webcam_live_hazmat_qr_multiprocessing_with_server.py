@@ -35,7 +35,7 @@ HAZMAT_DELAY_BAR_SCALE = 10 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 SERVER_FRAME_SCALE = 1
 
-FILE_DELAY = 0.1
+FILE_DELAY = 0.0
 
 MAIN_FILE = "states/state.json"
 SERVER_FILE = "states/server_state.json"
