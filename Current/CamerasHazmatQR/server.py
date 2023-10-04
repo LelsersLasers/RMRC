@@ -1,10 +1,13 @@
 from flask import Flask, render_template, Response, jsonify
 import json
 import time
+import argparse
 
 
 MAIN_FILE = "states/state.json"
 SERVER_FILE = "states/server_state.json"
+
+FILE_DELAY = 0.1
 
 MAIN_STATE = {
     "frame": "",
@@ -17,7 +20,7 @@ def read_state():
 		with open(MAIN_FILE, "r") as f:
 			MAIN_STATE = json.load(f)
 	except:
-		time.sleep(0.1)
+		time.sleep(FILE_DELAY)
 		read_state()
 
 def write_state():
@@ -64,11 +67,15 @@ def get():
 	response.headers.add('Access-Control-Allow-Origin', '*')
 	return response
 
+ap = argparse.ArgumentParser()
+ap.add_argument("-d", "--debug", required=False, help="show debug prints", action="store_true")
+args = vars(ap.parse_args())
+
 if __name__ == "__main__":
 	read_state()
 	write_state()
 
-	app.run(debug=True, port=5000, host='0.0.0.0')
+	app.run(debug=args["debug"], port=5000, host='0.0.0.0')
 
 	SERVER_STATE = {}
 	write_state()

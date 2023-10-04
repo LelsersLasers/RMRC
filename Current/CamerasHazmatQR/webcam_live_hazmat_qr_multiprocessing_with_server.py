@@ -35,6 +35,8 @@ HAZMAT_DELAY_BAR_SCALE = 10 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 SERVER_FRAME_SCALE = 1
 
+FILE_DELAY = 0.1
+
 MAIN_FILE = "states/state.json"
 SERVER_FILE = "states/server_state.json"
 
@@ -71,7 +73,7 @@ def read_state():
 		with open(SERVER_FILE, "r") as f:
 			SERVER_STATE = json.load(f)
 	except:
-		time.sleep(0.1)
+		time.sleep(FILE_DELAY)
 		read_state()
 
 
