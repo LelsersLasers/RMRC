@@ -38,12 +38,11 @@ html, body {
 	<img id="frame" />
 
 	<script>
-
 		// const FLASK_SERVER = "http://192.168.1.5:5000"
 		const FLASK_SERVER = "http://localhost:5000"
 		const DELAY = 50;
 
-		setInterval(function() {
+		const close = setInterval(function() {
 			const path = "/get";
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
@@ -52,16 +51,40 @@ html, body {
 						const frame_ele = document.getElementById("frame");
 						frame_ele.src = "data:image/jpg;base64," + data["frame"];
 
+						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
+
 						const max_w = window.innerWidth;
 						const max_h = window.innerHeight;
-						const size = Math.min(max_w, max_h) - 1;
-						frame_ele.style.width = size + "px";
-						frame_ele.style.height = size + "px";
+
+						const w = Math.min(max_w, max_h * ratio);
+						const h = Math.min(max_h, max_w / ratio);
+
+						
+						frame_ele.style.width = w + "px";
+						frame_ele.style.height = h + "px";
 					} catch (e) {
 						console.log(e);
 					}
 				});
 		}, DELAY);
+
+		function keydown(e) {
+			const key = e.key;
+			path = "/keydown/" + key;
+			fetch(FLASK_SERVER + path);
+
+			if (key == "q") {
+				clearInterval(close);
+			}
+		}
+		function keyup(e) {
+			const key = e.key;
+			path = "/keyup/" + key;
+			fetch(FLASK_SERVER + path);
+		}
+
+		window.addEventListener("keydown", keydown);
+		window.addEventListener("keyup", keyup);
 
 	</script>
 

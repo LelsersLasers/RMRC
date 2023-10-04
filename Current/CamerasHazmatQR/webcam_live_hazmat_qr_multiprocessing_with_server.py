@@ -35,14 +35,15 @@ HAZMAT_DELAY_BAR_SCALE = 10 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 SERVER_FRAME_SCALE = 1
 
-JSON_FILE = "state.json"
+MAIN_FILE = "state.json"
+SERVER_FILE = "server_state.json"
 
 # What main thread sends
 START_STATE_MAIN = {
     "frame": None,
     "run_hazmat": False,
     "quit": False,
-    "clear_all_found": False,
+    "clear_all_found": 0,
 }
 
 # What hazmat thread sends
@@ -52,13 +53,26 @@ START_STATE_HAZMAT = {
     # "cleared_all_found": False,
 }
 
-SERVER_STATE = {
-    "frame": ""
+MAIN_STATE = {
+    "frame": "",
+    "w": 1,
+    "h": 1,
 }
+SERVER_STATE = {}
+
 def write_state():
     # Write state to file
-    with open(JSON_FILE, "w") as f:
-        json.dump(SERVER_STATE, f)
+    with open(MAIN_FILE, "w") as f:
+        json.dump(MAIN_STATE, f)
+
+def read_state():
+	global SERVER_STATE
+	try:
+		with open(SERVER_FILE, "r") as f:
+			SERVER_STATE = json.load(f)
+	except:
+		time.sleep(0.1)
+		read_state()
 
 
 def processScreenshot(img, val):
@@ -226,7 +240,7 @@ def hazmat_main(main_queue, hazmat_queue):
         clear_all_found = False
         try:
             state_main = main_queue.get_nowait()
-            clear_all_found = clear_all_found or state_main["clear_all_found"]
+            clear_all_found = clear_all_found or state_main["clear_all_found"] > 0
         except:
             pass
 
@@ -315,7 +329,7 @@ def qr_detect(frame):
 
 
 def main(main_queue, hazmat_queue, debug, video_capture_zero):
-    global SERVER_STATE
+    global SERVER_STATE, MAIN_STATE
 
     print("Starting camera...")
 
@@ -364,7 +378,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
 
             if not ret or frame is None:
                 print("Exiting ...")
-                return
+                return caps
 
             frames[key] = frame
 
@@ -476,34 +490,44 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
 
         # cv2.imshow("Camera and hazmat", combined)
 
-        key = cv2.waitKey(1) & 0xFF
-        # key = ord('a')
-        if key == ord(QUIT_KEY):
-            state_main["quit"] = True
-            break
-        elif key == ord(HAZMAT_TOGGLE_KEY):
-            run_hazmat.toggle()
-        elif key == ord(QR_TOGGLE_KEY):
-            run_qr.toggle()
-        elif key == ord(QR_CLEAR_KEY):
-            all_qr_found = []
+        # key = cv2.waitKey(1) & 0xFF
 
-        if key == ord(HAZMAT_CLEAR_KEY):
-            state_main["clear_all_found"] = True
-        else:
-            state_main["clear_all_found"] = False
+        old_server_state = SERVER_STATE.copy()
+        read_state()
+
+        for key, value in SERVER_STATE.items():
+            if key not in old_server_state or old_server_state[key] != value:
+                if value:
+                    if key == QUIT_KEY:
+                        state_main["quit"] = True
+                        return caps
+                    if key == HAZMAT_TOGGLE_KEY:
+                        run_hazmat.toggle()
+                    if key == QR_TOGGLE_KEY:
+                        run_qr.toggle()
+                    if key == QR_CLEAR_KEY:
+                        all_qr_found = []
+                    if key == HAZMAT_CLEAR_KEY:
+                        state_main["clear_all_found"] = 1
+
+                    # SERVER_STATE[key] = False
+                    
+
+        if state_main["clear_all_found"] == 1:
+            state_main["clear_all_found"] = 2
+        elif state_main["clear_all_found"] == 2:
+            state_main["clear_all_found"] = 0
 
         state_main["frame"] = frame_to_pass_to_hazmat
         main_queue.put_nowait(state_main)
 
         combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
-        SERVER_STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
+        MAIN_STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
+
+        MAIN_STATE["w"] = combine_downscaled.shape[1]
+        MAIN_STATE["h"] = combine_downscaled.shape[0]
 
         write_state()
-
-    for cap in caps.values():
-        cap.release()
-    cv2.destroyAllWindows()
 
 
 ap = argparse.ArgumentParser()
@@ -522,7 +546,11 @@ if __name__ == "__main__":
     hazmat_thread.start()
 
     print("Starting main thread...")
-    main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"])
+    caps = main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"])
+
+    for cap in caps.values():
+        cap.release()
+    cv2.destroyAllWindows()
 
     print("Exiting...")
 
