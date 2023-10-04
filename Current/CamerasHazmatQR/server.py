@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, jsonify
 import json
 import time
 
@@ -25,7 +25,15 @@ app=Flask(__name__)
 def index():
 	return render_template('index.html')
 
-@app.route('/get')
+@app.route('/get', methods=['GET'])
 def get():
+	global STATE
+
 	read_state()
-	return Response(json.dumps(STATE), mimetype='application/json')
+	response = jsonify(STATE)
+	response.headers.add('Access-Control-Allow-Origin', '*')
+	return response
+
+if __name__ == "__main__":
+	read_state()
+	app.run(debug=True, port=5000, host='0.0.0.0')

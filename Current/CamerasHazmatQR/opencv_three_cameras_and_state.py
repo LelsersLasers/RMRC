@@ -47,8 +47,9 @@ def main():
     print("Starting camera feed...")
 
     caps = {}
-    for key, value in cap_args.items():
-        caps[key] = cv2.VideoCapture(value, cv2.CAP_GSTREAMER)
+    # for key, value in cap_args.items():
+    #     caps[key] = cv2.VideoCapture(value, cv2.CAP_GSTREAMER)
+    caps["webcam1"] = cv2.VideoCapture(0)
 
     for key, cap in caps.items():
         if not cap.isOpened():
@@ -75,7 +76,8 @@ def main():
             frames[key] = frame
 
         webcam1_shape = frames["webcam1"].shape
-        ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
+        # ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
+        ir_frame = frames["webcam1"]
 
 
         key = cv2.waitKey(1) & 0xFF
@@ -88,7 +90,8 @@ def main():
         hazmat_frame_to_display = hazmat_frame if hazmat_frame is not None else np.zeros_like(frames["webcam1"])
 
         top_combined = cv2.hconcat([frames["webcam1"], hazmat_frame_to_display])
-        bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
+        # bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
+        bottom_combined = cv2.hconcat([frames["webcam1"], ir_frame])
 
         combined = cv2.vconcat([top_combined, bottom_combined])
 
@@ -96,6 +99,8 @@ def main():
 
         combine_downscaled = cv2.resize(combined, (0, 0), fx=0.5, fy=0.5)
         STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
+
+        write_state()
 
         if key == ord("q"):
             break

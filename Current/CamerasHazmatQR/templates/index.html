@@ -7,20 +7,24 @@
 	<title>Bishop's RMRC Camera Feeds</title>
 	<meta
 		name="description"
-		content="Camera feeds: 2 webcams, ir, and hazmat
-	/>
-
-	<!-- Pico.css (Classless version) -->
-	<link
-		rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.classless.min.css"
+		content="Camera feeds: 2 webcams, ir, and hazmat"
 	/>
 
 	<style>
 
-#frame {
+html, body {
 	width: 100%;
-	height: auto;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#frame {
+	margin: 0 auto;
+	padding: 0;
 }
 
 /* .centerer {
@@ -35,7 +39,8 @@
 
 	<script>
 
-		const FLASK_SERVER = "http://192.168.1.5:5000"
+		// const FLASK_SERVER = "http://192.168.1.5:5000"
+		const FLASK_SERVER = "http://localhost:5000"
 		const DELAY = 50;
 
 		setInterval(function() {
@@ -44,7 +49,14 @@
 				.then(response => response.json())
 				.then(data => {
 					try {
-						document.getElementById("frame").src = "data:image/jpg;base64," + data["frame"];
+						const frame_ele = document.getElementById("frame");
+						frame_ele.src = "data:image/jpg;base64," + data["frame"];
+
+						const max_w = window.innerWidth;
+						const max_h = window.innerHeight;
+						const size = Math.min(max_w, max_h) - 1;
+						frame_ele.style.width = size + "px";
+						frame_ele.style.height = size + "px";
 					} catch (e) {
 						console.log(e);
 					}
