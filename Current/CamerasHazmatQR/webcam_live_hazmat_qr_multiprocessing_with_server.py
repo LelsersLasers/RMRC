@@ -52,13 +52,15 @@ START_STATE_MAIN = {
 START_STATE_HAZMAT = {
     "hazmat_delta": 1 / 10,
     "hazmat_frame": None,
-    # "cleared_all_found": False,
+    "hazmats_found": [],
 }
 
 MAIN_STATE = {
     "frame": "",
     "w": 1,
     "h": 1,
+    "hazmats_found": [],
+    "qr_found": [],
 }
 SERVER_STATE = {}
 
@@ -309,6 +311,7 @@ def hazmat_main(main_queue, hazmat_queue):
         time.sleep(sleep_time)
 
         state_hazmat["hazmat_delta"] = delta
+        state_hazmat["hazmats_found"] = all_found
 
         hazmat_queue.put_nowait(state_hazmat)
 
@@ -528,6 +531,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
 
         MAIN_STATE["w"] = combine_downscaled.shape[1]
         MAIN_STATE["h"] = combine_downscaled.shape[0]
+
+        MAIN_STATE["hazmats_found"] = state_hazmat["hazmats_found"]
+        MAIN_STATE["qr_found"] = all_qr_found
 
         write_state()
 

@@ -11,6 +11,10 @@ FILE_DELAY = 0.0
 
 MAIN_STATE = {
     "frame": "",
+    "w": 1,
+    "h": 1,
+    "hazmats_found": [],
+    "qr_found": [],
 }
 SERVER_STATE: dict[str, bool] = {}
 
