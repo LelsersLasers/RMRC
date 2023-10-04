@@ -3,8 +3,8 @@ import json
 import time
 
 
-MAIN_FILE = "state.json"
-SERVER_FILE = "server_state.json"
+MAIN_FILE = "states/state.json"
+SERVER_FILE = "states/server_state.json"
 
 MAIN_STATE = {
     "frame": "",
@@ -69,6 +69,6 @@ if __name__ == "__main__":
 	write_state()
 
 	app.run(debug=True, port=5000, host='0.0.0.0')
-	
+
 	SERVER_STATE = {}
 	write_state()
