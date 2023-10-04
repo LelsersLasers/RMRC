@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Bishop's RMRC Camera Feeds</title>
+	<meta
+		name="description"
+		content="Camera feeds: 2 webcams, ir, and hazmat
+	/>
+
+	<!-- Pico.css (Classless version) -->
+	<link
+		rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.classless.min.css"
+	/>
+
+	<style>
+
+#frame {
+	width: 100%;
+	height: auto;
+}
+
+/* .centerer {
+	display: flex;
+	flex-direction: column;
+} */
+	</style>
+</head>
+
+<body>
+	<img id="frame" />
+
+	<script>
+
+		const FLASK_SERVER = "http://192.168.1.5:5000"
+		const DELAY = 50;
+
+		setInterval(function() {
+			const path = "/get";
+			fetch(FLASK_SERVER + path)
+				.then(response => response.json())
+				.then(data => {
+					try {
+						document.getElementById("frame").src = "data:image/jpg;base64," + data["frame"];
+					} catch (e) {
+						console.log(e);
+					}
+				});
+		}, DELAY);
+
+	</script>
+
+
+</body>

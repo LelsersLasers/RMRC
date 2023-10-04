@@ -13,10 +13,12 @@ import cv2
 import time
 import hazmat
 import numpy as np
-# import subprocess
+import base64
+import json
 
 HAZMAT_KEY = "g"
 FILENAME = "screencapture.jpg"
+JSON_FILE = "state.json"
 
 
 def screenshot():
@@ -29,8 +31,19 @@ def screenshot():
 
     return img
 
+STATE = {
+    "frame": ""
+}
+
+def write_state():
+    # Write state to file
+    with open(JSON_FILE, "w") as f:
+        json.dump(STATE, f)
+
 
 def main():
+    global STATE
+
     print("Starting camera feed...")
 
     caps = {}
@@ -51,14 +64,6 @@ def main():
     hazmat_frame = None
 
     while True:
-        # webcam1_ret, webcam1_frame = webcam1_cap.read()
-        # webcam2_ret, webcam2_frame = webcam2_cap.read()
-        # ir_ret, ir_frame = ir_cap.read()
-
-        # if False in [webcam1_ret, webcam2_ret, ir_ret] or None in [webcam1_frame, webcam2_frame, ir_frame]:
-        #     print("Exiting ...")
-        #     break
-
         frames = {}
         for key, cap in caps.items():
             ret, frame = cap.read()
@@ -88,6 +93,9 @@ def main():
         combined = cv2.vconcat([top_combined, bottom_combined])
 
         cv2.imshow("Camera feed", combined)
+
+        combine_downscaled = cv2.resize(combined, (0, 0), fx=0.5, fy=0.5)
+        STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
 
         if key == ord("q"):
             break
