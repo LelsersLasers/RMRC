@@ -145,8 +145,9 @@ def findMax(list):
     return max(list, key=len)
 
 
-def hazmat_main():
-    img = screenshot()
+def hazmat_main(img = None, show_window = True):
+    if img is None:
+        img = screenshot()
 
     threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
     found_this_frame = []
@@ -190,10 +191,13 @@ def hazmat_main():
 
     print("")
 
-    cv2.imshow("hazmat image", img)
+    if show_window:
+        cv2.imshow("hazmat image", img)
 
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return img
 
 
 if __name__ == "__main__":
