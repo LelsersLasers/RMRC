@@ -88,10 +88,10 @@ div {
 						frame_ele.src = "data:image/jpg;base64," + data["frame"];
 
 						const hazmats_ele = document.getElementById("hazmats");
-						hazmats_ele.innerHTML = data["hazmats_found"].join("<br />");
+						hazmats_ele.innerHTML = data["hazmats_found"].sort().join("<br />");
 
 						const qrs_ele = document.getElementById("qrs");
-						qrs_ele.innerHTML = data["qr_found"].join("<br />");
+						qrs_ele.innerHTML = data["qr_found"].sort().join("<br />");
 
 
 						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);

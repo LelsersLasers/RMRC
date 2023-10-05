@@ -265,10 +265,11 @@ def hazmat_main(main_queue, hazmat_queue):
 
                     for r in received_tups:
                         found_this_frame.append(r)
-                        all_found.append(r[0])
+                        all_found.append(r[0].strip())
 
                 found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
                 all_found = list(set(all_found))
+                all_found.sort()
 
                 fontScale = 0.5
                 fontColor = (0, 0, 255)
@@ -426,8 +427,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
             qr_found_this_frame = qr_detect(frame)
             if len(qr_found_this_frame) > 0:
                 for qr in qr_found_this_frame:
-                    all_qr_found.append(qr)
+                    all_qr_found.append(qr.strip())
                 all_qr_found = list(set(all_qr_found))
+                all_qr_found.sort()
 
                 print(qr_found_this_frame)
                 print(all_qr_found)
