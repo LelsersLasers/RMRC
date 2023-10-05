@@ -78,7 +78,7 @@ div {
 		const FLASK_SERVER = "http://localhost:5000"
 		const DELAY = 50;
 
-		const close = setInterval(function() {
+		const end = setInterval(function() {
 			const path = "/get";
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
@@ -116,7 +116,7 @@ div {
 			fetch(FLASK_SERVER + path);
 
 			if (key == "q") {
-				clearInterval(close);
+				clearInterval(end);
 			}
 		}
 		function keyup(e) {
