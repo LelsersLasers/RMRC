@@ -1,3 +1,4 @@
+from __future__ import annotations
 from flask import Flask, render_template, Response, jsonify
 import json
 import time
