@@ -1,4 +1,3 @@
-from __future__ import annotations
 from flask import Flask, render_template, Response, jsonify
 import json
 import time
@@ -17,7 +16,7 @@ MAIN_STATE = {
     "hazmats_found": [],
     "qr_found": [],
 }
-SERVER_STATE: dict[str, bool] = {}
+SERVER_STATE = {}
 
 def read_state():
 	global MAIN_STATE
