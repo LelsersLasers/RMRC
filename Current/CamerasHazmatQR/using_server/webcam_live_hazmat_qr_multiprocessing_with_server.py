@@ -269,8 +269,6 @@ def hazmat_main(main_queue, hazmat_queue):
                         all_found.append(r[0].strip())
 
                 found_this_frame = remove_dups(found_this_frame, lambda x: x[0])
-                all_found = list(set(all_found))
-                all_found.sort()
 
                 fontScale = 0.5
                 fontColor = (0, 0, 255)
@@ -299,6 +297,9 @@ def hazmat_main(main_queue, hazmat_queue):
                     )
                 
                 if len(found_this_frame) > 0:
+                    all_found = list(set(all_found))
+                    all_found.sort()
+
                     print([x[0] for x in found_this_frame])
                     print(all_found)
 
@@ -313,6 +314,9 @@ def hazmat_main(main_queue, hazmat_queue):
         time.sleep(sleep_time)
 
         state_hazmat["hazmat_delta"] = delta
+
+        all_found = list(set(all_found))
+        all_found.sort()
         state_hazmat["hazmats_found"] = all_found
 
         hazmat_queue.put_nowait(state_hazmat)
@@ -377,7 +381,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
     state_hazmat = START_STATE_HAZMAT
 
     last_hazmat_update = time.time()
-    hazmat_frame_orginal = None
 
     while True:
         frames = {}
@@ -401,16 +404,13 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
         try:
             state_hazmat = hazmat_queue.get_nowait()
             last_hazmat_update = time.time()
-            if state_hazmat["hazmat_frame"] is not None:
-                hazmat_frame = state_hazmat["hazmat_frame"]
-                hazmat_frame_orginal = hazmat_frame.copy()
-            else:
-                hazmat_frame = np.zeros_like(frame)
         except:
-            if hazmat_frame_orginal is not None:
-                hazmat_frame = hazmat_frame_orginal.copy()
-            else:
-                hazmat_frame = np.zeros_like(frame)
+            pass
+
+        if state_hazmat["hazmat_frame"] is not None:
+            hazmat_frame = state_hazmat["hazmat_frame"]
+        else:
+            hazmat_frame = np.zeros_like(frame)
 
         frame_to_pass_to_hazmat = frame.copy()
 
@@ -421,7 +421,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
         hazmat_fps = min(-1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"], 100)
 
         if debug:
-            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat_toggler}\tQR: {run_qr_toggler}")
+            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat_toggler or run_hazmat_hold}\tQR: {run_qr_toggler}")
 
         if run_qr_toggler:
             start = time.time()
@@ -430,6 +430,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
             if len(qr_found_this_frame) > 0:
                 for qr in qr_found_this_frame:
                     all_qr_found.append(qr.strip())
+
                 all_qr_found = list(set(all_qr_found))
                 all_qr_found.sort()
 
@@ -456,6 +457,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
                 (255, 255, 0),
                 3
             )
+
+        all_qr_found = list(set(all_qr_found))
+        all_qr_found.sort()
 
         t1 = time.time()
         delta = t1 - t0
@@ -536,7 +540,11 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
         MAIN_STATE["w"] = combine_downscaled.shape[1]
         MAIN_STATE["h"] = combine_downscaled.shape[0]
 
-        MAIN_STATE["hazmats_found"] = state_hazmat["hazmats_found"]
+        hazmats_found = state_hazmat["hazmats_found"]
+        hazmats_found = list(set(hazmats_found))
+        hazmats_found.sort()
+
+        MAIN_STATE["hazmats_found"] = hazmats_found
         MAIN_STATE["qr_found"] = all_qr_found
 
         write_state()
