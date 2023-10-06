@@ -564,7 +564,7 @@ if __name__ == "__main__":
         cap.release()
     cv2.destroyAllWindows()
 
-    print("Exiting...")
+    print("Exiting cameras...")
 
     START_STATE_MAIN["quit"] = True
     main_queue.put_nowait(START_STATE_MAIN)
@@ -582,4 +582,4 @@ if __name__ == "__main__":
     main_queue.cancel_join_thread()
     hazmat_queue.cancel_join_thread()
 
-    print("Done.")
+    print("Cameras done.")

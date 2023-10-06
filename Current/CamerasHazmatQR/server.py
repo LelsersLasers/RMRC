@@ -77,8 +77,12 @@ ap.add_argument("-d", "--debug", required=False, help="show debug prints", actio
 args = vars(ap.parse_args())
 
 if __name__ == "__main__":
+    print("Updating starting states...")
+
     read_state()
     write_state()
+
+    print("Starting server...")
     
     if not args["debug"]:
         log = logging.getLogger('werkzeug')
@@ -88,3 +92,5 @@ if __name__ == "__main__":
 
     SERVER_STATE = {}
     write_state()
+
+    print("Server done.")
