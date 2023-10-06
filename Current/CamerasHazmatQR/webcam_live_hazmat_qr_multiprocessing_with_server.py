@@ -339,7 +339,7 @@ def qr_detect(frame):
 def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     global SERVER_STATE, MAIN_STATE
 
-    print("Starting camera...")
+    print("Starting cameras...")
 
     if video_capture_zero:
         caps["webcam1"] = cv2.VideoCapture(0)
@@ -352,6 +352,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             raise RuntimeError(
                 f"Can't open camera {key}. Are the cap_args set right? Is the camera plugged in?"
             )
+        print(f"Camera {key} opened.")
 
 
     time.sleep(CAMERA_WAKEUP_TIME)
