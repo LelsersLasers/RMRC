@@ -418,7 +418,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         hazmat_fps = min(-1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"], 100)
 
         if debug:
-            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat_toggler or run_hazmat_hold}\tQR: {run_qr_toggler}")
+            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {state_main['run_hazmat']}\tQR: {run_qr_toggler}")
 
         if run_qr_toggler:
             start = time.time()
@@ -486,7 +486,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             hazmat_frame,
             (5, 5),
             (5 + int(w), 5),
-            (255, 255, 0) if not run_hazmat_toggler.get() else (0, 0, 255),
+            (255, 255, 0) if not state_main["run_hazmat"] else (0, 0, 255),
             3
         )
 
