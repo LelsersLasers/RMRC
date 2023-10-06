@@ -22,7 +22,6 @@ import json
 import base64
 
 
-QUIT_KEY = "q"
 HAZMAT_TOGGLE_KEY = "h"
 HAZMAT_HOLD_KEY = "g"
 QR_TOGGLE_KEY = "r"
@@ -339,12 +338,11 @@ def qr_detect(frame):
     return links
 
 
-def main(main_queue, hazmat_queue, debug, video_capture_zero):
+def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     global SERVER_STATE, MAIN_STATE
 
     print("Starting camera...")
 
-    caps = {}
     if video_capture_zero:
         caps["webcam1"] = cv2.VideoCapture(0)
     else:
@@ -361,8 +359,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
     time.sleep(CAMERA_WAKEUP_TIME)
 
 
-    print(f"\nPress '{QUIT_KEY}' to quit.")
-    print(f"Press '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
+    print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.\n")
@@ -389,7 +386,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
 
             if not ret or frame is None:
                 print("Exiting ...")
-                return caps
 
             frames[key] = frame
 
@@ -501,19 +497,12 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
         combined = cv2.vconcat([top_combined, bottom_combined])
 
 
-        # cv2.imshow("Camera and hazmat", combined)
-
-        # key = cv2.waitKey(1) & 0xFF
-
         old_server_state = SERVER_STATE.copy()
         read_state()
 
         for key, value in SERVER_STATE.items():
             if key not in old_server_state or old_server_state[key] != value:
                 if value:
-                    if key == QUIT_KEY:
-                        state_main["quit"] = True
-                        return caps
                     if key == HAZMAT_TOGGLE_KEY:
                         run_hazmat_toggler.toggle()
                     if key == QR_TOGGLE_KEY:
@@ -566,7 +555,9 @@ if __name__ == "__main__":
     hazmat_thread.start()
 
     print("Starting main thread...")
-    caps = main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"])
+    
+    caps = {}
+    main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"], caps)
 
     for cap in caps.values():
         cap.release()
