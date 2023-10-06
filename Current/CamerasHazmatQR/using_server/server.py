@@ -82,7 +82,7 @@ if __name__ == "__main__":
     
     if not args["debug"]:
         log = logging.getLogger('werkzeug')
-        log.setLevel(logging.ERROR)
+        log.setLevel(logging.WARNING)
 
     app.run(debug=args["debug"], port=5000, host='0.0.0.0')
 
