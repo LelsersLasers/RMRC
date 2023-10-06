@@ -24,6 +24,7 @@ import base64
 
 QUIT_KEY = "q"
 HAZMAT_TOGGLE_KEY = "h"
+HAZMAT_HOLD_KEY = "g"
 QR_TOGGLE_KEY = "r"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
@@ -31,7 +32,7 @@ QR_CLEAR_KEY = "x"
 HAZMAT_MIN_DELAY = 0.1 # TODO?
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
-HAZMAT_DELAY_BAR_SCALE = 20 # in seconds
+HAZMAT_DELAY_BAR_SCALE = 30 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 SERVER_FRAME_SCALE = 1
 
@@ -366,8 +367,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
     t1 = time.time()
     delta = 1 / 30
 
-    run_hazmat = Toggler(False)
-    run_qr = Toggler(False)
+    run_hazmat_toggler = Toggler(False)
+    run_hazmat_hold = False
+    run_qr_toggler = Toggler(False)
 
     all_qr_found = []
 
@@ -413,15 +415,15 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
         frame_to_pass_to_hazmat = frame.copy()
 
 
-        state_main["run_hazmat"] = run_hazmat.get()
+        state_main["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
 
         fps = -1 if delta == 0 else 1 / delta
         hazmat_fps = min(-1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"], 100)
 
         if debug:
-            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat}\tQR: {run_qr}")
+            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {run_hazmat_toggler}\tQR: {run_qr_toggler}")
 
-        if run_qr:
+        if run_qr_toggler:
             start = time.time()
 
             qr_found_this_frame = qr_detect(frame)
@@ -481,7 +483,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
             hazmat_frame,
             (5, 5),
             (5 + int(w), 5),
-            (255, 255, 0) if not run_hazmat.get() else (0, 0, 255),
+            (255, 255, 0) if not run_hazmat_toggler.get() else (0, 0, 255),
             3
         )
 
@@ -509,15 +511,15 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero):
                         state_main["quit"] = True
                         return caps
                     if key == HAZMAT_TOGGLE_KEY:
-                        run_hazmat.toggle()
+                        run_hazmat_toggler.toggle()
                     if key == QR_TOGGLE_KEY:
-                        run_qr.toggle()
+                        run_qr_toggler.toggle()
                     if key == QR_CLEAR_KEY:
                         all_qr_found = []
                     if key == HAZMAT_CLEAR_KEY:
                         state_main["clear_all_found"] = 1
-
-                    # SERVER_STATE[key] = False
+            if key == HAZMAT_HOLD_KEY:
+                run_hazmat_hold = value
                     
 
         if state_main["clear_all_found"] == 1:
