@@ -422,14 +422,16 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
             qr_found_this_frame = qr_detect(frame)
             if len(qr_found_this_frame) > 0:
+                previous_qr_count = len(all_qr_found)
                 for qr in qr_found_this_frame:
                     all_qr_found.append(qr.strip())
 
                 all_qr_found = list(set(all_qr_found))
                 all_qr_found.sort()
 
-                print(qr_found_this_frame)
-                print(all_qr_found)
+                if len(all_qr_found) > previous_qr_count:
+                    print(qr_found_this_frame)
+                    print(all_qr_found)
 
             end = time.time()
 
