@@ -13,7 +13,10 @@ printInColor "(note: this script doesn't play super nice with control-c)\n"
 
 
 python3 webcam_live_hazmat_qr_multiprocessing_with_server.py &
+sleep 1
+
 python3 server.py &
+sleep 1
 
 
 # start: wait for quit requested ---------------------------------------------#
@@ -38,6 +41,8 @@ echo -e "${NC}"
 
 sleep 1
 
+printInColor "Killing background processes"
+
 # Take output of running background jobs and pass them to kill
 jobs -p | xargs kill
 
@@ -51,4 +56,4 @@ printInColor "Finished cleanup"
 # end: cleanup ---------------------------------------------------------------#
 
 
-printInColor "Exiting"
+printInColor "Done"
