@@ -97,8 +97,9 @@ def hazmat_main(main_queue, hazmat_queue):
 
         clear_all_found = False
         try:
-            state_main = main_queue.get_nowait()
-            clear_all_found = clear_all_found or state_main["clear_all_found"] > 0
+            while True:
+                state_main = main_queue.get_nowait()
+                clear_all_found = clear_all_found or state_main["clear_all_found"] > 0
         except:
             pass
 
@@ -242,6 +243,8 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         try:
             state_hazmat = hazmat_queue.get_nowait()
             last_hazmat_update = time.time()
+                state_hazmat = hazmat_queue.get_nowait()
+                last_hazmat_update = time.time()
         except:
             pass
 
