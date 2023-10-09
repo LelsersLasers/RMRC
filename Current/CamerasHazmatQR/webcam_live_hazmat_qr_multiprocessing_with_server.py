@@ -10,12 +10,12 @@ import time
 import numpy as np
 import argparse
 from multiprocessing import Process, Queue
-import pyzbar.pyzbar as pyzbar
 import argparse
 import json
 import base64
 import util
 import hazmat
+import qr_detect
 
 
 HAZMAT_TOGGLE_KEY = "h"
@@ -31,11 +31,7 @@ HAZMAT_DELAY_BAR_SCALE = 30 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 SERVER_FRAME_SCALE = 1
 
-FILE_DELAY = 0.0
-
-MAIN_FILE = "states/state.json"
-SERVER_FILE = "states/server_state.json"
-
+#------------------------------------------------------------------------------#
 # What main thread sends
 START_STATE_MAIN = {
     "frame": None,
@@ -50,6 +46,13 @@ START_STATE_HAZMAT = {
     "hazmat_frame": None,
     "hazmats_found": [],
 }
+#------------------------------------------------------------------------------#
+
+
+#------------------------------------------------------------------------------#
+MAIN_FILE = "states/state.json"
+SERVER_FILE = "states/server_state.json"
+FILE_DELAY = 0.0
 
 MAIN_STATE = {
     "frame": "",
@@ -73,8 +76,10 @@ def read_state():
 	except:
 		time.sleep(FILE_DELAY)
 		read_state()
+#------------------------------------------------------------------------------#
 
 
+#------------------------------------------------------------------------------#
 def hazmat_main(main_queue, hazmat_queue):
     time.sleep(CAMERA_WAKEUP_TIME)
 
@@ -168,25 +173,10 @@ def hazmat_main(main_queue, hazmat_queue):
         state_hazmat["hazmats_found"] = all_found
 
         hazmat_queue.put_nowait(state_hazmat)
-
-def qr_detect(frame):
-    decoded_objects = pyzbar.decode(frame)
-
-    links = []
-
-    for decoded_object in decoded_objects:
-        link = decoded_object.data.decode("utf-8")
-        links.append(link)
-
-        points = decoded_object.polygon
-        cv2.polylines(frame, [np.array(points, np.int32)], True, (0, 255, 0), 3)
-
-        x, y, _, _ = decoded_object.rect
-        cv2.putText(frame, link, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
-
-    return links
+#------------------------------------------------------------------------------#
 
 
+#------------------------------------------------------------------------------#
 def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     global SERVER_STATE, MAIN_STATE
 
@@ -274,7 +264,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         if run_qr_toggler:
             start = time.time()
 
-            qr_found_this_frame = qr_detect(frame)
+            qr_found_this_frame = qr_detect.qr_detect(frame)
             if len(qr_found_this_frame) > 0:
                 previous_qr_count = len(all_qr_found)
                 for qr in qr_found_this_frame:
@@ -391,13 +381,18 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         MAIN_STATE["qr_found"] = all_qr_found
 
         write_state()
+#------------------------------------------------------------------------------#
 
 
+#------------------------------------------------------------------------------#
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--debug", required=False, help="show debug prints", action="store_true")
 ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
 args = vars(ap.parse_args())
+#------------------------------------------------------------------------------#
 
+
+#------------------------------------------------------------------------------#
 if __name__ == "__main__":
     print("Starting hazmat thread...")
 
