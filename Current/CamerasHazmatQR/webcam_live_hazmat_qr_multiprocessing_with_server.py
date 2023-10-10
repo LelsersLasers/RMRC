@@ -62,7 +62,9 @@ MAIN_STATE = {
     "hazmats_found": [],
     "qr_found": [],
 }
-SERVER_STATE = {}
+SERVER_STATE = {
+    "keys_down": []
+}
 
 def write_state():
     # Write state to file
@@ -179,10 +181,7 @@ def hazmat_main(hazmat_con):
 #------------------------------------------------------------------------------#
 def key_down(key):
     global SERVER_STATE
-    try:
-        return SERVER_STATE[key] == "true"
-    except KeyError:
-        return False
+    return key in SERVER_STATE["keys_down"]
 
 def main(main_con, debug, video_capture_zero, caps):
     global SERVER_STATE, MAIN_STATE

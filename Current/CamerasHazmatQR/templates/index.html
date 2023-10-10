@@ -78,7 +78,9 @@ div {
 		const FLASK_SERVER = "http://localhost:5000"
 		const DELAY = 50;
 
-		const STATE = {}; // STATE[key] = true/false
+		const STATE = {
+			"keys_down": []
+		};
 
 		const end = setInterval(function() {
 			const path = "/get";
@@ -112,22 +114,33 @@ div {
 				});
 		}, DELAY);
 
+		function send_clear_state() {
+			const path = "/clear";
+			fetch(FLASK_SERVER + path);
+		}
+
 		function send_state() {
 			const base_path = "/set";
-			for (const key in STATE) {
-				const path = base_path + "/" + key + "/" + STATE[key];
+			for (key of STATE["keys_down"]) {
+				const path = base_path + "/" + key;
 				fetch(FLASK_SERVER + path);
 			}
 		}
 
 		function keydown(e) {
 			const key = e.key;
-			STATE[key] = true;
+			if (!STATE["keys_down"].includes(key)) {
+				STATE["keys_down"].push(key);
+			}
+			
+			send_clear_state();
 			send_state();
 		}
 		function keyup(e) {
 			const key = e.key;
-			STATE[key] = false;
+			STATE["keys_down"] = STATE["keys_down"].filter(k => k != key);
+
+			send_clear_state();
 			send_state();
 		}
 
