@@ -17,9 +17,7 @@ MAIN_STATE = {
     "hazmats_found": [],
     "qr_found": [],
 }
-SERVER_STATE = {
-    "keys_down": []
-}
+SERVER_STATE = {}
 
 def read_state():
     global MAIN_STATE
@@ -54,21 +52,10 @@ def index():
 
 #     return response
 
-@app.route('/clear', methods=['GET'])
-def clear():
+@app.route('/set/<key>/<value>', methods=['GET'])
+def set(key, value):
     global SERVER_STATE
-    SERVER_STATE["keys_down"] = []
-    write_state()
-
-    response = jsonify(SERVER_STATE)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-
-    return response
-
-@app.route('/set/<key>', methods=['GET'])
-def set(key):
-    global SERVER_STATE
-    SERVER_STATE["keys_down"].append(key)
+    SERVER_STATE[key] = value
     write_state()
 
     response = jsonify(SERVER_STATE)
