@@ -9,11 +9,11 @@ import cv2
 import time
 import numpy as np
 import argparse
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Pipe
 import argparse
 import json
 import base64
-import queue
+# import queue
 import util
 import hazmat
 import qr_detect
@@ -81,7 +81,7 @@ def read_state():
 
 
 #------------------------------------------------------------------------------#
-def hazmat_main(main_queue, hazmat_queue):
+def hazmat_main(hazmat_con):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     t0 = time.time()
@@ -97,12 +97,9 @@ def hazmat_main(main_queue, hazmat_queue):
     while not state_main["quit"]:
 
         clear_all_found = False
-        try:
-            while True:
-                state_main = main_queue.get_nowait()
-                clear_all_found = clear_all_found or state_main["clear_all_found"] > 0
-        except:
-            pass
+        while hazmat_con.poll():
+            state_main = hazmat_con.recv()
+            clear_all_found = clear_all_found or state_main["clear_all_found"] > 0
 
         if clear_all_found:
             all_found = []
@@ -166,7 +163,7 @@ def hazmat_main(main_queue, hazmat_queue):
         t0 = t1
 
         sleep_time = max(HAZMAT_MIN_DELAY - delta, 0)
-        # time.sleep(sleep_time)
+        time.sleep(sleep_time)
 
         state_hazmat["hazmat_delta"] = delta
 
@@ -174,8 +171,8 @@ def hazmat_main(main_queue, hazmat_queue):
         all_found.sort()
         state_hazmat["hazmats_found"] = all_found
 
-        hazmat_queue.put_nowait(state_hazmat)
-        # print("b")
+        hazmat_con.send(state_hazmat)
+        print("b")
 #------------------------------------------------------------------------------#
 
 
@@ -187,7 +184,7 @@ def key_down(key):
     except KeyError:
         return False
 
-def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
+def main(main_con, debug, video_capture_zero, caps):
     global SERVER_STATE, MAIN_STATE
 
     print("Starting cameras...")
@@ -252,14 +249,12 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         else:
             ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
 
-        try:
-            while True:
-                state_hazmat = hazmat_queue.get_nowait()
-                last_hazmat_update = time.time()
-                # print("a")
-        except queue.Empty:
-            # print(e)
-            pass
+        print("a0")
+        while main_con.poll():
+            state_hazmat = main_con.recv()
+            last_hazmat_update = time.time()
+            print("a")
+        print("a1")
 
         if state_hazmat["hazmat_frame"] is not None:
             hazmat_frame = state_hazmat["hazmat_frame"]
@@ -358,9 +353,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         read_state()
 
-        print(hazmat_queue.qsize(), main_queue.qsize())
-        # print(SERVER_STATE, key_down(QR_TOGGLE_KEY))
-
         if hazmat_tk.down(key_down(HAZMAT_TOGGLE_KEY)):
             run_hazmat_toggler.toggle()
         if qr_tk.down(key_down(QR_TOGGLE_KEY)):
@@ -380,7 +372,10 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             state_main["clear_all_found"] = 0
 
         state_main["frame"] = frame_to_pass_to_hazmat
-        main_queue.put_nowait(state_main)
+
+        print("a2")
+        main_con.send(state_main)
+        print("a3")
 
         combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
         MAIN_STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
@@ -411,17 +406,16 @@ args = vars(ap.parse_args())
 if __name__ == "__main__":
     print("Starting hazmat thread...")
 
-    main_queue = Queue()
-    hazmat_queue = Queue()
+    main_con, hazmat_con = Pipe(True)
 
-    hazmat_thread = Process(target=hazmat_main, args=(main_queue, hazmat_queue))
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_con,))
 
     hazmat_thread.start()
 
     print("Starting main thread...")
     
     caps = {}
-    main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"], caps)
+    main(main_con, args["debug"], args["video_capture_zero"], caps)
 
     for cap in caps.values():
         cap.release()
@@ -430,7 +424,7 @@ if __name__ == "__main__":
     print("Exiting cameras...")
 
     START_STATE_MAIN["quit"] = True
-    main_queue.put_nowait(START_STATE_MAIN)
+    main_con.send(START_STATE_MAIN)
     
     hazmat_thread.terminate()
     time.sleep(1) # wait for thread to terminate
@@ -438,11 +432,7 @@ if __name__ == "__main__":
 
     print("Closing queues...")
 
-    main_queue.close()
-    hazmat_queue.close()
-
-    # basically `allow_exit_without_flush`
-    main_queue.cancel_join_thread()
-    hazmat_queue.cancel_join_thread()
+    main_con.close()
+    hazmat_con.close()
 
     print("Cameras done.")
