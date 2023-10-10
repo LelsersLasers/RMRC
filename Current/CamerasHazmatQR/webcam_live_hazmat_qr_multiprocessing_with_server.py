@@ -13,6 +13,7 @@ from multiprocessing import Process, Queue
 import argparse
 import json
 import base64
+import queue
 import util
 import hazmat
 import qr_detect
@@ -24,7 +25,7 @@ QR_TOGGLE_KEY = "r"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
-HAZMAT_MIN_DELAY = 0.1 # TODO?
+HAZMAT_MIN_DELAY = 0.05 # TODO?
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 30 # in seconds
@@ -165,7 +166,7 @@ def hazmat_main(main_queue, hazmat_queue):
         t0 = t1
 
         sleep_time = max(HAZMAT_MIN_DELAY - delta, 0)
-        time.sleep(sleep_time)
+        # time.sleep(sleep_time)
 
         state_hazmat["hazmat_delta"] = delta
 
@@ -174,10 +175,18 @@ def hazmat_main(main_queue, hazmat_queue):
         state_hazmat["hazmats_found"] = all_found
 
         hazmat_queue.put_nowait(state_hazmat)
+        # print("b")
 #------------------------------------------------------------------------------#
 
 
 #------------------------------------------------------------------------------#
+def key_down(key):
+    global SERVER_STATE
+    try:
+        return SERVER_STATE[key] == "true"
+    except KeyError:
+        return False
+
 def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     global SERVER_STATE, MAIN_STATE
 
@@ -215,6 +224,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     run_hazmat_hold = False
     run_qr_toggler = util.Toggler(False)
 
+    hazmat_tk = util.ToggleKey()
+    qr_tk = util.ToggleKey()
+
     all_qr_found = []
 
     state_main = START_STATE_MAIN
@@ -241,11 +253,12 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
 
         try:
-            state_hazmat = hazmat_queue.get_nowait()
-            last_hazmat_update = time.time()
+            while True:
                 state_hazmat = hazmat_queue.get_nowait()
                 last_hazmat_update = time.time()
-        except:
+                # print("a")
+        except queue.Empty:
+            # print(e)
             pass
 
         if state_hazmat["hazmat_frame"] is not None:
@@ -343,24 +356,23 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         combined = cv2.vconcat([top_combined, bottom_combined])
 
-
-        old_server_state = SERVER_STATE.copy()
         read_state()
 
-        for key, value in SERVER_STATE.items():
-            if key not in old_server_state or old_server_state[key] != value:
-                if value:
-                    if key == HAZMAT_TOGGLE_KEY:
-                        run_hazmat_toggler.toggle()
-                    if key == QR_TOGGLE_KEY:
-                        run_qr_toggler.toggle()
-                    if key == QR_CLEAR_KEY:
-                        all_qr_found = []
-                    if key == HAZMAT_CLEAR_KEY:
-                        state_main["clear_all_found"] = 1
-            if key == HAZMAT_HOLD_KEY:
-                run_hazmat_hold = value
-                    
+        print(hazmat_queue.qsize(), main_queue.qsize())
+        # print(SERVER_STATE, key_down(QR_TOGGLE_KEY))
+
+        if hazmat_tk.down(key_down(HAZMAT_TOGGLE_KEY)):
+            run_hazmat_toggler.toggle()
+        if qr_tk.down(key_down(QR_TOGGLE_KEY)):
+            run_qr_toggler.toggle()
+
+        if key_down(QR_CLEAR_KEY):
+            all_qr_found = []
+
+        if key_down(HAZMAT_CLEAR_KEY):
+            state_main["clear_all_found"] = 1
+        
+        run_hazmat_hold = key_down(HAZMAT_HOLD_KEY)
 
         if state_main["clear_all_found"] == 1:
             state_main["clear_all_found"] = 2

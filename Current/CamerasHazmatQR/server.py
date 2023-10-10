@@ -40,28 +40,28 @@ app=Flask(__name__)
 def index():
     return render_template('index.html')
 
-@app.route('/keyup/<key>', methods=['GET'])
-def keyup(key):
+
+# @app.route('/set', methods=['POST'])
+# def set():
+#     global SERVER_STATE
+#     SERVER_STATE = request.get_json()
+#     write_state()
+
+#     response = jsonify(SERVER_STATE)
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+
+#     return response
+
+@app.route('/set/<key>/<value>', methods=['GET'])
+def set(key, value):
     global SERVER_STATE
-    SERVER_STATE[key] = False
+    SERVER_STATE[key] = value
     write_state()
 
     response = jsonify(SERVER_STATE)
     response.headers.add('Access-Control-Allow-Origin', '*')
 
     return response
-
-@app.route('/keydown/<key>', methods=['GET'])
-def keydown(key):
-    global SERVER_STATE
-    SERVER_STATE[key] = True
-    write_state()
-
-    response = jsonify(SERVER_STATE)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-
-    return response
-
 
 @app.route('/get', methods=['GET'])
 def get():

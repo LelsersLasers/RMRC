@@ -78,6 +78,8 @@ div {
 		const FLASK_SERVER = "http://localhost:5000"
 		const DELAY = 50;
 
+		const STATE = {}; // STATE[key] = true/false
+
 		const end = setInterval(function() {
 			const path = "/get";
 			fetch(FLASK_SERVER + path)
@@ -110,19 +112,23 @@ div {
 				});
 		}, DELAY);
 
+		function send_state() {
+			const base_path = "/set";
+			for (const key in STATE) {
+				const path = base_path + "/" + key + "/" + STATE[key];
+				fetch(FLASK_SERVER + path);
+			}
+		}
+
 		function keydown(e) {
 			const key = e.key;
-			path = "/keydown/" + key;
-			fetch(FLASK_SERVER + path);
-
-			if (key == "q") {
-				clearInterval(end);
-			}
+			STATE[key] = true;
+			send_state();
 		}
 		function keyup(e) {
 			const key = e.key;
-			path = "/keyup/" + key;
-			fetch(FLASK_SERVER + path);
+			STATE[key] = false;
+			send_state();
 		}
 
 		window.addEventListener("keydown", keydown);

@@ -13,7 +13,18 @@ class Toggler:
     
     def __str__(self):
         return str(self.state)
+    
+class ToggleKey:
+    def __init__(self, default: bool = False):
+        self.was_down = default
 
+    def down(self, condition: bool) -> bool:
+        if not self.was_down and condition:
+            self.was_down = True
+            return True
+        elif not condition:
+            self.was_down = False
+        return False
 
 def remove_dups(list, comp):
     new_list = []
