@@ -42,7 +42,7 @@ START_STATE_MAIN = {
 
 # What hazmat thread sends
 START_STATE_HAZMAT = {
-    "hazmat_delta": 1 / 10,
+    "hazmat_fps": 100,
     "hazmat_frame": None,
     "hazmats_found": [],
 }
@@ -158,7 +158,8 @@ def hazmat_main(main_queue, hazmat_queue):
             unscale = 1 / HAZMAT_FRAME_SCALE
             state_hazmat["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
 
-        state_hazmat["hazmat_delta"] = fps_controller.update()
+        fps_controller.update()
+        state_hazmat["hazmat_fps"] = fps_controller.fps()
 
         all_found = list(set(all_found))
         all_found.sort()
@@ -205,6 +206,8 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.\n")
+    print("Press 1-4 to switched focused feed (0 to show grid).")
+    print("Press 5 to toggle sidebar.")
 
     fps_controller = util.FPS()
 
@@ -214,6 +217,8 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
     hazmat_tk = util.ToggleKey()
     qr_tk = util.ToggleKey()
+
+    view_mode = util.ViewMode()
 
     all_qr_found = []
 
@@ -260,7 +265,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         state_main["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
 
         fps = fps_controller.fps()
-        hazmat_fps = -1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"]
+        hazmat_fps = state_hazmat["hazmat_fps"]
 
         if debug:
             print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {state_main['run_hazmat']}\tQR: {run_qr_toggler}")
@@ -332,15 +337,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             3
         )
 
-
-        top_combined = cv2.hconcat([frame, hazmat_frame])
-        if video_capture_zero:
-            bottom_combined = cv2.hconcat([frames["webcam1"], ir_frame])
-        else:
-            bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
-
-        combined = cv2.vconcat([top_combined, bottom_combined])
-
         read_state()
 
         if hazmat_tk.down(key_down(HAZMAT_TOGGLE_KEY)):
@@ -353,6 +349,21 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         if key_down(HAZMAT_CLEAR_KEY):
             state_main["clear_all_found"] = 1
+
+        if key_down("0"):
+            view_mode.mode = util.ViewMode.GRID
+        elif key_down("1"):
+            view_mode.mode = util.ViewMode.ZOOM
+            view_mode.zoom_on = 0
+        elif key_down("2"):
+            view_mode.mode = util.ViewMode.ZOOM
+            view_mode.zoom_on = 1
+        elif key_down("3"):
+            view_mode.mode = util.ViewMode.ZOOM
+            view_mode.zoom_on = 2
+        elif key_down("4"):
+            view_mode.mode = util.ViewMode.ZOOM
+            view_mode.zoom_on = 3
         
         run_hazmat_hold = key_down(HAZMAT_HOLD_KEY)
 
@@ -363,6 +374,32 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         state_main["frame"] = frame_to_pass_to_hazmat
         main_queue.put_nowait(state_main)
+
+
+        if view_mode.mode == util.ViewMode.GRID:
+            top_combined = cv2.hconcat([frame, hazmat_frame])
+            if video_capture_zero:
+                bottom_combined = cv2.hconcat([frames["webcam1"], ir_frame])
+            else:
+                bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
+        else:
+            if video_capture_zero:
+                all_frames = [frame, hazmat_frame, frames["webcam1"], ir_frame]
+            else:
+                all_frames = [frame, hazmat_frame, frames["webcam2"], ir_frame]
+            
+            top_frames = []
+            for i, f in enumerate(all_frames):
+                if i != view_mode.zoom_on:
+                    top_frames.append(f)
+
+            top_combined = cv2.hconcat(top_frames)
+            resize_factor = all_frames[view_mode.zoom_on].shape[1] / top_combined.shape[1]
+            top_combined = cv2.resize(top_combined, (0, 0), fx=resize_factor, fy=resize_factor)
+            bottom_combined = all_frames[view_mode.zoom_on]
+
+
+        combined = cv2.vconcat([top_combined, bottom_combined])
 
         combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
         MAIN_STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()

@@ -80,9 +80,10 @@ div {
 
 		const STATE = {}; // STATE[key] = true/false
 
+		let show_sidebar = true;
+
 		const end = setInterval(function() {
 			const path = "/get";
-			console.log(path);
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
 				.then(data => {
@@ -99,7 +100,7 @@ div {
 
 						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
 
-						const max_w = window.innerWidth * 3 / 4;
+						const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1);
 						const max_h = window.innerHeight;
 
 						const w = Math.min(max_w, max_h * ratio);
@@ -125,6 +126,12 @@ div {
 			const key = e.key;
 			STATE[key] = true;
 			send_state();
+
+			if (key == 5) {
+				show_sidebar = !show_sidebar;
+				const sidebar = document.getElementById("sidebar");
+				sidebar.style.display = show_sidebar ? "block" : "none";
+			}
 		}
 		function keyup(e) {
 			const key = e.key;
