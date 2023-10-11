@@ -83,9 +83,7 @@ def read_state():
 def hazmat_main(main_queue, hazmat_queue):
     time.sleep(CAMERA_WAKEUP_TIME)
 
-    t0 = time.time()
-    t1 = time.time()
-    delta = 1 / 10
+    fps_controller = util.FPS()
 
     all_found = []
     frame = None
@@ -160,11 +158,7 @@ def hazmat_main(main_queue, hazmat_queue):
             unscale = 1 / HAZMAT_FRAME_SCALE
             state_hazmat["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
 
-        t1 = time.time()
-        delta = t1 - t0
-        t0 = t1
-
-        state_hazmat["hazmat_delta"] = delta
+        state_hazmat["hazmat_delta"] = fps_controller.update()
 
         all_found = list(set(all_found))
         all_found.sort()
@@ -212,9 +206,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.\n")
 
-    t0 = time.time()
-    t1 = time.time()
-    delta = 1 / 30
+    fps_controller = util.FPS()
 
     run_hazmat_toggler = util.Toggler(False)
     run_hazmat_hold = False
@@ -231,6 +223,8 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     last_hazmat_update = time.time()
 
     while True:
+        fps_controller.update()
+
         frames = {}
         for key, cap in caps.items():
             ret, frame = cap.read()
@@ -265,7 +259,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         state_main["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
 
-        fps = -1 if delta == 0 else 1 / delta
+        fps = fps_controller.fps()
         hazmat_fps = -1 if state_hazmat["hazmat_delta"] == 0 else 1 / state_hazmat["hazmat_delta"]
 
         if debug:
@@ -311,9 +305,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         all_qr_found = list(set(all_qr_found))
         all_qr_found.sort()
 
-        t1 = time.time()
-        delta = t1 - t0
-        t0 = t1
 
         # fps text (bottom left)
         font                   = cv2.FONT_HERSHEY_SIMPLEX
