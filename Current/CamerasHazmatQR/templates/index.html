@@ -20,28 +20,28 @@ html, body {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-    /* overflow: hidden; */
+}
+
+
+#frame {
+	margin: 0 auto;
+	padding: 0;
 }
 
 #mainbar {
 	flex: 3;
-	margin: 0;
+	margin: 0 auto;
 	padding: 0;
 
-	/* display: flex;
+	display: flex;
 	justify-content: center;
-	align-items: center; */
-
-	object-fit: contain;
-	height: 100%;
-	width: 100%;
+	align-items: center;
 }
 
 #sidebar {
 	flex: 1;
 	overflow: auto;
 	padding-left: 5px;
-	margin: 0;
 }
 
 
@@ -54,30 +54,6 @@ div {
 	width: 100%;
 	height: 100%;
 	display: flex;
-	margin: 0;
-	padding: 0;
-}
-
-#image_holder {
-    display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
-	grid-template-rows: 1fr 1fr;
-
-	margin: 0;
-	padding: 0;
-	width: 100%;
-	height: 100%;
-
-	object-fit: contain;
-}
-
-img {
-    margin: 0 auto;
-    padding: 0;
-	object-fit: contain;
-
-	max-width: 100%;
-	max-height: 100%;
 }
 
 	</style>
@@ -86,12 +62,7 @@ img {
 <body>
 	<div id="main">
 		<div id="mainbar">
-            <div id="image_holder">
-                <img id="webcam1" />
-                <img id="hazmat" />
-                <img id="webcam2" />
-                <img id="ir" />
-            </div>
+			<img id="frame" />
 		</div>
 		<div id="sidebar">
 			<h4>Detected Hazmat Labels:</h4>
@@ -111,15 +82,13 @@ img {
 
 		const end = setInterval(function() {
 			const path = "/get";
+			console.log(path);
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
 				.then(data => {
 					try {
-                        const frames = data["frames"];
-                        for (const key in frames) {
-                            const frame_ele = document.getElementById(key);
-                            frame_ele.src = "data:image/jpg;base64," + frames[key]["frame"];
-                        }
+						const frame_ele = document.getElementById("frame");
+						frame_ele.src = "data:image/jpg;base64," + data["frame"];
 
 						const hazmats_ele = document.getElementById("hazmats");
 						hazmats_ele.innerHTML = data["hazmats_found"].sort().join("<br />");
@@ -128,16 +97,16 @@ img {
 						qrs_ele.innerHTML = data["qr_found"].sort().join("<br />");
 
 
-						// const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
+						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
 
-						// const max_w = window.innerWidth * 3 / 4;
-						// const max_h = window.innerHeight;
+						const max_w = window.innerWidth * 3 / 4;
+						const max_h = window.innerHeight;
 
-						// const w = Math.min(max_w, max_h * ratio);
-						// const h = Math.min(max_h, max_w / ratio);
+						const w = Math.min(max_w, max_h * ratio);
+						const h = Math.min(max_h, max_w / ratio);
 						
-						// frame_ele.style.width = w + "px";
-						// frame_ele.style.height = h + "px";
+						frame_ele.style.width = w + "px";
+						frame_ele.style.height = h + "px";
 					} catch (e) {
 						console.log(e);
 					}
@@ -156,41 +125,6 @@ img {
 			const key = e.key;
 			STATE[key] = true;
 			send_state();
-
-
-            const key_to_id = {
-                "1": "webcam1",
-                "2": "hazmat",
-                "3": "webcam2",
-                "4": "ir",
-            };
-
-            const id = key_to_id[key];
-            if (id) {
-				let i = 1;
-                for (const key in key_to_id) {
-					const ele = document.getElementById(key_to_id[key]);
-					if (id != key_to_id[key]) {
-						ele.style.gridRow = "1";
-						ele.style.gridColumn = i + "/" + (i + 1);
-
-						ele.style.height = "100%";
-						ele.style.width = "auto";
-						ele.style.objectPosition = "bottom";
-						i++;
-					} else {
-						ele.style.gridRow = "2";
-						ele.style.gridColumn = "1/4";
-
-						ele.style.height = "100%";
-						ele.style.width = "auto";
-						ele.style.objectPosition = "top";
-					}
-				}
-            } else if (key == "5") {
-				const ele = document.getElementById("sidebar");
-				ele.style.display = ele.style.display == "none" ? "block" : "none";
-			}
 		}
 		function keyup(e) {
 			const key = e.key;
@@ -200,9 +134,6 @@ img {
 
 		window.addEventListener("keydown", keydown);
 		window.addEventListener("keyup", keyup);
-		window.addEventListener("load", function() {
-			keydown({key: "1"});
-		});
 
 	</script>
 

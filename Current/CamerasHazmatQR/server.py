@@ -54,9 +54,12 @@ def set(key, value):
 @app.route('/get', methods=['GET'])
 def get():
     global MAIN_STATE
+
     read_state()
+
     response = jsonify(MAIN_STATE)
     response.headers.add('Access-Control-Allow-Origin', '*')
+    
     return response
 
 ap = argparse.ArgumentParser()

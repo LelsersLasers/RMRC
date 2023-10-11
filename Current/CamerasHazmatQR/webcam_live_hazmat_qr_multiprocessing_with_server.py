@@ -55,28 +55,9 @@ SERVER_FILE = "states/server_state.json"
 FILE_DELAY = 0.0
 
 MAIN_STATE = {
-    "frames": {
-        "webcam1": {
-            "frame": "",
-            "w": 1,
-            "h": 1,
-        },
-        "webcam2": {
-            "frame": "",
-            "w": 1,
-            "h": 1,
-        },
-        "ir": {
-            "frame": "",
-            "w": 1,
-            "h": 1,
-        },
-        "hazmat": {
-            "frame": "",
-            "w": 1,
-            "h": 1,
-        },
-    },
+    "frame": "",
+    "w": 1,
+    "h": 1,
     "hazmats_found": [],
     "qr_found": [],
 }
@@ -259,11 +240,12 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
             frames[key] = frame
 
+        frame = frames["webcam1"]
+
         webcam1_shape = frames["webcam1"].shape
         if video_capture_zero:
             ir_frame = frames["webcam1"]
         else:
-            # TODO: resize in JS/CSS instead?
             ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
 
         while True:
@@ -276,9 +258,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         if state_hazmat["hazmat_frame"] is not None:
             hazmat_frame = state_hazmat["hazmat_frame"]
         else:
-            hazmat_frame = np.zeros_like(frames["webcam1"])
+            hazmat_frame = np.zeros_like(frame)
 
-        frame_to_pass_to_hazmat = frames["webcam1"].copy()
+        frame_to_pass_to_hazmat = frame.copy()
 
 
         state_main["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
@@ -292,7 +274,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         if run_qr_toggler:
             start = time.time()
 
-            qr_found_this_frame = qr_detect.qr_detect(frames["webcam1"])
+            qr_found_this_frame = qr_detect.qr_detect(frame)
             if len(qr_found_this_frame) > 0:
                 previous_qr_count = len(all_qr_found)
                 for qr in qr_found_this_frame:
@@ -308,10 +290,10 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             end = time.time()
 
             ratio = min((end - start) / QR_TIME_BAR_SCALE, 1)
-            w = ratio * (frames["webcam1"].shape[1] - 10)
+            w = ratio * (frame.shape[1] - 10)
 
             cv2.line(
-                frames["webcam1"],
+                frame,
                 (5, 5),
                 (5 + int(w), 5),
                 (0, 0, 255),
@@ -319,7 +301,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             )
         else:
             cv2.line(
-                frames["webcam1"],
+                frame,
                 (5, 5),
                 (5, 5),
                 (255, 255, 0),
@@ -335,21 +317,21 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         # fps text (bottom left)
         font                   = cv2.FONT_HERSHEY_SIMPLEX
-        bottomLeftCornerOfText = (5, frames["webcam1"].shape[0] - 5)
+        bottomLeftCornerOfText = (5, frame.shape[0] - 5)
         fontScale              = 0.5
         fontColor              = (0, 255, 0)
         thickness              = 1
         lineType               = 2
 
         text                   = "FPS: %.0f" % fps
-        cv2.putText(frames["webcam1"], text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
+        cv2.putText(frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
         text                  = "Hazmat FPS: %.0f" % hazmat_fps
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
         time_since_last_hazmat_update = time.time() - last_hazmat_update
         ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
-        w = ratio * (frames["webcam1"].shape[1] - 10)
+        w = ratio * (frame.shape[1] - 10)
 
         cv2.line(
             hazmat_frame,
@@ -358,6 +340,15 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
             (255, 255, 0) if not state_main["run_hazmat"] else (0, 0, 255),
             3
         )
+
+
+        top_combined = cv2.hconcat([frame, hazmat_frame])
+        if video_capture_zero:
+            bottom_combined = cv2.hconcat([frames["webcam1"], ir_frame])
+        else:
+            bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
+
+        combined = cv2.vconcat([top_combined, bottom_combined])
 
         read_state()
 
@@ -371,9 +362,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         if key_down(HAZMAT_CLEAR_KEY):
             state_main["clear_all_found"] = 1
-
-        if key_down("q"):
-            break
         
         run_hazmat_hold = key_down(HAZMAT_HOLD_KEY)
 
@@ -382,40 +370,14 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         elif state_main["clear_all_found"] == 2:
             state_main["clear_all_found"] = 0
 
-
-        # top_combined = cv2.hconcat([frames["webcam1"], hazmat_frame])
-        # if video_capture_zero:
-        #     bottom_combined = cv2.hconcat([frames["webcam1"], ir_frame])
-        # else:
-        #     bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
-
-        # combined = cv2.vconcat([top_combined, bottom_combined])
-
         state_main["frame"] = frame_to_pass_to_hazmat
         main_queue.put_nowait(state_main)
 
-        # combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
-        # MAIN_STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
+        combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
+        MAIN_STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
 
-        if video_capture_zero:
-            frames = {
-                "webcam1": frames["webcam1"],
-                "webcam2": frames["webcam1"],
-                "ir": ir_frame,
-                "hazmat": hazmat_frame,
-            }
-        else:
-            frames = {
-                "webcam1": frames["webcam1"],
-                "webcam2": frames["webcam2"],
-                "ir": ir_frame,
-                "hazmat": hazmat_frame,
-            }
-
-        for key, value in frames.items():
-            MAIN_STATE["frames"][key]["frame"] = base64.b64encode(cv2.imencode('.jpg', value)[1]).decode()
-            MAIN_STATE["frames"][key]["w"] = value.shape[1]
-            MAIN_STATE["frames"][key]["h"] = value.shape[0]
+        MAIN_STATE["w"] = combine_downscaled.shape[1]
+        MAIN_STATE["h"] = combine_downscaled.shape[0]
 
         hazmats_found = state_hazmat["hazmats_found"]
         hazmats_found = list(set(hazmats_found))
