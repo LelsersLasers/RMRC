@@ -40,18 +40,6 @@ app=Flask(__name__)
 def index():
     return render_template('index.html')
 
-
-# @app.route('/set', methods=['POST'])
-# def set():
-#     global SERVER_STATE
-#     SERVER_STATE = request.get_json()
-#     write_state()
-
-#     response = jsonify(SERVER_STATE)
-#     response.headers.add('Access-Control-Allow-Origin', '*')
-
-#     return response
-
 @app.route('/set/<key>/<value>', methods=['GET'])
 def set(key, value):
     global SERVER_STATE
@@ -66,7 +54,6 @@ def set(key, value):
 @app.route('/get', methods=['GET'])
 def get():
     global MAIN_STATE
-
     read_state()
     response = jsonify(MAIN_STATE)
     response.headers.add('Access-Control-Allow-Origin', '*')
