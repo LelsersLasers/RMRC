@@ -24,19 +24,21 @@ html, body {
 }
 
 #mainbar {
-	flex: 6;
+	flex: 3;
 	margin: 0;
 	padding: 0;
 
-	display: flex;
+	/* display: flex;
 	justify-content: center;
-	align-items: center;
+	align-items: center; */
 
 	object-fit: contain;
+	height: 100%;
+	width: 100%;
 }
 
 #sidebar {
-	flex: 2;
+	flex: 1;
 	overflow: auto;
 	padding-left: 5px;
 	margin: 0;
@@ -57,23 +59,25 @@ div {
 }
 
 #image_holder {
-    display: flex;
+    display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
 
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
 	margin: 0;
 	padding: 0;
 	width: 100%;
 	height: 100%;
+
+	object-fit: contain;
 }
 
 img {
-    margin: 0;
+    margin: 0 auto;
     padding: 0;
 	object-fit: contain;
-	width: 50%;
-	height: 50%;
+
+	max-width: 100%;
+	max-height: 100%;
 }
 
 	</style>
@@ -163,8 +167,26 @@ img {
 
             const id = key_to_id[key];
             if (id) {
-                const ele = document.getElementById(id);
-                ele.style.display = ele.style.display == "none" ? "block" : "none";
+				let i = 1;
+                for (const key in key_to_id) {
+					const ele = document.getElementById(key_to_id[key]);
+					if (id != key_to_id[key]) {
+						ele.style.gridRow = "1";
+						ele.style.gridColumn = i + "/" + (i + 1);
+
+						ele.style.height = "100%";
+						ele.style.width = "auto";
+						ele.style.objectPosition = "bottom";
+						i++;
+					} else {
+						ele.style.gridRow = "2";
+						ele.style.gridColumn = "1/4";
+
+						ele.style.height = "100%";
+						ele.style.width = "auto";
+						ele.style.objectPosition = "top";
+					}
+				}
             } else if (key == "5") {
 				const ele = document.getElementById("sidebar");
 				ele.style.display = ele.style.display == "none" ? "block" : "none";
@@ -178,6 +200,9 @@ img {
 
 		window.addEventListener("keydown", keydown);
 		window.addEventListener("keyup", keyup);
+		window.addEventListener("load", function() {
+			keydown({key: "1"});
+		});
 
 	</script>
 
