@@ -13,13 +13,14 @@
 	<style>
 
 html, body {
-	width: 100%;
-	height: 100%;
+	width: 100vw;
+	height: 100vh;
 	margin: 0;
 	padding: 0;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+    overflow: hidden;
 }
 
 
@@ -56,13 +57,31 @@ div {
 	display: flex;
 }
 
+#image_holder {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+img {
+    margin: 0;
+    padding: 0;
+    flex: 50%;
+}
+
 	</style>
 </head>
 
 <body>
 	<div id="main">
 		<div id="mainbar">
-			<img id="frame" />
+            <div id="image_holder">
+                <img id="webcam1" />
+                <img id="hazmat" />
+                <img id="webcam2" />
+                <img id="ir" />
+            </div>
 		</div>
 		<div id="sidebar">
 			<h4>Detected Hazmat Labels:</h4>
@@ -74,8 +93,8 @@ div {
 	</div>
 
 	<script>
-		const FLASK_SERVER = "http://192.168.1.6:5000";
-		// const FLASK_SERVER = "http://localhost:5000"
+		// const FLASK_SERVER = "http://192.168.1.6:5000";
+		const FLASK_SERVER = "http://localhost:5000"
 		const DELAY = 50;
 
 		const STATE = {}; // STATE[key] = true/false
@@ -86,8 +105,11 @@ div {
 				.then(response => response.json())
 				.then(data => {
 					try {
-						const frame_ele = document.getElementById("frame");
-						frame_ele.src = "data:image/jpg;base64," + data["frame"];
+                        const frames = data["frames"];
+                        for (const key in frames) {
+                            const frame_ele = document.getElementById(key);
+                            frame_ele.src = "data:image/jpg;base64," + frames[key]["frame"];
+                        }
 
 						const hazmats_ele = document.getElementById("hazmats");
 						hazmats_ele.innerHTML = data["hazmats_found"].sort().join("<br />");
@@ -96,16 +118,16 @@ div {
 						qrs_ele.innerHTML = data["qr_found"].sort().join("<br />");
 
 
-						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
+						// const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
 
-						const max_w = window.innerWidth * 3 / 4;
-						const max_h = window.innerHeight;
+						// const max_w = window.innerWidth * 3 / 4;
+						// const max_h = window.innerHeight;
 
-						const w = Math.min(max_w, max_h * ratio);
-						const h = Math.min(max_h, max_w / ratio);
+						// const w = Math.min(max_w, max_h * ratio);
+						// const h = Math.min(max_h, max_w / ratio);
 						
-						frame_ele.style.width = w + "px";
-						frame_ele.style.height = h + "px";
+						// frame_ele.style.width = w + "px";
+						// frame_ele.style.height = h + "px";
 					} catch (e) {
 						console.log(e);
 					}
@@ -124,6 +146,20 @@ div {
 			const key = e.key;
 			STATE[key] = true;
 			send_state();
+
+
+            const key_to_id = {
+                "1": "webcam1",
+                "2": "hazmat",
+                "3": "webcam2",
+                "4": "ir",
+            };
+
+            const id = key_to_id[key];
+            if (id) {
+                const ele = document.getElementById(id);
+                ele.style.display = ele.style.display == "none" ? "block" : "none";
+            }
 		}
 		function keyup(e) {
 			const key = e.key;
