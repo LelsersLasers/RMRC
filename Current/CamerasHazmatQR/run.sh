@@ -12,7 +12,7 @@ printInColor "STARTING!"
 printInColor "(note: this script doesn't play super nice with control-c)\n"
 
 
-python3 webcam_live_hazmat_qr_multiprocessing_with_server.py &
+python3 cameras.py &
 sleep 1
 
 python3 server.py &

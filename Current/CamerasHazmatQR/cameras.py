@@ -1,4 +1,6 @@
-cap_args = {
+# Runs 2 webcams, IR, QR detection, and hazmat detection.
+
+CAP_ARGS = {
     "webcam1": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_2D4AA0A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! appsink",
     "webcam2": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_348E60A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! appsink",
     "ir": "v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! appsink",
@@ -186,7 +188,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     if video_capture_zero:
         caps["webcam1"] = cv2.VideoCapture(0)
     else:
-        for key, value in cap_args.items():
+        for key, value in CAP_ARGS.items():
             print(f'Opening camera {key} with args "{value}"...')
             caps[key] = cv2.VideoCapture(value, cv2.CAP_GSTREAMER)
             print(f"Camera {key} opened.")
