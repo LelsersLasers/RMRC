@@ -280,6 +280,18 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         if debug:
             print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {state_main['run_hazmat']}\tQR: {run_qr_toggler}")
 
+        time_since_last_hazmat_update = time.time() - state_hazmat["last_update"]
+        ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
+        w = ratio * (frame.shape[1] - 10)
+
+        cv2.line(
+            hazmat_frame,
+            (5, 5),
+            (5 + int(w), 5),
+            (255, 255, 0) if not state_main["run_hazmat"] else (0, 0, 255),
+            3
+        )
+
         if run_qr_toggler:
             start = time.time()
 
@@ -335,17 +347,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         text                  = "Hazmat FPS: %.0f" % hazmat_fps
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
-        time_since_last_hazmat_update = time.time() - state_hazmat["last_update"]
-        ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
-        w = ratio * (frame.shape[1] - 10)
-
-        cv2.line(
-            hazmat_frame,
-            (5, 5),
-            (5 + int(w), 5),
-            (255, 255, 0) if not state_main["run_hazmat"] else (0, 0, 255),
-            3
-        )
 
         read_state()
 
