@@ -29,7 +29,7 @@ QR_CLEAR_KEY = "x"
 
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
-HAZMAT_DELAY_BAR_SCALE = 30 # in seconds
+HAZMAT_DELAY_BAR_SCALE = 5 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 SERVER_FRAME_SCALE = 1
 HAMZAT_POOL_SIZE = 4
@@ -48,6 +48,7 @@ START_STATE_HAZMAT = {
     "hazmat_fps": 100,
     "hazmat_frame": None,
     "hazmats_found": [],
+    "last_update": 0,
 }
 #------------------------------------------------------------------------------#
 
@@ -117,9 +118,9 @@ def hazmat_main(main_queue, hazmat_queue):
 
                 with Pool(HAMZAT_POOL_SIZE) as pool:
                     threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
+
                     args = [(frame, threshVal) for threshVal in threshVals]
                     all_received_tups = pool.starmap(hazmat.processScreenshot, args)
-
 
                     found_this_frame = []
 
@@ -173,6 +174,8 @@ def hazmat_main(main_queue, hazmat_queue):
         all_found.sort()
         state_hazmat["hazmats_found"] = all_found
 
+        state_hazmat["last_update"] = time.time()
+
         hazmat_queue.put_nowait(state_hazmat)
         # print("b")
 #------------------------------------------------------------------------------#
@@ -213,9 +216,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
-    print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.\n")
+    print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
-    print("Press 5 to toggle sidebar.")
+    print("Press 5 to toggle sidebar.\n")
 
     fps_controller = util.FPS()
 
@@ -258,7 +261,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         while True:
             try:
                 state_hazmat = hazmat_queue.get_nowait()
-                last_hazmat_update = time.time()
             except queue.Empty:
                 break
 
@@ -333,7 +335,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         text                  = "Hazmat FPS: %.0f" % hazmat_fps
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
-        time_since_last_hazmat_update = time.time() - last_hazmat_update
+        time_since_last_hazmat_update = time.time() - state_hazmat["last_update"]
         ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
         w = ratio * (frame.shape[1] - 10)
 
