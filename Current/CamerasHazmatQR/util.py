@@ -70,5 +70,5 @@ def removeSpecialCharacter(s):
             t += i
     return t
 
-def rects_overlap(r1, r2):
-    return not (r1[0] + r1[2] <= r2[0] or r2[0] + r2[2] <= r1[0] or r1[1] + r1[3] <= r2[1] or r2[1] + r2[3] <= r1[1])
+# def rects_overlap(r1, r2):
+#     return not (r1[0] + r1[2] <= r2[0] or r2[0] + r2[2] <= r1[0] or r1[1] + r1[3] <= r2[1] or r2[1] + r2[3] <= r1[1])
