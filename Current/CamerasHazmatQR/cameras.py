@@ -60,6 +60,7 @@ FILE_DELAY = 0.0
 
 MAIN_STATE = {
     "frame": "",
+    "ns": 0,
     "w": 1,
     "h": 1,
     "hazmats_found": [],
@@ -236,12 +237,11 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     state_main = START_STATE_MAIN
     state_hazmat = START_STATE_HAZMAT
 
-    last_hazmat_update = time.time()
-
     while True:
         fps_controller.update()
 
         frames = {}
+        frame_read_time_ns = time.time_ns()
         for key, cap in caps.items():
             ret, frame = cap.read()
 
@@ -424,6 +424,8 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
         MAIN_STATE["hazmats_found"] = hazmats_found
         MAIN_STATE["qr_found"] = all_qr_found
+
+        MAIN_STATE["ns"] = frame_read_time_ns
 
         write_state()
 #------------------------------------------------------------------------------#
