@@ -129,14 +129,36 @@ def hazmat_main(main_queue, hazmat_queue):
                             found_this_frame.append(r)
                             all_found.append(r[0].strip())
 
-                # found_this_frame = util.remove_dups(found_this_frame, lambda x: x[0])
+                found_this_frame.sort(lambda x: cv2.contourArea(x[1]), reverse=True)
+
+                filtered_found = []
+                for i, found in enumerate(found_this_frame):
+                    _, cnt = found
+
+                    rect = cv2.boundingRect(cnt)
+                    add = True
+
+                    for j, other_found in enumerate(found_this_frame):
+                        if i == j:
+                            continue
+
+                        _, other_cnt = other_found
+                        other_rect = cv2.boundingRect(other_cnt)
+
+                        if util.rects_overlap(rect, other_rect):
+                            add = False
+                            break
+
+                    if add:
+                        filtered_found.append(found)
+
 
                 fontScale = 0.5
                 fontColor = (0, 0, 255)
                 thickness = 1
                 lineType = 2
 
-                for found in found_this_frame:
+                for found in filtered_found:
                     text, cnt = found
 
                     frame = cv2.drawContours(frame, [cnt], -1, (255, 0, 0), 3)
@@ -161,7 +183,7 @@ def hazmat_main(main_queue, hazmat_queue):
                     all_found = list(set(all_found))
                     all_found.sort()
 
-                    print([x[0] for x in found_this_frame])
+                    print([x[0] for x in filtered_found])
                     print(all_found)
 
             unscale = 1 / HAZMAT_FRAME_SCALE
