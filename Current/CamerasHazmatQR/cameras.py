@@ -11,7 +11,7 @@ import cv2
 import time
 import numpy as np
 import argparse
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool
 import argparse
 import json
 import base64
@@ -32,6 +32,7 @@ HAZMAT_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 30 # in seconds
 QR_TIME_BAR_SCALE = 0.1 # in seconds
 SERVER_FRAME_SCALE = 1
+HAMZAT_POOL_SIZE = 4
 
 #------------------------------------------------------------------------------#
 # What main thread sends
@@ -113,16 +114,21 @@ def hazmat_main(main_queue, hazmat_queue):
 
             if state_main["run_hazmat"]:
 
-                threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
-                found_this_frame = []
-                for threshVal in threshVals:
-                    received_tups = hazmat.processScreenshot(frame, threshVal)
 
-                    for r in received_tups:
-                        found_this_frame.append(r)
-                        all_found.append(r[0].strip())
+                with Pool(HAMZAT_POOL_SIZE) as pool:
+                    threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
+                    args = [(frame, threshVal) for threshVal in threshVals]
+                    all_received_tups = pool.starmap(hazmat.processScreenshot, args)
 
-                found_this_frame = util.remove_dups(found_this_frame, lambda x: x[0])
+
+                    found_this_frame = []
+
+                    for received_tups in all_received_tups:
+                        for r in received_tups:
+                            found_this_frame.append(r)
+                            all_found.append(r[0].strip())
+
+                # found_this_frame = util.remove_dups(found_this_frame, lambda x: x[0])
 
                 fontScale = 0.5
                 fontColor = (0, 0, 255)

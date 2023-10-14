@@ -120,5 +120,5 @@ def processScreenshot(img, val):
             tup = (closest, cnt)
             correct_tups.append(tup)
 
-    correct_tups = util.remove_dups(correct_tups, lambda x: x[0])
+    # correct_tups = util.remove_dups(correct_tups, lambda x: x[0])
     return correct_tups
