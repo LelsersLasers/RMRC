@@ -7,6 +7,14 @@ printInColor() {
     echo -e "${BLUE} $1 ${NC}"
 }
 
+printCurrentRunning() {
+    printInColor "Currently running backgrounds processes:"
+
+    echo -e "${BLUE}"
+    jobs -rl
+    echo -e "${NC}"
+}
+
 
 printInColor "STARTING!"
 printInColor "(note: this script doesn't play super nice with control-c)\n"
@@ -17,6 +25,8 @@ sleep 1
 
 python3 server.py &
 sleep 1
+
+printCurrentRunning
 
 
 # start: wait for quit requested ---------------------------------------------#
@@ -33,13 +43,7 @@ done
 
 # start: cleanup -------------------------------------------------------------#
 printInColor "Starting closing background processes"
-printInColor "Currently running backgrounds processes:"
-
-echo -e "${BLUE}"
-jobs -r
-echo -e "${NC}"
-
-sleep 1
+printCurrentRunning
 
 printInColor "Killing background processes"
 
