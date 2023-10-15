@@ -81,7 +81,7 @@ p {
 			<img id="frame" />
 		</div>
 		<div id="sidebar">
-			<h4>Delay</h4>
+			<h4>Initial Delay</h4>
 			<p id="delay">0 MS</p>
 			<div id="delaybar"></div>
 			<h4>Detected Hazmat Labels:</h4>
@@ -95,7 +95,7 @@ p {
 	<script>
 		// const FLASK_SERVER = "http://192.168.1.6:5000";
 		const FLASK_SERVER = "http://localhost:5000";
-		const FRONT_END_FPS = 50;
+		const FRONT_END_FPS = 30;
 
 		const delay = 1000 / FRONT_END_FPS;
 
@@ -103,7 +103,7 @@ p {
 
 		let show_sidebar = true;
 
-		let last_frame = "";
+		let last_ms = Date.now();
 
 		const end = setInterval(function() {
 			const path = "/get";
@@ -134,9 +134,7 @@ p {
 						frame_ele.style.height = h + "px";
 
 						const ms = data["ns"] / 1000000;
-						if (last_frame != frame) {
-							last_frame = frame;
-
+						if (ms.toFixed(0) != last_ms.toFixed(0)) {
 							const now = Date.now()
 							const diff = now - ms;
 							const rounded = diff.toFixed(0);
@@ -146,6 +144,8 @@ p {
 
 							const delaybar = document.getElementById("delaybar");
 							delaybar.style.width = diff / 10 + "%";
+
+							last_ms = ms;
 						}
 					} catch (e) {
 						console.log(e);

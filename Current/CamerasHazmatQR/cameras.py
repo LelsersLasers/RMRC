@@ -218,9 +218,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
         caps["webcam1"] = cv2.VideoCapture(0)
     else:
         for key, value in CAP_ARGS.items():
-            print(f'Opening camera {key} with args "{value}"...')
+            print(f'Opening camera {key}...')
             caps[key] = cv2.VideoCapture(value, cv2.CAP_GSTREAMER)
-            print(f"Camera {key} opened.")
+            print(f"Camera {key} VideoCapture created.")
 
     for key, cap in caps.items():
         if not cap.isOpened():
