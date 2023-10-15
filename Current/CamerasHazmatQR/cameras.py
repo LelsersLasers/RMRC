@@ -9,9 +9,7 @@ CAP_ARGS = {
 """
 TODO:
 ws vs not
-filter overlapping squares
 each camera gets its own thread?
-
 """
 
 
@@ -158,10 +156,13 @@ def hazmat_main(main_queue, hazmat_queue):
 
                     for received_tups in all_received_tups:
                         for r in received_tups:
-                            found_this_frame.append(r)
-                            all_found.append(r[0].strip())
+                            text = r[0].strip()
+                            cnt = r[1]
+                            rect = util.Rect(cv2.boundingRect(cnt))
+                            found_this_frame.append((text, cnt, rect))
+                            all_found.append(text)
 
-                # found_this_frame = util.remove_dups(found_this_frame, lambda x: x[0])
+                found_this_frame = util.remove_dups(found_this_frame, lambda x: x[2])
 
                 fontScale = 0.5
                 fontColor = (0, 0, 255)
@@ -169,14 +170,13 @@ def hazmat_main(main_queue, hazmat_queue):
                 lineType = 2
 
                 for found in found_this_frame:
-                    text, cnt = found
+                    text, cnt, rect = found
 
                     frame = cv2.drawContours(frame, [cnt], -1, (255, 0, 0), 3)
-                    x, y, w, h = cv2.boundingRect(cnt)
 
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (225, 0, 0), 4)
+                    cv2.rectangle(frame, (rect.x, rect.y), (rect.x + rect.w, rect.y + rect.h), (0, 225, 0), 4)
 
-                    corner = (x + 5, y + 15)
+                    corner = (rect.x + 5, rect.y + 15)
 
                     cv2.putText(
                         frame,
