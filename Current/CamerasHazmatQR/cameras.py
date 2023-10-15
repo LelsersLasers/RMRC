@@ -13,12 +13,14 @@ import numpy as np
 import argparse
 from multiprocessing import Process, Queue, Pool
 import argparse
-import json
 import base64
 import queue
 import util
 import hazmat
 import qr_detect
+
+from flask import Flask, render_template, jsonify
+import logging
 
 
 HAZMAT_TOGGLE_KEY = "h"
@@ -54,10 +56,6 @@ START_STATE_HAZMAT = {
 
 
 #------------------------------------------------------------------------------#
-MAIN_FILE = "states/state.json"
-SERVER_FILE = "states/server_state.json"
-FILE_DELAY = 0.0
-
 MAIN_STATE = {
     "frame": "",
     "ns": 0,
@@ -68,19 +66,44 @@ MAIN_STATE = {
 }
 SERVER_STATE = {}
 
-def write_state():
-    # Write state to file
-    with open(MAIN_FILE, "w") as f:
-        json.dump(MAIN_STATE, f)
 
-def read_state():
-	global SERVER_STATE
-	try:
-		with open(SERVER_FILE, "r") as f:
-			SERVER_STATE = json.load(f)
-	except:
-		time.sleep(FILE_DELAY)
-		read_state()
+app = Flask(__name__)
+m_q = Queue() # main_queue
+f_q = Queue() # flask_queue
+m_s = MAIN_STATE
+s_s= SERVER_STATE
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/set/<key>/<value>', methods=['GET'])
+def set_key(key, value):
+    global f_q, s_s
+
+    s_s[key] = value
+
+    f_q.put_nowait(s_s)
+
+    response = jsonify(s_s)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+
+    return response
+
+@app.route('/get', methods=['GET'])
+def get():
+    global m_q, m_s
+
+    while True:
+        try:
+            m_s = m_q.get_nowait()
+        except queue.Empty:
+            break
+
+    response = jsonify(m_s)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    
+    return response
 #------------------------------------------------------------------------------#
 
 
@@ -178,21 +201,17 @@ def hazmat_main(main_queue, hazmat_queue):
         state_hazmat["last_update"] = time.time()
 
         hazmat_queue.put_nowait(state_hazmat)
-        # print("b")
 #------------------------------------------------------------------------------#
 
 
 #------------------------------------------------------------------------------#
-def key_down(key):
-    global SERVER_STATE
+def key_down(s_s, key):
     try:
-        return SERVER_STATE[key] == "true"
+        return s_s[key] == "true"
     except KeyError:
         return False
 
-def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
-    global SERVER_STATE, MAIN_STATE
-
+def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
     print("Starting cameras...")
 
     if video_capture_zero:
@@ -236,6 +255,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
 
     state_main = START_STATE_MAIN
     state_hazmat = START_STATE_HAZMAT
+
+    m_s = MAIN_STATE
+    s_s = SERVER_STATE
 
     killer = util.GracefulKiller()
 
@@ -349,36 +371,39 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         text                  = "Hazmat FPS: %.0f" % hazmat_fps
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
+        while True:
+            try:
+                s_s = f_q.get_nowait()
+            except queue.Empty:
+                break
 
-        read_state()
-
-        if hazmat_tk.down(key_down(HAZMAT_TOGGLE_KEY)):
+        if hazmat_tk.down(key_down(s_s, HAZMAT_TOGGLE_KEY)):
             run_hazmat_toggler.toggle()
-        if qr_tk.down(key_down(QR_TOGGLE_KEY)):
+        if qr_tk.down(key_down(s_s, QR_TOGGLE_KEY)):
             run_qr_toggler.toggle()
 
-        if key_down(QR_CLEAR_KEY):
+        if key_down(s_s, QR_CLEAR_KEY):
             all_qr_found = []
 
-        if key_down(HAZMAT_CLEAR_KEY):
+        if key_down(s_s, HAZMAT_CLEAR_KEY):
             state_main["clear_all_found"] = 1
 
-        if key_down("0"):
+        if key_down(s_s, "0"):
             view_mode.mode = util.ViewMode.GRID
-        elif key_down("1"):
+        elif key_down(s_s, "1"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 0
-        elif key_down("2"):
+        elif key_down(s_s, "2"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 1
-        elif key_down("3"):
+        elif key_down(s_s, "3"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 2
-        elif key_down("4"):
+        elif key_down(s_s, "4"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 3
         
-        run_hazmat_hold = key_down(HAZMAT_HOLD_KEY)
+        run_hazmat_hold = key_down(s_s, HAZMAT_HOLD_KEY)
 
         if state_main["clear_all_found"] == 1:
             state_main["clear_all_found"] = 2
@@ -415,21 +440,21 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
         combined = cv2.vconcat([top_combined, bottom_combined])
 
         combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
-        MAIN_STATE["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
+        m_s["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
 
-        MAIN_STATE["w"] = combine_downscaled.shape[1]
-        MAIN_STATE["h"] = combine_downscaled.shape[0]
+        m_s["w"] = combine_downscaled.shape[1]
+        m_s["h"] = combine_downscaled.shape[0]
 
         hazmats_found = state_hazmat["hazmats_found"]
         hazmats_found = list(set(hazmats_found))
         hazmats_found.sort()
 
-        MAIN_STATE["hazmats_found"] = hazmats_found
-        MAIN_STATE["qr_found"] = all_qr_found
+        m_s["hazmats_found"] = hazmats_found
+        m_s["qr_found"] = all_qr_found
 
-        MAIN_STATE["ns"] = frame_read_time_ns
+        m_s["ns"] = frame_read_time_ns
 
-        write_state()
+        m_q.put_nowait(m_s)
 #------------------------------------------------------------------------------#
 
 
@@ -449,29 +474,46 @@ if __name__ == "__main__":
     hazmat_queue = Queue()
 
     hazmat_thread = Process(target=hazmat_main, args=(main_queue, hazmat_queue))
-
     hazmat_thread.start()
+
+    print("Starting server...")
+
+    if not args["debug"]:
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.WARNING)
+
+    flask_thread = Process(target=app.run, kwargs={"debug": args["debug"], "port": 5000, "host": "0.0.0.0"})
+    flask_thread.start()
 
     print("Starting main thread...")
     
     caps = {}
     try:
-        main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"], caps)
+        main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"], caps, m_q, f_q)
     except:
         pass
 
+    print("Exiting...")
+
+
+    print("Closing cameras...")
     for cap in caps.values():
         cap.release()
     cv2.destroyAllWindows()
 
-    print("Exiting cameras...")
 
+    print("Closing hazmat thread...")
     START_STATE_MAIN["quit"] = True
     main_queue.put_nowait(START_STATE_MAIN)
     
     hazmat_thread.terminate()
     time.sleep(1) # wait for thread to terminate
     hazmat_thread.close()
+
+    print("Closing server...")
+    flask_thread.terminate()
+    time.sleep(1) # wait for thread to terminate
+    flask_thread.close()
 
     print("Closing queues...")
 
@@ -482,4 +524,10 @@ if __name__ == "__main__":
     main_queue.cancel_join_thread()
     hazmat_queue.cancel_join_thread()
 
-    print("Cameras done.")
+    m_q.close()
+    f_q.close()
+
+    m_q.cancel_join_thread()
+    f_q.cancel_join_thread()
+
+    print("Done.")

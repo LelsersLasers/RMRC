@@ -94,8 +94,10 @@ p {
 
 	<script>
 		// const FLASK_SERVER = "http://192.168.1.6:5000";
-		const FLASK_SERVER = "http://localhost:5000"
-		const DELAY = 50;
+		const FLASK_SERVER = "http://localhost:5000";
+		const FRONT_END_FPS = 50;
+
+		const delay = 1000 / FRONT_END_FPS;
 
 		const STATE = {}; // STATE[key] = true/false
 
@@ -142,7 +144,7 @@ p {
 						console.log(e);
 					}
 				});
-		}, DELAY);
+		}, delay);
 
 		function send_state() {
 			const base_path = "/set";
