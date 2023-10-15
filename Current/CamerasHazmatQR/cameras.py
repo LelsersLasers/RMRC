@@ -237,7 +237,9 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps):
     state_main = START_STATE_MAIN
     state_hazmat = START_STATE_HAZMAT
 
-    while True:
+    killer = util.GracefulKiller()
+
+    while not killer.kill_now and not state_main["quit"]:
         fps_controller.update()
 
         frames = {}
@@ -453,7 +455,10 @@ if __name__ == "__main__":
     print("Starting main thread...")
     
     caps = {}
-    main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"], caps)
+    try:
+        main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"], caps)
+    except:
+        pass
 
     for cap in caps.values():
         cap.release()

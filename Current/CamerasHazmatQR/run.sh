@@ -20,7 +20,7 @@ printInColor "STARTING!"
 printInColor "(note: this script doesn't play super nice with control-c)\n"
 
 
-python3 cameras.py &
+python3 cameras.py -z &
 sleep 1
 
 python3 server.py &
@@ -53,7 +53,7 @@ jobs -p | xargs kill
 sleep 5 # give time for the procceses to end
 
 echo -e "${BLUE}"
-jobs
+jobs -l
 echo -e "${NC}"
 
 printInColor "Finished cleanup"
