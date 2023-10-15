@@ -103,6 +103,8 @@ p {
 
 		let show_sidebar = true;
 
+		let last_frame = "";
+
 		const end = setInterval(function() {
 			const path = "/get";
 			fetch(FLASK_SERVER + path)
@@ -110,7 +112,8 @@ p {
 				.then(data => {
 					try {
 						const frame_ele = document.getElementById("frame");
-						frame_ele.src = "data:image/jpg;base64," + data["frame"];
+						const frame = data["frame"];
+						frame_ele.src = "data:image/jpg;base64," + frame;
 
 						const hazmats_ele = document.getElementById("hazmats");
 						hazmats_ele.innerHTML = data["hazmats_found"].sort().join("<br />");
@@ -131,15 +134,19 @@ p {
 						frame_ele.style.height = h + "px";
 
 						const ms = data["ns"] / 1000000;
-						const now = Date.now()
-						const diff = now - ms;
-						const rounded = diff.toFixed(0);
+						if (last_frame != frame) {
+							last_frame = frame;
 
-						const delay_ele = document.getElementById("delay");
-						delay_ele.innerHTML = rounded + " MS";
+							const now = Date.now()
+							const diff = now - ms;
+							const rounded = diff.toFixed(0);
 
-						const delaybar = document.getElementById("delaybar");
-						delaybar.style.width = diff / 10 + "%";
+							const delay_ele = document.getElementById("delay");
+							delay_ele.innerHTML = rounded + " MS";
+
+							const delaybar = document.getElementById("delaybar");
+							delaybar.style.width = diff / 10 + "%";
+						}
 					} catch (e) {
 						console.log(e);
 					}
