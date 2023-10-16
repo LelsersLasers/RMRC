@@ -9,7 +9,6 @@ CAP_ARGS = {
 """
 TODO:
 ws vs not
-DoubleQueue and Double States
 slight limit on hazmat fps
 each camera gets its own thread?
 """
@@ -255,9 +254,7 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
     all_qr_found = []
 
     hazmat_ds = util.DoubleState(START_STATE_MAIN, START_STATE_HAZMAT)
-
-    m_s = MAIN_STATE
-    s_s = SERVER_STATE
+    server_ds = util.DoubleState(MAIN_STATE, SERVER_STATE)
 
     killer = util.GracefulKiller()
 
@@ -369,35 +366,35 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
 
-        s_s = server_dq.last_q2(s_s)
+        server_ds.update_s2(server_dq)
 
-        if hazmat_tk.down(key_down(s_s, HAZMAT_TOGGLE_KEY)):
+        if hazmat_tk.down(key_down(server_ds.s2, HAZMAT_TOGGLE_KEY)):
             run_hazmat_toggler.toggle()
-        if qr_tk.down(key_down(s_s, QR_TOGGLE_KEY)):
+        if qr_tk.down(key_down(server_ds.s2, QR_TOGGLE_KEY)):
             run_qr_toggler.toggle()
 
-        if key_down(s_s, QR_CLEAR_KEY):
+        if key_down(server_ds.s2, QR_CLEAR_KEY):
             all_qr_found = []
 
-        if key_down(s_s, HAZMAT_CLEAR_KEY):
+        if key_down(server_ds.s2, HAZMAT_CLEAR_KEY):
             hazmat_ds.s1["clear_all_found"] = 1
 
-        if key_down(s_s, "0"):
+        if key_down(server_ds.s2, "0"):
             view_mode.mode = util.ViewMode.GRID
-        elif key_down(s_s, "1"):
+        elif key_down(server_ds.s2, "1"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 0
-        elif key_down(s_s, "2"):
+        elif key_down(server_ds.s2, "2"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 1
-        elif key_down(s_s, "3"):
+        elif key_down(server_ds.s2, "3"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 2
-        elif key_down(s_s, "4"):
+        elif key_down(server_ds.s2, "4"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 3
         
-        run_hazmat_hold = key_down(s_s, HAZMAT_HOLD_KEY)
+        run_hazmat_hold = key_down(server_ds.s2, HAZMAT_HOLD_KEY)
 
         if hazmat_ds.s1["clear_all_found"] == 1:
             hazmat_ds.s1["clear_all_found"] = 2
@@ -434,21 +431,21 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
         combined = cv2.vconcat([top_combined, bottom_combined])
 
         combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
-        m_s["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
+        server_ds.s1["frame"] = base64.b64encode(cv2.imencode('.jpg', combine_downscaled)[1]).decode()
 
-        m_s["w"] = combine_downscaled.shape[1]
-        m_s["h"] = combine_downscaled.shape[0]
+        server_ds.s1["w"] = combine_downscaled.shape[1]
+        server_ds.s1["h"] = combine_downscaled.shape[0]
 
         hazmats_found = hazmat_ds.s2["hazmats_found"]
         hazmats_found = list(set(hazmats_found))
         hazmats_found.sort()
 
-        m_s["hazmats_found"] = hazmats_found
-        m_s["qr_found"] = all_qr_found
+        server_ds.s1["hazmats_found"] = hazmats_found
+        server_ds.s1["qr_found"] = all_qr_found
 
-        m_s["ns"] = frame_read_time_ns
+        server_ds.s1["ns"] = frame_read_time_ns
 
-        server_dq.put_q1(m_s)
+        server_ds.put_s1(server_dq)
 #------------------------------------------------------------------------------#
 
 
