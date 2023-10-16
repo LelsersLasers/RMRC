@@ -17,7 +17,7 @@ import cv2
 import time
 import numpy as np
 import argparse
-from multiprocessing import Process, Queue, Pool
+from multiprocessing import Process, Pool
 import argparse
 import base64
 import queue
@@ -74,8 +74,7 @@ SERVER_STATE = {}
 
 
 app = Flask(__name__)
-m_q = Queue() # main_queue
-f_q = Queue() # flask_queue
+server_dq = util.DoubleQueue()
 m_s = MAIN_STATE
 s_s= SERVER_STATE
 
@@ -85,11 +84,11 @@ def index():
 
 @app.route('/set/<key>/<value>', methods=['GET'])
 def set_key(key, value):
-    global f_q, s_s
+    global server_dq, s_s
 
     s_s[key] = value
 
-    f_q.put_nowait(s_s)
+    server_dq.put_q2(s_s)
 
     response = jsonify(s_s)
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -98,8 +97,8 @@ def set_key(key, value):
 
 @app.route('/get', methods=['GET'])
 def get():
-    global m_q, m_s
-    m_s = util.last_from_queue(m_q, m_s)
+    global server_dq, m_s
+    m_s = server_dq.last_q1(m_s)
 
     response = jsonify(m_s)
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -109,7 +108,7 @@ def get():
 
 
 #------------------------------------------------------------------------------#
-def hazmat_main(main_queue, hazmat_queue):
+def hazmat_main(hazmat_dq):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPS()
@@ -125,7 +124,7 @@ def hazmat_main(main_queue, hazmat_queue):
         clear_all_found = False
         while True:
             try:
-                state_main = main_queue.get_nowait()
+                state_main = hazmat_dq.q1.get_nowait()
                 clear_all_found = clear_all_found or state_main["clear_all_found"] > 0
             except queue.Empty:
                 break
@@ -203,7 +202,8 @@ def hazmat_main(main_queue, hazmat_queue):
 
         state_hazmat["last_update"] = time.time()
 
-        hazmat_queue.put_nowait(state_hazmat)
+        # hazmat_queue.put_nowait(state_hazmat)
+        hazmat_dq.put_q2(state_hazmat)
 #------------------------------------------------------------------------------#
 
 
@@ -214,7 +214,7 @@ def key_down(s_s, key):
     except KeyError:
         return False
 
-def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
+def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
     print("Starting cameras...")
 
     if video_capture_zero:
@@ -286,7 +286,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
             ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
 
 
-        state_hazmat = util.last_from_queue(hazmat_queue, state_hazmat)
+        state_hazmat = hazmat_dq.last_q2(state_hazmat)
 
         if state_hazmat["hazmat_frame"] is not None:
             hazmat_frame = state_hazmat["hazmat_frame"]
@@ -372,7 +372,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
 
-        s_s = util.last_from_queue(f_q, s_s)
+        s_s = server_dq.last_q2(s_s)
 
         if hazmat_tk.down(key_down(s_s, HAZMAT_TOGGLE_KEY)):
             run_hazmat_toggler.toggle()
@@ -408,7 +408,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
             state_main["clear_all_found"] = 0
 
         state_main["frame"] = frame_to_pass_to_hazmat
-        main_queue.put_nowait(state_main)
+        hazmat_dq.put_q1(state_main)
 
 
         if view_mode.mode == util.ViewMode.GRID:
@@ -451,7 +451,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
 
         m_s["ns"] = frame_read_time_ns
 
-        m_q.put_nowait(m_s)
+        server_dq.put_q1(m_s)
 #------------------------------------------------------------------------------#
 
 
@@ -467,10 +467,11 @@ args = vars(ap.parse_args())
 if __name__ == "__main__":
     print("Starting hazmat thread...")
 
-    main_queue = Queue()
-    hazmat_queue = Queue()
+    # main_queue = Queue()
+    # hazmat_queue = Queue()
+    hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(main_queue, hazmat_queue))
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq,))
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
 
@@ -488,9 +489,9 @@ if __name__ == "__main__":
     
     caps = {}
     try:
-        main(main_queue, hazmat_queue, args["debug"], args["video_capture_zero"], caps, m_q, f_q)
-    except:
-        pass
+        main(hazmat_dq, server_dq, args["debug"], args["video_capture_zero"], caps)
+    except Exception as e:
+        print(e)
 
     print("\nExiting...")
 
@@ -503,7 +504,7 @@ if __name__ == "__main__":
 
     print("Closing hazmat thread...")
     START_STATE_MAIN["quit"] = True
-    main_queue.put_nowait(START_STATE_MAIN)
+    hazmat_dq.put_q1(START_STATE_MAIN)
     
     hazmat_thread.terminate()
     time.sleep(1) # wait for thread to terminate
@@ -516,17 +517,7 @@ if __name__ == "__main__":
 
     print("Closing queues...")
 
-    main_queue.close()
-    hazmat_queue.close()
-
-    # basically `allow_exit_without_flush`
-    main_queue.cancel_join_thread()
-    hazmat_queue.cancel_join_thread()
-
-    m_q.close()
-    f_q.close()
-
-    m_q.cancel_join_thread()
-    f_q.cancel_join_thread()
+    hazmat_dq.close()
+    server_dq.close()
 
     print("Done.")

@@ -1,6 +1,7 @@
 import time
 import signal
 import queue
+from multiprocessing import Queue
 
 class ViewMode:
     GRID = 0
@@ -72,16 +73,39 @@ def removeSpecialCharacter(s):
             t += i
     return t
 
-def last_from_queue(queue, last_value):
+def last_from_queue(q, last_value):
 	value = last_value
 
 	while True:
 		try:
-			value = queue.get_nowait()
+			value = q.get_nowait()
 		except queue.Empty:
 			break
 
 	return value
+
+class DoubleQueue:
+    def __init__(self):
+        self.q1 = Queue()
+        self.q2 = Queue()
+
+    def put_q1(self, item):
+        self.q1.put(item)
+    def put_q2(self, item):
+        self.q2.put(item)
+
+    def last_q1(self, value):
+        return last_from_queue(self.q1, value)
+    def last_q2(self, value):
+        return last_from_queue(self.q2, value)
+    
+    def close(self):
+        self.q1.close()
+        self.q2.close()
+
+        # basically `allow_exit_without_flush`
+        self.q1.cancel_join_thread()
+        self.q2.cancel_join_thread()
 
 class Rect:
     def __init__(self, r):
