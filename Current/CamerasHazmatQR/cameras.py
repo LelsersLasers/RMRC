@@ -9,7 +9,6 @@ CAP_ARGS = {
 """
 TODO:
 ws vs not
-slight limit on hazmat fps
 each camera gets its own thread?
 """
 
@@ -36,6 +35,7 @@ QR_TOGGLE_KEY = "r"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
+HAZMAT_DRY_FPS = 20
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 5 # in seconds
@@ -201,6 +201,9 @@ def hazmat_main(hazmat_dq):
         hazmat_ds.s2["last_update"] = time.time()
 
         hazmat_ds.put_s2(hazmat_dq)
+
+        if not hazmat_ds.s1["run_hazmat"]:
+            time.sleep(1 / HAZMAT_DRY_FPS)
 #------------------------------------------------------------------------------#
 
 
