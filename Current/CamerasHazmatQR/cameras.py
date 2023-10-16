@@ -273,7 +273,6 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
         fps_controller.update()
 
         frames = {}
-        frame_read_time_ns = time.time_ns()
         for key, cap in caps.items():
             ret, frame = cap.read()
 
@@ -281,6 +280,7 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
                 print("Exiting ...")
 
             frames[key] = frame
+        frame_read_time_ns = time.time_ns()
 
         frame = frames["webcam1"]
 
@@ -483,6 +483,7 @@ if __name__ == "__main__":
 
     hazmat_thread = Process(target=hazmat_main, args=(main_queue, hazmat_queue))
     hazmat_thread.start()
+    print(f"Hazmat thread pid: {hazmat_thread.pid}")
 
     print("Starting server...")
 
@@ -492,8 +493,9 @@ if __name__ == "__main__":
 
     flask_thread = Process(target=app.run, kwargs={"debug": args["debug"], "port": 5000, "host": "0.0.0.0"})
     flask_thread.start()
+    print(f"Flask thread pid: {flask_thread.pid}")
 
-    print("Starting main thread...")
+    print("Starting main thread...\n")
     
     caps = {}
     try:
@@ -501,7 +503,7 @@ if __name__ == "__main__":
     except:
         pass
 
-    print("Exiting...")
+    print("\nExiting...")
 
 
     print("Closing cameras...")
