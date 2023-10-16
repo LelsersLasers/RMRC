@@ -9,6 +9,8 @@ CAP_ARGS = {
 """
 TODO:
 ws vs not
+DoubleQueue and Double States
+slight limit on hazmat fps
 each camera gets its own thread?
 """
 
@@ -75,8 +77,7 @@ SERVER_STATE = {}
 
 app = Flask(__name__)
 server_dq = util.DoubleQueue()
-m_s = MAIN_STATE
-s_s= SERVER_STATE
+server_ds = util.DoubleState(MAIN_STATE, SERVER_STATE)
 
 @app.route('/')
 def index():
@@ -84,23 +85,23 @@ def index():
 
 @app.route('/set/<key>/<value>', methods=['GET'])
 def set_key(key, value):
-    global server_dq, s_s
+    global server_dq, server_ds
 
-    s_s[key] = value
+    server_ds.s2[key] = value
 
-    server_dq.put_q2(s_s)
+    server_ds.put_s2(server_dq)
 
-    response = jsonify(s_s)
+    response = jsonify(server_ds.s2)
     response.headers.add('Access-Control-Allow-Origin', '*')
 
     return response
 
 @app.route('/get', methods=['GET'])
 def get():
-    global server_dq, m_s
-    m_s = server_dq.last_q1(m_s)
+    global server_dq, server_ds
+    server_ds.update_s1(server_dq)
 
-    response = jsonify(m_s)
+    response = jsonify(server_ds.s1)
     response.headers.add('Access-Control-Allow-Origin', '*')
     
     return response
@@ -116,16 +117,15 @@ def hazmat_main(hazmat_dq):
     all_found = []
     frame = None
 
-    state_main = START_STATE_MAIN
-    state_hazmat = START_STATE_HAZMAT
+    hazmat_ds = util.DoubleState(START_STATE_MAIN, START_STATE_HAZMAT)
 
-    while not state_main["quit"]:
+    while not hazmat_ds.s1["quit"]:
 
         clear_all_found = False
         while True:
             try:
-                state_main = hazmat_dq.q1.get_nowait()
-                clear_all_found = clear_all_found or state_main["clear_all_found"] > 0
+                hazmat_ds.s1 = hazmat_dq.q1.get_nowait()
+                clear_all_found = clear_all_found or hazmat_ds.s1["clear_all_found"] > 0
             except queue.Empty:
                 break
 
@@ -133,12 +133,11 @@ def hazmat_main(hazmat_dq):
             all_found = []
             print("Cleared all found hazmat labels.")
 
-        if state_main["frame"] is not None:
-            frame = state_main["frame"]
+        if hazmat_ds.s1["frame"] is not None:
+            frame = hazmat_ds.s1["frame"]
             frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
 
-            if state_main["run_hazmat"]:
-
+            if hazmat_ds.s1["run_hazmat"]:
 
                 with Pool(HAMZAT_POOL_SIZE) as pool:
                     threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
@@ -191,26 +190,25 @@ def hazmat_main(hazmat_dq):
                     print(all_found)
 
             unscale = 1 / HAZMAT_FRAME_SCALE
-            state_hazmat["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
+            hazmat_ds.s2["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
 
         fps_controller.update()
-        state_hazmat["hazmat_fps"] = fps_controller.fps()
+        hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
 
         all_found = list(set(all_found))
         all_found.sort()
-        state_hazmat["hazmats_found"] = all_found
+        hazmat_ds.s2["hazmats_found"] = all_found
 
-        state_hazmat["last_update"] = time.time()
+        hazmat_ds.s2["last_update"] = time.time()
 
-        # hazmat_queue.put_nowait(state_hazmat)
-        hazmat_dq.put_q2(state_hazmat)
+        hazmat_ds.put_s2(hazmat_dq)
 #------------------------------------------------------------------------------#
 
 
 #------------------------------------------------------------------------------#
-def key_down(s_s, key):
+def key_down(keys, key):
     try:
-        return s_s[key] == "true"
+        return keys[key] == "true"
     except KeyError:
         return False
 
@@ -256,15 +254,14 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
 
     all_qr_found = []
 
-    state_main = START_STATE_MAIN
-    state_hazmat = START_STATE_HAZMAT
+    hazmat_ds = util.DoubleState(START_STATE_MAIN, START_STATE_HAZMAT)
 
     m_s = MAIN_STATE
     s_s = SERVER_STATE
 
     killer = util.GracefulKiller()
 
-    while not killer.kill_now and not state_main["quit"]:
+    while not killer.kill_now and not hazmat_ds.s1["quit"]:
         fps_controller.update()
 
         frames = {}
@@ -286,25 +283,25 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
             ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
 
 
-        state_hazmat = hazmat_dq.last_q2(state_hazmat)
+        hazmat_ds.update_s2(hazmat_dq)
 
-        if state_hazmat["hazmat_frame"] is not None:
-            hazmat_frame = state_hazmat["hazmat_frame"]
+        if hazmat_ds.s2["hazmat_frame"] is not None:
+            hazmat_frame = hazmat_ds.s2["hazmat_frame"]
         else:
             hazmat_frame = np.zeros_like(frame)
 
         frame_to_pass_to_hazmat = frame.copy()
 
 
-        state_main["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
+        hazmat_ds.s1["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
 
         fps = fps_controller.fps()
-        hazmat_fps = state_hazmat["hazmat_fps"]
+        hazmat_fps = hazmat_ds.s2["hazmat_fps"]
 
         if debug:
-            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {state_main['run_hazmat']}\tQR: {run_qr_toggler}")
+            print(f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {hazmat_ds.s1['run_hazmat']}\tQR: {run_qr_toggler}")
 
-        time_since_last_hazmat_update = time.time() - state_hazmat["last_update"]
+        time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
         ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
         w = ratio * (frame.shape[1] - 10)
 
@@ -312,7 +309,7 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
             hazmat_frame,
             (5, 5),
             (5 + int(w), 5),
-            (255, 255, 0) if not state_main["run_hazmat"] else (0, 0, 255),
+            (255, 255, 0) if not hazmat_ds.s1["run_hazmat"] else (0, 0, 255),
             3
         )
 
@@ -383,7 +380,7 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
             all_qr_found = []
 
         if key_down(s_s, HAZMAT_CLEAR_KEY):
-            state_main["clear_all_found"] = 1
+            hazmat_ds.s1["clear_all_found"] = 1
 
         if key_down(s_s, "0"):
             view_mode.mode = util.ViewMode.GRID
@@ -402,13 +399,13 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
         
         run_hazmat_hold = key_down(s_s, HAZMAT_HOLD_KEY)
 
-        if state_main["clear_all_found"] == 1:
-            state_main["clear_all_found"] = 2
-        elif state_main["clear_all_found"] == 2:
-            state_main["clear_all_found"] = 0
+        if hazmat_ds.s1["clear_all_found"] == 1:
+            hazmat_ds.s1["clear_all_found"] = 2
+        elif hazmat_ds.s1["clear_all_found"] == 2:
+            hazmat_ds.s1["clear_all_found"] = 0
 
-        state_main["frame"] = frame_to_pass_to_hazmat
-        hazmat_dq.put_q1(state_main)
+        hazmat_ds.s1["frame"] = frame_to_pass_to_hazmat
+        hazmat_ds.put_s1(hazmat_dq)
 
 
         if view_mode.mode == util.ViewMode.GRID:
@@ -442,7 +439,7 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
         m_s["w"] = combine_downscaled.shape[1]
         m_s["h"] = combine_downscaled.shape[0]
 
-        hazmats_found = state_hazmat["hazmats_found"]
+        hazmats_found = hazmat_ds.s2["hazmats_found"]
         hazmats_found = list(set(hazmats_found))
         hazmats_found.sort()
 
@@ -490,8 +487,8 @@ if __name__ == "__main__":
     caps = {}
     try:
         main(hazmat_dq, server_dq, args["debug"], args["video_capture_zero"], caps)
-    except Exception as e:
-        print(e)
+    except:
+        pass
 
     print("\nExiting...")
 
@@ -506,14 +503,10 @@ if __name__ == "__main__":
     START_STATE_MAIN["quit"] = True
     hazmat_dq.put_q1(START_STATE_MAIN)
     
-    hazmat_thread.terminate()
-    time.sleep(1) # wait for thread to terminate
-    hazmat_thread.close()
+    util.close_thread(hazmat_thread)
 
     print("Closing server...")
-    flask_thread.terminate()
-    time.sleep(1) # wait for thread to terminate
-    flask_thread.close()
+    util.close_thread(flask_thread)
 
     print("Closing queues...")
 
