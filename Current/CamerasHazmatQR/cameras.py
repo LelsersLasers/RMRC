@@ -99,12 +99,7 @@ def set_key(key, value):
 @app.route('/get', methods=['GET'])
 def get():
     global m_q, m_s
-
-    while True:
-        try:
-            m_s = m_q.get_nowait()
-        except queue.Empty:
-            break
+    m_s = util.last_from_queue(m_q, m_s)
 
     response = jsonify(m_s)
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -290,11 +285,8 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
         else:
             ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
 
-        while True:
-            try:
-                state_hazmat = hazmat_queue.get_nowait()
-            except queue.Empty:
-                break
+
+        state_hazmat = util.last_from_queue(hazmat_queue, state_hazmat)
 
         if state_hazmat["hazmat_frame"] is not None:
             hazmat_frame = state_hazmat["hazmat_frame"]
@@ -379,11 +371,8 @@ def main(main_queue, hazmat_queue, debug, video_capture_zero, caps, m_q, f_q):
         text                  = "Hazmat FPS: %.0f" % hazmat_fps
         cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
-        while True:
-            try:
-                s_s = f_q.get_nowait()
-            except queue.Empty:
-                break
+
+        s_s = util.last_from_queue(f_q, s_s)
 
         if hazmat_tk.down(key_down(s_s, HAZMAT_TOGGLE_KEY)):
             run_hazmat_toggler.toggle()

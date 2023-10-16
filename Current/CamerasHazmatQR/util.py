@@ -1,5 +1,6 @@
 import time
 import signal
+import queue
 
 class ViewMode:
     GRID = 0
@@ -71,6 +72,16 @@ def removeSpecialCharacter(s):
             t += i
     return t
 
+def last_from_queue(queue, last_value):
+	value = last_value
+
+	while True:
+		try:
+			value = queue.get_nowait()
+		except queue.Empty:
+			break
+
+	return value
 
 class Rect:
     def __init__(self, r):
