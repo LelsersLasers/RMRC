@@ -287,9 +287,20 @@ def key_down(keys, key):
         return keys[key] == "true"
     except KeyError:
         return False
+    
+def fps_text(frame, fps):
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    bottomLeftCornerOfText = (5, frame.shape[0] - 5)
+    fontScale = 0.5
+    fontColor = (0, 255, 0)
+    thickness = 1
+    lineType = 2
+
+    text = "FPS: %.0f" % fps
+    cv2.putText(frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
 
-def main(hazmat_dq, server_dq, camera_dqs, debug, video_capture_zero):
+def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
@@ -333,8 +344,7 @@ def main(hazmat_dq, server_dq, camera_dqs, debug, video_capture_zero):
             frames[key] = camera_ds.s2["frame"]
 
             if key == base_key:
-                ns = camera_ds.s2["ns"]
-                frame_read_time_ns = ns
+                frame_read_time_ns = camera_ds.s2["ns"]
 
         frame = frames[base_key]
         if frame is None:
@@ -346,6 +356,9 @@ def main(hazmat_dq, server_dq, camera_dqs, debug, video_capture_zero):
             ir_frame = frames[base_key]
         else:
             ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
+            fps_text(ir_frame, camera_dses["ir"].s2["fps"])
+
+            fps_text(frames["webcam2"], camera_dses["webcam2"].s2["fps"])
 
         hazmat_ds.update_s2(hazmat_dq)
 
@@ -357,14 +370,6 @@ def main(hazmat_dq, server_dq, camera_dqs, debug, video_capture_zero):
         frame_to_pass_to_hazmat = frame.copy()
 
         hazmat_ds.s1["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
-
-        fps = fps_controller.fps()
-        hazmat_fps = hazmat_ds.s2["hazmat_fps"]
-
-        if debug:
-            print(
-                f"FPS: {fps:.0f}\tHazmat FPS: {hazmat_fps:.0f}\tHazmat: {hazmat_ds.s1['run_hazmat']}\tQR: {run_qr_toggler}"
-            )
 
         time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
         ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
@@ -402,19 +407,10 @@ def main(hazmat_dq, server_dq, camera_dqs, debug, video_capture_zero):
         all_qr_found = list(set(all_qr_found))
         all_qr_found.sort()
 
-        # fps text (bottom left)
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        bottomLeftCornerOfText = (5, frame.shape[0] - 5)
-        fontScale = 0.5
-        fontColor = (0, 255, 0)
-        thickness = 1
-        lineType = 2
+        # print(fps_controller.fps())
+        fps_text(frame, camera_dses[base_key].s2["fps"])
+        fps_text(hazmat_frame, hazmat_ds.s2["hazmat_fps"])
 
-        text = "FPS: %.0f" % fps
-        cv2.putText(frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
-
-        text = "Hazmat FPS: %.0f" % hazmat_fps
-        cv2.putText(hazmat_frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
         server_ds.update_s2(server_dq)
 
@@ -501,7 +497,6 @@ def main(hazmat_dq, server_dq, camera_dqs, debug, video_capture_zero):
 
 # ---------------------------------------------------------------------------- #
 ap = argparse.ArgumentParser()
-ap.add_argument("-d", "--debug", required=False, help="show debug prints", action="store_true")
 ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
 args = vars(ap.parse_args())
 # ---------------------------------------------------------------------------- #
@@ -537,18 +532,17 @@ if __name__ == "__main__":
 
     print("\nStarting server...")
 
-    if not args["debug"]:
-        log = logging.getLogger("werkzeug")
-        log.setLevel(logging.WARNING)
+    log = logging.getLogger("werkzeug")
+    log.setLevel(logging.WARNING)
 
-    flask_thread = Process(target=app.run, kwargs={"debug": args["debug"], "port": 5000, "host": "0.0.0.0"})
+    flask_thread = Process(target=app.run, kwargs={"debug": False, "port": 5000, "host": "0.0.0.0"})
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
 
     print("\nStarting main thread...\n")
 
     try:
-        main(hazmat_dq, server_dq, camera_dqs, args["debug"], args["video_capture_zero"])
+        main(hazmat_dq, server_dq, camera_dqs, args["video_capture_zero"])
     except Exception as e:
         # print(e)
         pass
