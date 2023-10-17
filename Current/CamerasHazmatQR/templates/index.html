@@ -23,6 +23,9 @@ html, body {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+
+	background-color: #2E3440;
+	color: #ECEFF4;
 }
 
 
@@ -33,19 +36,24 @@ html, body {
 
 #mainbar {
 	flex: 3;
-	margin: 0 auto;
-	padding: 0;
 
 	display: flex;
 	justify-content: center;
 	align-items: center;
+
+	margin: 1em;
+	margin-right: 0;
 }
 
 #sidebar {
 	flex: 1;
 	overflow: auto;
-	padding-left: 5px;
-	padding-right: 5px;
+
+	background-color: #3B4252;
+
+	padding: 1em;
+	margin: 1em;
+	border-radius: 0.5em;
 }
 
 
@@ -202,9 +210,11 @@ span {
 							fpsbar.style.width = ratio * 100 + "%";
 						}
 
+
 						const frame_ele = document.getElementById("frame");
 						const frame = data["frame"];
 						frame_ele.src = "data:image/jpg;base64," + frame;
+
 
 						const hazmats_ele = document.getElementById("hazmats");
 						hazmats_ele.innerHTML = data["hazmats_found"].sort().join("<br />");
@@ -215,14 +225,16 @@ span {
 
 						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
 
-						const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1);
-						const max_h = window.innerHeight;
+						const EM = 16; // 1em = 16px (usually)
+						const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - 2 * EM;
+						const max_h = window.innerHeight - 2 * EM;
 
 						const w = Math.min(max_w, max_h * ratio);
 						const h = Math.min(max_h, max_w / ratio);
 						
 						frame_ele.style.width = w + "px";
 						frame_ele.style.height = h + "px";
+
 
 						const ms = data["ns"] / 1000000;
 						if (ms.toFixed(0) != last_ms.toFixed(0)) {

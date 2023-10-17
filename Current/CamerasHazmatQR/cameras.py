@@ -564,8 +564,9 @@ if __name__ == "__main__":
 
     try:
         main(hazmat_dq, server_dq, camera_dqs, args["video_capture_zero"])
-    except Exception as e:
+    # except Exception as e:
         # print(e)
+    except:
         pass
     # ------------------------------------------------------------------------ #
 
