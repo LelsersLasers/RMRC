@@ -253,11 +253,6 @@ span {
 						delaybar.style.width = average / 5 + "%";
 
 						last_ms = ms;
-
-						t3 = performance.now();
-						delta2 = (t3 - t2) / 1000;
-						t2 = t3;
-						console.log((1 / delta2).toFixed(0))
 					} catch (e) {
 						console.log(e);
 					}
