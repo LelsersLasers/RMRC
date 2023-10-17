@@ -12,17 +12,22 @@ ws vs not
 """
 
 
-import cv2
 import time
-import numpy as np
 import argparse
-from multiprocessing import Process, Pool
 import argparse
 import base64
 import queue
+
+import psutil
+
 import util
 import hazmat
 import qr_detect
+
+import cv2
+import numpy as np
+
+from multiprocessing import Process, Pool
 
 from flask import Flask, render_template, jsonify
 import logging
@@ -83,6 +88,8 @@ STATE_SERVER_MASTER = {
     "hazmats_found": [],
     "qr_found": [],
     "fpses": [-1, -1, -1, -1, -1],
+    "ram": 0,
+    "cpu": 0,
 }
 STATE_SERVER = {} # keys
 # ---------------------------------------------------------------------------- #
@@ -518,6 +525,10 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
                 fps_controller.fps(),
             ]
         server_ds.s1["fpses"] = fpses
+
+        server_ds.s1["ram"] = psutil.virtual_memory().percent
+        server_ds.s1["cpu"] = psutil.cpu_percent()
+
 
         server_ds.put_s1(server_dq)
         # -------------------------------------------------------------------- #

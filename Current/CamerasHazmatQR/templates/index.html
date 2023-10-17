@@ -110,6 +110,10 @@ span {
 	background-color: #A3BE8C;
 }
 
+#rambar, #cpubar {
+	background-color: #4C566A;
+}
+
 
 
 #main {
@@ -152,6 +156,14 @@ span {
 				<span id="fps-frontend">20 FPS</span>
 			</div>
 
+			<h4>Host stats</h4>
+			<div class="bar" id="cpubar">
+				<span id="stats-cpu">10%</span>
+			</div>
+			<div class="bar" id="rambar">
+				<span id="stats-ram">20%</span>
+			</div>
+
 			<h4>Detected Hazmat Labels:</h4>
 			<p id="hazmats"></p>
 
@@ -161,8 +173,8 @@ span {
 	</div>
 
 	<script>
-		// const FLASK_SERVER = "http://192.168.1.6:5000";
-		const FLASK_SERVER = "http://localhost:5000";
+		const FLASK_SERVER = "http://192.168.1.6:5000";
+		// const FLASK_SERVER = "http://localhost:5000";
 		const FRONT_END_FPS = 30;
 
 		const DELAY = 1000 / FRONT_END_FPS;
@@ -209,6 +221,19 @@ span {
 							const fpsbar = document.getElementById(fps_id + "bar");
 							const ratio = fps / max_ratio;
 							fpsbar.style.width = ratio * 100 + "%";
+						}
+
+						
+						const stats_ids = ["cpu", "ram"];
+
+						for (let i = 0; i < stats_ids.length; i++) {
+							const stats_id = stats_ids[i];
+							const stat = data[stats_id];
+							const stat_ele = document.getElementById("stats-" + stats_id);
+							stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
+
+							const statbar = document.getElementById(stats_id + "bar");
+							statbar.style.width = stat + "%";
 						}
 
 
