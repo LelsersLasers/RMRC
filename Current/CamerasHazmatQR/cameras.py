@@ -9,7 +9,7 @@ CAP_ARGS = {
 """
 TODO:
 ws vs not
-each camera gets its own thread?
+FPS displays per camera and overall
 """
 
 
@@ -54,11 +54,26 @@ START_STATE_MAIN = {
 
 # What hazmat thread sends
 START_STATE_HAZMAT = {
-    "hazmat_fps": 100,
+    "hazmat_fps": HAZMAT_DRY_FPS,
     "hazmat_frame": None,
     "hazmats_found": [],
     "last_update": 0,
 }
+#------------------------------------------------------------------------------#
+
+
+#------------------------------------------------------------------------------#
+CAMERA_MAIN_STATE = {
+    "quit": False,
+}
+
+CAMERA_STATE = {
+    "frame": None,
+    "ns": 0,
+    "fps": 20,
+    # "cap": None,
+}
+
 #------------------------------------------------------------------------------#
 
 
@@ -118,92 +133,147 @@ def hazmat_main(hazmat_dq):
 
     hazmat_ds = util.DoubleState(START_STATE_MAIN, START_STATE_HAZMAT)
 
-    while not hazmat_ds.s1["quit"]:
+    try:
+        while not hazmat_ds.s1["quit"]:
 
-        clear_all_found = False
-        while True:
-            try:
-                hazmat_ds.s1 = hazmat_dq.q1.get_nowait()
-                clear_all_found = clear_all_found or hazmat_ds.s1["clear_all_found"] > 0
-            except queue.Empty:
+            clear_all_found = False
+            while True:
+                try:
+                    hazmat_ds.s1 = hazmat_dq.q1.get_nowait()
+                    clear_all_found = clear_all_found or hazmat_ds.s1["clear_all_found"] > 0
+                except queue.Empty:
+                    break
+
+            if clear_all_found:
+                all_found = []
+                print("Cleared all found hazmat labels.")
+
+            if hazmat_ds.s1["frame"] is not None:
+                frame = hazmat_ds.s1["frame"]
+                frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
+
+                if hazmat_ds.s1["run_hazmat"]:
+
+                    with Pool(HAMZAT_POOL_SIZE) as pool:
+                        threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
+
+                        args = [(frame, threshVal) for threshVal in threshVals]
+                        all_received_tups = pool.starmap(hazmat.processScreenshot, args)
+
+                        found_this_frame = []
+
+                        for received_tups in all_received_tups:
+                            for r in received_tups:
+                                text = r[0].strip()
+                                cnt = r[1]
+                                rect = util.Rect(cv2.boundingRect(cnt))
+                                found_this_frame.append((text, cnt, rect))
+                                all_found.append(text)
+
+                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[2])
+
+                    fontScale = 0.5
+                    fontColor = (0, 0, 255)
+                    thickness = 1
+                    lineType = 2
+
+                    for found in found_this_frame:
+                        text, cnt, rect = found
+
+                        frame = cv2.drawContours(frame, [cnt], -1, (255, 0, 0), 3)
+
+                        cv2.rectangle(frame, (rect.x, rect.y), (rect.x + rect.w, rect.y + rect.h), (0, 225, 0), 4)
+
+                        corner = (rect.x + 5, rect.y + 15)
+
+                        cv2.putText(
+                            frame,
+                            text,
+                            corner,
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale,
+                            fontColor,
+                            thickness,
+                            lineType,
+                        )
+                    
+                    if len(found_this_frame) > 0:
+                        all_found = list(set(all_found))
+                        all_found.sort()
+
+                        print([x[0] for x in found_this_frame])
+                        print(all_found)
+
+                unscale = 1 / HAZMAT_FRAME_SCALE
+                hazmat_ds.s2["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
+
+            fps_controller.update()
+            hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
+
+            all_found = list(set(all_found))
+            all_found.sort()
+            hazmat_ds.s2["hazmats_found"] = all_found
+
+            hazmat_ds.s2["last_update"] = time.time()
+
+            hazmat_ds.put_s2(hazmat_dq)
+
+            if not hazmat_ds.s1["run_hazmat"]:
+                time.sleep(1 / HAZMAT_DRY_FPS)
+    except KeyboardInterrupt:
+        pass
+#------------------------------------------------------------------------------#
+
+
+#------------------------------------------------------------------------------#
+def camera_main(camera_dq, key):
+    camera_ds = util.DoubleState(CAMERA_MAIN_STATE, CAMERA_STATE)
+
+    print(f"Opening camera {key}...")
+    if key is not None:
+        cap_arg = CAP_ARGS[key]
+        cap = cv2.VideoCapture(cap_arg, cv2.CAP_GSTREAMER)
+    else:
+        cap = cv2.VideoCapture(0)
+    print(f"Camera {key} VideoCapture created.")
+
+    if not cap.isOpened():
+        raise RuntimeError(
+                f"Can't open camera {key}. Are the cap_args set right? Is the camera plugged in?"
+            )
+    print(f"Camera {key} opened.")
+
+
+    time.sleep(CAMERA_WAKEUP_TIME)
+
+    fps_controller = util.FPS()
+
+    try:
+        while not camera_ds.s1["quit"]:
+            camera_ds.update_s1(camera_dq)
+
+            ret, frame = cap.read()
+            if not ret or frame is None:
+                print(f"Camera {key} read failed.")
                 break
 
-        if clear_all_found:
-            all_found = []
-            print("Cleared all found hazmat labels.")
+            camera_ds.s2["ns"] = time.time_ns()
 
-        if hazmat_ds.s1["frame"] is not None:
-            frame = hazmat_ds.s1["frame"]
-            frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
+            if not ret or frame is None:
+                print("Exiting ...")
 
-            if hazmat_ds.s1["run_hazmat"]:
+            camera_ds.s2["frame"] = frame
 
-                with Pool(HAMZAT_POOL_SIZE) as pool:
-                    threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
+            fps_controller.update()
+            camera_ds.s2["fps"] = fps_controller.fps()
 
-                    args = [(frame, threshVal) for threshVal in threshVals]
-                    all_received_tups = pool.starmap(hazmat.processScreenshot, args)
-
-                    found_this_frame = []
-
-                    for received_tups in all_received_tups:
-                        for r in received_tups:
-                            text = r[0].strip()
-                            cnt = r[1]
-                            rect = util.Rect(cv2.boundingRect(cnt))
-                            found_this_frame.append((text, cnt, rect))
-                            all_found.append(text)
-
-                found_this_frame = util.remove_dups(found_this_frame, lambda x: x[2])
-
-                fontScale = 0.5
-                fontColor = (0, 0, 255)
-                thickness = 1
-                lineType = 2
-
-                for found in found_this_frame:
-                    text, cnt, rect = found
-
-                    frame = cv2.drawContours(frame, [cnt], -1, (255, 0, 0), 3)
-
-                    cv2.rectangle(frame, (rect.x, rect.y), (rect.x + rect.w, rect.y + rect.h), (0, 225, 0), 4)
-
-                    corner = (rect.x + 5, rect.y + 15)
-
-                    cv2.putText(
-                        frame,
-                        text,
-                        corner,
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        fontScale,
-                        fontColor,
-                        thickness,
-                        lineType,
-                    )
-                
-                if len(found_this_frame) > 0:
-                    all_found = list(set(all_found))
-                    all_found.sort()
-
-                    print([x[0] for x in found_this_frame])
-                    print(all_found)
-
-            unscale = 1 / HAZMAT_FRAME_SCALE
-            hazmat_ds.s2["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
-
-        fps_controller.update()
-        hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
-
-        all_found = list(set(all_found))
-        all_found.sort()
-        hazmat_ds.s2["hazmats_found"] = all_found
-
-        hazmat_ds.s2["last_update"] = time.time()
-
-        hazmat_ds.put_s2(hazmat_dq)
-
-        if not hazmat_ds.s1["run_hazmat"]:
-            time.sleep(1 / HAZMAT_DRY_FPS)
+            camera_ds.put_s2(camera_dq)
+    # except KeyboardInterrupt:
+    finally:
+        # I don't think I need to offical release the VideoCapture
+        # It should happen automatically when the VideoCapture is deconstructed
+        print(f"Releasing camera {key}...")
+        cap.release()
 #------------------------------------------------------------------------------#
 
 
@@ -214,28 +284,7 @@ def key_down(keys, key):
     except KeyError:
         return False
 
-def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
-    print("Starting cameras...")
-
-    if video_capture_zero:
-        caps["webcam1"] = cv2.VideoCapture(0)
-    else:
-        for key, value in CAP_ARGS.items():
-            print(f'Opening camera {key}...')
-            caps[key] = cv2.VideoCapture(value, cv2.CAP_GSTREAMER)
-            print(f"Camera {key} VideoCapture created.")
-
-    for key, cap in caps.items():
-        if not cap.isOpened():
-            raise RuntimeError(
-                f"Can't open camera {key}. Are the cap_args set right? Is the camera plugged in?"
-            )
-        print(f"Camera {key} opened.")
-
-
-    time.sleep(CAMERA_WAKEUP_TIME)
-
-
+def main(hazmat_dq, server_dq, camera_dqs, debug, video_capture_zero):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
@@ -259,28 +308,39 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
     hazmat_ds = util.DoubleState(START_STATE_MAIN, START_STATE_HAZMAT)
     server_ds = util.DoubleState(MAIN_STATE, SERVER_STATE)
 
+    camera_dses = {}
+    for key in camera_dqs.keys():
+        camera_ds = util.DoubleState(CAMERA_MAIN_STATE, CAMERA_STATE)
+        camera_dses[key] = camera_ds
+
+    base_key = None if video_capture_zero else "webcam1"
+
     killer = util.GracefulKiller()
 
     while not killer.kill_now and not hazmat_ds.s1["quit"]:
         fps_controller.update()
 
         frames = {}
-        for key, cap in caps.items():
-            ret, frame = cap.read()
-
-            if not ret or frame is None:
-                print("Exiting ...")
-
-            frames[key] = frame
         frame_read_time_ns = time.time_ns()
+        for key, camera_dq in camera_dqs.items():
+            camera_ds = camera_dses[key]
+            camera_ds.update_s2(camera_dq)
+            frames[key] = camera_ds.s2["frame"]
 
-        frame = frames["webcam1"]
+            if key == base_key:
+                ns = camera_ds.s2["ns"]
+                frame_read_time_ns = ns
 
-        webcam1_shape = frames["webcam1"].shape
+        frame = frames[base_key]
+        if frame is None:
+            time.sleep(0.5)
+            continue
+
+        base_frame_shape = frames[base_key].shape
         if video_capture_zero:
-            ir_frame = frames["webcam1"]
+            ir_frame = frames[base_key]
         else:
-            ir_frame = cv2.resize(frames["ir"], (webcam1_shape[1], webcam1_shape[0]))
+            ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
 
 
         hazmat_ds.update_s2(hazmat_dq)
@@ -411,12 +471,12 @@ def main(hazmat_dq, server_dq, debug, video_capture_zero, caps):
         if view_mode.mode == util.ViewMode.GRID:
             top_combined = cv2.hconcat([frame, hazmat_frame])
             if video_capture_zero:
-                bottom_combined = cv2.hconcat([frames["webcam1"], ir_frame])
+                bottom_combined = cv2.hconcat([frames[base_key], ir_frame])
             else:
                 bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
         else:
             if video_capture_zero:
-                all_frames = [frame, hazmat_frame, frames["webcam1"], ir_frame]
+                all_frames = [frame, hazmat_frame, frames[base_key], ir_frame]
             else:
                 all_frames = [frame, hazmat_frame, frames["webcam2"], ir_frame]
             
@@ -462,17 +522,35 @@ args = vars(ap.parse_args())
 
 #------------------------------------------------------------------------------#
 if __name__ == "__main__":
-    print("Starting hazmat thread...")
+    print("\nStarting camera threads...")
 
-    # main_queue = Queue()
-    # hazmat_queue = Queue()
+    camera_dqs = {}
+    camera_threads = {}
+
+    cap_arg_keys = [None] if args["video_capture_zero"] else CAP_ARGS.keys()
+    for key in cap_arg_keys:
+        camera_dq = util.DoubleQueue()
+
+        camera_thread = Process(target=camera_main, args=(camera_dq, key))
+        camera_thread.start()
+        print(f"Camera {key} thread pid: {camera_thread.pid}")
+
+        camera_dqs[key] = camera_dq
+        camera_threads[key] = camera_thread
+
+    time.sleep(CAMERA_WAKEUP_TIME * 2)
+
+
+    print("\nStarting hazmat thread...")
+
     hazmat_dq = util.DoubleQueue()
 
     hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq,))
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
 
-    print("Starting server...")
+
+    print("\nStarting server...")
 
     if not args["debug"]:
         log = logging.getLogger('werkzeug')
@@ -482,21 +560,28 @@ if __name__ == "__main__":
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
 
-    print("Starting main thread...\n")
+
+    print("\nStarting main thread...\n")
     
-    caps = {}
     try:
-        main(hazmat_dq, server_dq, args["debug"], args["video_capture_zero"], caps)
-    except:
+        main(hazmat_dq, server_dq, camera_dqs, args["debug"], args["video_capture_zero"])
+    except Exception as e:
+        # print(e)
         pass
 
-    print("\nExiting...")
+    print("\n\nExiting...")
 
 
-    print("Closing cameras...")
-    for cap in caps.values():
-        cap.release()
-    cv2.destroyAllWindows()
+    print("Closing camera threads...")
+    for key in camera_threads.keys():
+        print(f"Closing camera {key} capture and thread...")
+        CAMERA_MAIN_STATE["quit"] = True
+
+        camera_dq = camera_dqs[key]
+        camera_dq.put_q1(CAMERA_MAIN_STATE)
+
+        camera_thread = camera_threads[key]
+        util.close_thread(camera_thread)
 
 
     print("Closing hazmat thread...")
@@ -512,5 +597,8 @@ if __name__ == "__main__":
 
     hazmat_dq.close()
     server_dq.close()
+
+    for camera_dq in camera_dqs.values():
+        camera_dq.close()
 
     print("Done.")
