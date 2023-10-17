@@ -45,6 +45,7 @@ html, body {
 	flex: 1;
 	overflow: auto;
 	padding-left: 5px;
+	padding-right: 5px;
 }
 
 
@@ -55,6 +56,7 @@ div {
 
 h4 {
 	margin-bottom: 0.25em;
+	margin-top: 0.5em;
 }
 
 p {
@@ -62,12 +64,45 @@ p {
 	margin-bottom: 0.25em;
 }
 
-#delaybar {
-	height: 0.5em;
-	background-color: red;
+.bar {
 	border-radius: 10px;
-	transition: width 0.05s;
+	transition: width 0.1s linear;
+	margin: 0;
+	padding: 0;
+	padding-top: 0.1em;
 }
+
+span {
+	white-space: nowrap;
+	text-wrap: none;
+	margin-left: 6px;
+	padding-top: 0.1em;
+	padding-bottom: 0.1em;
+}
+
+#delaybar {
+	background-color: #BF616A;
+}
+#webcam1bar {
+	background-color: #5E81AC;
+}
+#hazmatbar {
+	background-color: #81A1C1;
+}
+#webcam2bar {
+	background-color: #88C0D0;
+}
+#irbar {
+	background-color: #8FBCBB;
+}
+#masterbar {
+	background-color: #B48EAD;
+}
+#frontbar {
+	background-color: #A3BE8C;
+}
+
+
 
 #main {
 	width: 100%;
@@ -85,8 +120,30 @@ p {
 		</div>
 		<div id="sidebar">
 			<h4>Initial Delay</h4>
-			<p id="delay">0 MS</p>
-			<div id="delaybar"></div>
+			<div class="bar" id="delaybar">
+				<span id="delay">0 MS</span>
+			</div>
+
+			<h4>FPS's</h4>
+			<div class="bar" id="webcam1bar">
+				<span id="fps-webcam1">20 FPS</span>
+			</div>
+			<div class="bar" id="hazmatbar">
+				<span id="fps-hazmat">20 FPS</span>
+			</div>
+			<div class="bar" id="webcam2bar">
+				<span id="fps-webcam2">20 FPS</span>
+			</div>
+			<div class="bar" id="irbar">
+				<span id="fps-ir">20 FPS</span>
+			</div>
+			<div class="bar" id="masterbar">
+				<span id="fps-master">20 FPS</span>
+			</div>
+			<div class="bar" id="frontbar">
+				<span id="fps-front">20 FPS</span>
+			</div>
+
 			<h4>Detected Hazmat Labels:</h4>
 			<p id="hazmats"></p>
 
@@ -108,12 +165,43 @@ p {
 
 		let last_ms = Date.now();
 
+		let t0 = performance.now();
+		let t1 = performance.now();
+		let delta = FRONT_END_FPS;
+
+		let max_fpses = [1];
+
 		const end = setInterval(function() {
 			const path = "/get";
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
 				.then(data => {
 					try {
+						t1 = performance.now();
+						delta = (t1 - t0) / 1000;
+						t0 = t1;
+
+						const fpses = data["fpses"];
+						const fps_values = [...fpses, 1 / delta];
+						
+						const max_fps = Math.max(...fps_values);
+						max_fpses.push(max_fps);
+						max_fpses = max_fpses.slice(-(3 * FRONT_END_FPS));
+						const max_ratio = Math.max(...max_fpses);
+
+						const fps_ids = ["webcam1", "hazmat", "webcam2", "ir", "master", "front"];
+
+						for (let i = 0; i < fps_ids.length; i++) {
+							const fps_id = fps_ids[i];
+							const fps = fps_values[i];
+							const fps_ele = document.getElementById("fps-" + fps_id);
+							fps_ele.innerHTML = fps.toFixed(0) + " FPS";
+
+							const fpsbar = document.getElementById(fps_id + "bar");
+							const ratio = fps / max_ratio;
+							fpsbar.style.width = ratio * 100 + "%";
+						}
+
 						const frame_ele = document.getElementById("frame");
 						const frame = data["frame"];
 						frame_ele.src = "data:image/jpg;base64," + frame;
@@ -146,7 +234,7 @@ p {
 							delay_ele.innerHTML = rounded + " MS";
 
 							const delaybar = document.getElementById("delaybar");
-							delaybar.style.width = diff / 10 + "%";
+							delaybar.style.width = diff / 5 + "%";
 
 							last_ms = ms;
 						}

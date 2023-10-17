@@ -85,6 +85,7 @@ MAIN_STATE = {
     "h": 1,
     "hazmats_found": [],
     "qr_found": [],
+    "fpses": [-1, -1, -1, -1, -1],
 }
 SERVER_STATE = {}
 
@@ -488,6 +489,17 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
         server_ds.s1["qr_found"] = all_qr_found
 
         server_ds.s1["ns"] = frame_read_time_ns
+
+        if video_capture_zero:
+            fpses = [camera_dses[base_key].s2["fps"]] * 3
+        else:
+            fpses = []
+            for key in camera_dses.keys():
+                fpses.append(camera_dses[key].s2["fps"])
+        fpses.append(hazmat_ds.s2["hazmat_fps"])
+        fpses.append(fps_controller.fps())
+        server_ds.s1["fpses"] = fpses
+
 
         server_ds.put_s1(server_dq)
 
