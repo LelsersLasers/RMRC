@@ -5,6 +5,7 @@ import mahotas
 import util
 import levenshtein
 
+
 def processScreenshot(img, val):
     # CHANGE THRESHOLD AS NEEDED
     lowerThresh = np.array([0, 0, 0])  # lower thresh for black

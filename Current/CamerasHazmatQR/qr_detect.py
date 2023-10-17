@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import pyzbar.pyzbar as pyzbar
 
+
 def qr_detect(frame):
     decoded_objects = pyzbar.decode(frame)
 
