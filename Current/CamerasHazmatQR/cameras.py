@@ -85,41 +85,43 @@ STATE_SERVER_MAIN = {
     "fpses": [-1, -1, -1, -1, -1],
 }
 STATE_SERVER = {} # keys
+# ---------------------------------------------------------------------------- #
 
 
-app = Flask(__name__)
-server_dq = util.DoubleQueue()
-server_ds = util.DoubleState(STATE_SERVER_MAIN, STATE_SERVER)
+# ---------------------------------------------------------------------------- #
+def server_main(server_dq):
+    app = Flask(__name__)
+    server_ds = util.DoubleState(STATE_SERVER_MAIN, STATE_SERVER)
 
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+    @app.route("/")
+    def index():
+        return render_template("index.html")
 
 
-@app.route("/set/<key>/<value>", methods=["GET"])
-def set_key(key, value):
-    global server_dq, server_ds
+    @app.route("/set/<key>/<value>", methods=["GET"])
+    def set_key(key, value):
+        server_ds.s2[key] = value
 
-    server_ds.s2[key] = value
+        server_ds.put_s2(server_dq)
 
-    server_ds.put_s2(server_dq)
+        response = jsonify(server_ds.s2)
+        response.headers.add("Access-Control-Allow-Origin", "*")
 
-    response = jsonify(server_ds.s2)
-    response.headers.add("Access-Control-Allow-Origin", "*")
-
-    return response
+        return response
 
 
-@app.route("/get", methods=["GET"])
-def get():
-    global server_dq, server_ds
-    server_ds.update_s1(server_dq)
+    @app.route("/get", methods=["GET"])
+    def get():
+        server_ds.update_s1(server_dq)
 
-    response = jsonify(server_ds.s1)
-    response.headers.add("Access-Control-Allow-Origin", "*")
+        response = jsonify(server_ds.s1)
+        response.headers.add("Access-Control-Allow-Origin", "*")
 
-    return response
+        return response
+    
+    
+    app.run(debug=False, port=5000, host="0.0.0.0")
 # ---------------------------------------------------------------------------- #
 
 
@@ -209,6 +211,7 @@ def hazmat_main(hazmat_dq):
                 unscale = 1 / HAZMAT_FRAME_SCALE
                 hazmat_ds.s2["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
 
+            # ---------------------------------------------------------------- #
             fps_controller.update()
             hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
 
@@ -219,9 +222,12 @@ def hazmat_main(hazmat_dq):
             hazmat_ds.s2["last_update"] = time.time()
 
             hazmat_ds.put_s2(hazmat_dq)
+            # ---------------------------------------------------------------- #
 
+            # ---------------------------------------------------------------- #
             if not hazmat_ds.s1["run_hazmat"]:
                 time.sleep(1 / HAZMAT_DRY_FPS)
+            # ---------------------------------------------------------------- #
     except KeyboardInterrupt:
         pass
 # ---------------------------------------------------------------------------- #
@@ -551,10 +557,13 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("\nStarting server...")
 
+    server_dq = util.DoubleQueue()
+
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.WARNING)
 
-    flask_thread = Process(target=app.run, kwargs={"debug": False, "port": 5000, "host": "0.0.0.0"})
+    # flask_thread = Process(target=app.run, kwargs={"debug": False, "port": 5000, "host": "0.0.0.0"})
+    flask_thread = Process(target=server_main, args=(server_dq,))
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
     # ------------------------------------------------------------------------ #
