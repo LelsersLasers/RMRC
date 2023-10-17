@@ -106,7 +106,7 @@ span {
 #masterbar {
 	background-color: #B48EAD;
 }
-#frontbar {
+#frontendbar {
 	background-color: #A3BE8C;
 }
 
@@ -166,7 +166,7 @@ span {
 		const FRONT_END_FPS = 30;
 
 		const DELAY = 1000 / FRONT_END_FPS;
-        const INTITAL_DELAY_ONLY = false;
+        const INTITAL_DELAY_ONLY = true;
 
 		const STATE = {}; // STATE[key] = true/false
 
@@ -179,7 +179,7 @@ span {
 		let delta = FRONT_END_FPS;
 
 		let max_fpses = [1];
-        const MAX_FPS_LEN = 3 * FRONT_END_FPS;
+        const MAX_FPS_LEN = 1 * FRONT_END_FPS;
 
 		const end = setInterval(function() {
 			const path = "/get";
@@ -239,7 +239,7 @@ span {
 
 
 						const ms = data["ns"] / 1000000;
-						if (ms.toFixed(0) != last_ms.toFixed(0) || INTITAL_DELAY_ONLY) {
+						if (ms.toFixed(0) != last_ms.toFixed(0) || !INTITAL_DELAY_ONLY) {
 							const now = Date.now()
 							const diff = now - ms;
 							const rounded = diff.toFixed(0);
