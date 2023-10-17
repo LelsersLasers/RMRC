@@ -106,7 +106,7 @@ span {
 #masterbar {
 	background-color: #B48EAD;
 }
-#frontbar {
+#frontendbar {
 	background-color: #A3BE8C;
 }
 
@@ -148,8 +148,8 @@ span {
 			<div class="bar" id="masterbar">
 				<span id="fps-master">20 FPS</span>
 			</div>
-			<div class="bar" id="frontbar">
-				<span id="fps-front">20 FPS</span>
+			<div class="bar" id="frontendbar">
+				<span id="fps-frontend">20 FPS</span>
 			</div>
 
 			<h4>Detected Hazmat Labels:</h4>
@@ -165,19 +165,20 @@ span {
 		const FLASK_SERVER = "http://localhost:5000";
 		const FRONT_END_FPS = 30;
 
-		const delay = 1000 / FRONT_END_FPS;
+		const DELAY = 1000 / FRONT_END_FPS;
 
 		const STATE = {}; // STATE[key] = true/false
 
 		let show_sidebar = true;
 
-		let last_ms = Date.now();
-
 		let t0 = performance.now();
 		let t1 = performance.now();
-		let delta = FRONT_END_FPS;
+		let delta = DELAY;
+
+		let delays = [DELAY];
 
 		let max_fpses = [1];
+        const MAX_LEN = 1 * FRONT_END_FPS;
 
 		const end = setInterval(function() {
 			const path = "/get";
@@ -194,16 +195,16 @@ span {
 						
 						const max_fps = Math.max(...fps_values);
 						max_fpses.push(max_fps);
-						max_fpses = max_fpses.slice(-(3 * FRONT_END_FPS));
+						max_fpses = max_fpses.slice(-MAX_LEN);
 						const max_ratio = Math.max(...max_fpses);
 
-						const fps_ids = ["webcam1", "hazmat", "webcam2", "ir", "master", "front"];
+						const fps_ids = ["webcam1", "hazmat", "webcam2", "ir", "master", "frontend"];
 
 						for (let i = 0; i < fps_ids.length; i++) {
 							const fps_id = fps_ids[i];
 							const fps = fps_values[i];
 							const fps_ele = document.getElementById("fps-" + fps_id);
-							fps_ele.innerHTML = fps.toFixed(0) + " FPS";
+							fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
 
 							const fpsbar = document.getElementById(fps_id + "bar");
 							const ratio = fps / max_ratio;
@@ -226,7 +227,7 @@ span {
 						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
 
 						const EM = 16; // 1em = 16px (usually)
-						const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - 2 * EM;
+						const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - 3 * EM;
 						const max_h = window.innerHeight - 2 * EM;
 
 						const w = Math.min(max_w, max_h * ratio);
@@ -237,24 +238,31 @@ span {
 
 
 						const ms = data["ns"] / 1000000;
-						if (ms.toFixed(0) != last_ms.toFixed(0)) {
-							const now = Date.now()
-							const diff = now - ms;
-							const rounded = diff.toFixed(0);
+						const now = Date.now()
+						const diff = now - ms;
+						
+						delays.push(diff);
+						delays = delays.slice(-MAX_LEN);
+						const average = delays.reduce((a, b) => a + b, 0) / delays.length;
+						const rounded = average.toFixed(0);
 
-							const delay_ele = document.getElementById("delay");
-							delay_ele.innerHTML = rounded + " MS";
+						const delay_ele = document.getElementById("delay");
+						delay_ele.innerHTML = rounded + " MS";
 
-							const delaybar = document.getElementById("delaybar");
-							delaybar.style.width = diff / 5 + "%";
+						const delaybar = document.getElementById("delaybar");
+						delaybar.style.width = average / 5 + "%";
 
-							last_ms = ms;
-						}
+						last_ms = ms;
+
+						t3 = performance.now();
+						delta2 = (t3 - t2) / 1000;
+						t2 = t3;
+						console.log((1 / delta2).toFixed(0))
 					} catch (e) {
 						console.log(e);
 					}
 				});
-		}, delay);
+		}, DELAY);
 
 		function send_state() {
 			const base_path = "/set";
