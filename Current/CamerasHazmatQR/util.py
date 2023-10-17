@@ -1,5 +1,7 @@
 import time
 import signal
+import numpy as np
+import cv2
 import queue
 from multiprocessing import Queue
 
@@ -128,16 +130,31 @@ class DoubleState:
 
 
 # ---------------------------------------------------------------------------- #
-class Rect:
-    def __init__(self, r):
-        self.x = r[0]
-        self.y = r[1]
-        self.w = r[2]
-        self.h = r[3]
+class CNT:
+    def __init__(self, cnt, frame_shape):
+        self.cnt = cnt
+        self.frame_shape = frame_shape
 
     def __eq__(self, other):
         # True if self and other overlap
-        return not (self.x + self.w <= other.x or other.x + other.w <= self.x or self.y + self.h <= other.y or other.y + other.h <= self.y)
+        return contours_overlap(self.frame_shape, self.cnt, other.cnt)
+
+
+def contours_overlap(frame_shape, c1, c2):
+    mask1 = np.zeros(frame_shape, np.uint8)
+    cv2.drawContours(mask1, [c1], -1, 255, -1)
+    px_count1 = cv2.countNonZero(mask1)
+
+    mask2 = np.zeros(frame_shape, np.uint8)
+    cv2.drawContours(mask2, [c2], -1, 255, -1)
+    px_count2 = cv2.countNonZero(mask2)
+
+    mask3 = np.zeros(frame_shape, np.uint8)
+    cv2.drawContours(mask3, [c1], -1, 255, -1)
+    cv2.drawContours(mask3, [c2], -1, 255, -1)
+    px_count3 = cv2.countNonZero(mask3)
+
+    return px_count3 < px_count1 + px_count2
 # ---------------------------------------------------------------------------- #
 
 

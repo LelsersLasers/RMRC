@@ -169,12 +169,12 @@ def hazmat_main(hazmat_dq):
                         for received_tups in all_received_tups:
                             for r in received_tups:
                                 text = r[0].strip()
-                                cnt = r[1]
-                                rect = util.Rect(cv2.boundingRect(cnt))
-                                found_this_frame.append((text, cnt, rect))
+                                cnt = util.CNT(r[1], frame.shape)
+                                found_this_frame.append((text, cnt))
                                 all_found.append(text)
 
-                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[2])
+                    # uses util.CNT.__eq__
+                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[1])
 
                     fontScale = 0.5
                     fontColor = (0, 0, 255)
@@ -182,13 +182,14 @@ def hazmat_main(hazmat_dq):
                     lineType = 2
 
                     for found in found_this_frame:
-                        text, cnt, rect = found
+                        text, cnt = found
 
-                        frame = cv2.drawContours(frame, [cnt], -1, (255, 0, 0), 3)
+                        frame = cv2.drawContours(frame, [cnt.cnt], -1, (255, 0, 0), 3)
+                        x, y, w, h = cv2.boundingRect(cnt.cnt)
 
-                        cv2.rectangle(frame, (rect.x, rect.y), (rect.x + rect.w, rect.y + rect.h), (0, 225, 0), 4)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
 
-                        corner = (rect.x + 5, rect.y + 15)
+                        corner = (x + 5, y + 15)
 
                         cv2.putText(
                             frame,
@@ -327,6 +328,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
         camera_dses[key] = camera_ds
 
     base_key = None if video_capture_zero else "webcam1"
+    frame_to_pass_to_hazmat = None
 
     killer = util.GracefulKiller()
 
@@ -343,8 +345,10 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
             if key == base_key:
                 frame_read_time_ns = camera_ds.s2["ns"]
+                frame_to_pass_to_hazmat = frames[key].copy()
 
         frame = frames[base_key]
+
         if frame is None:
             time.sleep(0.5)
             continue
@@ -367,8 +371,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
             hazmat_frame = hazmat_ds.s2["hazmat_frame"]
         else:
             hazmat_frame = np.zeros_like(frame)
-
-        frame_to_pass_to_hazmat = frame.copy()
 
         time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
         ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
