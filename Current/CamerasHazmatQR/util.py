@@ -3,6 +3,7 @@ import signal
 import queue
 from multiprocessing import Queue
 
+# ---------------------------------------------------------------------------- #
 class ViewMode:
     GRID = 0
     ZOOM = 1
@@ -10,7 +11,10 @@ class ViewMode:
     def __init__(self, start_mode = GRID):
         self.mode = start_mode
         self.zoom_on = -1
+# ---------------------------------------------------------------------------- #
 
+
+# ---------------------------------------------------------------------------- #
 class Toggler:
     def __init__(self, start_state=False):
         self.state = start_state
@@ -26,7 +30,10 @@ class Toggler:
     
     def __str__(self):
         return str(self.state)
-    
+# ---------------------------------------------------------------------------- #
+
+
+# ---------------------------------------------------------------------------- #
 class ToggleKey:
     def __init__(self, default = False):
         self.was_down = default
@@ -38,8 +45,11 @@ class ToggleKey:
         elif not condition:
             self.was_down = False
         return False
-    
-class FPS:
+# ---------------------------------------------------------------------------- #
+
+
+# ---------------------------------------------------------------------------- #
+class FPSController:
     def __init__(self, start_delta = 1/30):
         self.t0 = time.time()
         self.t1 = time.time()
@@ -57,22 +67,10 @@ class FPS:
             return -1
         else:
             return 1 / self.delta
-        
+# ---------------------------------------------------------------------------- #
 
-def remove_dups(list, comp):
-    new_list = []
-    for item in list:
-        if comp(item) not in [comp(x) for x in new_list]:
-            new_list.append(item)
-    return new_list
 
-def removeSpecialCharacter(s):
-    t = ""
-    for i in s:
-        if i >= 'A' and i <= 'Z' or i == " ":
-            t += i
-    return t
-
+# ---------------------------------------------------------------------------- #
 def close_thread(t):
     t.terminate()
     time.sleep(1) # wait for thread to terminate
@@ -126,8 +124,10 @@ class DoubleState:
         dq.put_q1(self.s1)
     def put_s2(self, dq):
         dq.put_q2(self.s2)
-    
+# ---------------------------------------------------------------------------- #
 
+
+# ---------------------------------------------------------------------------- #
 class Rect:
     def __init__(self, r):
         self.x = r[0]
@@ -138,11 +138,32 @@ class Rect:
     def __eq__(self, other):
         # True if self and other overlap
         return not (self.x + self.w <= other.x or other.x + other.w <= self.x or self.y + self.h <= other.y or other.y + other.h <= self.y)
+# ---------------------------------------------------------------------------- #
 
+
+# ---------------------------------------------------------------------------- #
 class GracefulKiller:
     kill_now = False
     def __init__(self):
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
-    def exit_gracefully(self, *args):
+    def exit_gracefully(self):
         self.kill_now = True
+# ---------------------------------------------------------------------------- #
+
+
+# ---------------------------------------------------------------------------- #
+def remove_dups(list, comp):
+    new_list = []
+    for item in list:
+        if comp(item) not in [comp(x) for x in new_list]:
+            new_list.append(item)
+    return new_list
+
+def removeSpecialCharacter(s):
+    t = ""
+    for i in s:
+        if i >= 'A' and i <= 'Z' or i == " ":
+            t += i
+    return t
+# ---------------------------------------------------------------------------- #

@@ -9,7 +9,6 @@ CAP_ARGS = {
 """
 TODO:
 ws vs not
-FPS displays per camera and overall
 """
 
 
@@ -45,7 +44,7 @@ HAMZAT_POOL_SIZE = 4
 
 # ---------------------------------------------------------------------------- #
 # What main thread sends
-START_STATE_MAIN = {
+STATE_HAZMAT_MAIN = {
     "frame": None,
     "run_hazmat": False,
     "quit": False,
@@ -53,7 +52,7 @@ START_STATE_MAIN = {
 }
 
 # What hazmat thread sends
-START_STATE_HAZMAT = {
+STATE_HAZMAT = {
     "hazmat_fps": HAZMAT_DRY_FPS,
     "hazmat_frame": None,
     "hazmats_found": [],
@@ -63,22 +62,20 @@ START_STATE_HAZMAT = {
 
 
 # ---------------------------------------------------------------------------- #
-CAMERA_MAIN_STATE = {
+STATE_CAMERA_MAIN = {
     "quit": False,
 }
 
-CAMERA_STATE = {
+STATE_CAMERA = {
     "frame": None,
     "ns": 0,
     "fps": 20,
-    # "cap": None,
 }
-
 # ---------------------------------------------------------------------------- #
 
 
 # ---------------------------------------------------------------------------- #
-MAIN_STATE = {
+STATE_SERVER_MAIN = {
     "frame": "",
     "ns": 0,
     "w": 1,
@@ -87,12 +84,12 @@ MAIN_STATE = {
     "qr_found": [],
     "fpses": [-1, -1, -1, -1, -1],
 }
-SERVER_STATE = {}
+STATE_SERVER = {} # keys
 
 
 app = Flask(__name__)
 server_dq = util.DoubleQueue()
-server_ds = util.DoubleState(MAIN_STATE, SERVER_STATE)
+server_ds = util.DoubleState(STATE_SERVER_MAIN, STATE_SERVER)
 
 
 @app.route("/")
@@ -123,8 +120,6 @@ def get():
     response.headers.add("Access-Control-Allow-Origin", "*")
 
     return response
-
-
 # ---------------------------------------------------------------------------- #
 
 
@@ -132,15 +127,17 @@ def get():
 def hazmat_main(hazmat_dq):
     time.sleep(CAMERA_WAKEUP_TIME)
 
-    fps_controller = util.FPS()
+    fps_controller = util.FPSController()
 
     all_found = []
     frame = None
 
-    hazmat_ds = util.DoubleState(START_STATE_MAIN, START_STATE_HAZMAT)
+    hazmat_ds = util.DoubleState(STATE_HAZMAT_MAIN, STATE_HAZMAT)
 
     try:
         while not hazmat_ds.s1["quit"]:
+
+            # ---------------------------------------------------------------- #
             clear_all_found = False
             while True:
                 try:
@@ -152,6 +149,7 @@ def hazmat_main(hazmat_dq):
             if clear_all_found:
                 all_found = []
                 print("Cleared all found hazmat labels.")
+            # ---------------------------------------------------------------- #
 
             if hazmat_ds.s1["frame"] is not None:
                 frame = hazmat_ds.s1["frame"]
@@ -226,19 +224,16 @@ def hazmat_main(hazmat_dq):
                 time.sleep(1 / HAZMAT_DRY_FPS)
     except KeyboardInterrupt:
         pass
-
-
 # ---------------------------------------------------------------------------- #
 
 
 # ---------------------------------------------------------------------------- #
 def camera_main(camera_dq, key):
-    camera_ds = util.DoubleState(CAMERA_MAIN_STATE, CAMERA_STATE)
+    camera_ds = util.DoubleState(STATE_CAMERA_MAIN, STATE_CAMERA)
 
     print(f"Opening camera {key}...")
     if key is not None:
-        cap_arg = CAP_ARGS[key]
-        cap = cv2.VideoCapture(cap_arg, cv2.CAP_GSTREAMER)
+        cap = cv2.VideoCapture(CAP_ARGS[key], cv2.CAP_GSTREAMER)
     else:
         cap = cv2.VideoCapture(0)
     print(f"Camera {key} VideoCapture created.")
@@ -249,7 +244,7 @@ def camera_main(camera_dq, key):
 
     time.sleep(CAMERA_WAKEUP_TIME)
 
-    fps_controller = util.FPS()
+    fps_controller = util.FPSController()
 
     try:
         while not camera_ds.s1["quit"]:
@@ -271,14 +266,9 @@ def camera_main(camera_dq, key):
             camera_ds.s2["fps"] = fps_controller.fps()
 
             camera_ds.put_s2(camera_dq)
-    # except KeyboardInterrupt:
     finally:
-        # I don't think I need to offical release the VideoCapture
-        # It should happen automatically when the VideoCapture is deconstructed
         print(f"Releasing camera {key}...")
         cap.release()
-
-
 # ---------------------------------------------------------------------------- #
 
 
@@ -309,7 +299,7 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
-    fps_controller = util.FPS()
+    fps_controller = util.FPSController()
 
     run_hazmat_toggler = util.Toggler(False)
     run_hazmat_hold = False
@@ -322,12 +312,12 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
     all_qr_found = []
 
-    hazmat_ds = util.DoubleState(START_STATE_MAIN, START_STATE_HAZMAT)
-    server_ds = util.DoubleState(MAIN_STATE, SERVER_STATE)
+    hazmat_ds = util.DoubleState(STATE_HAZMAT_MAIN, STATE_HAZMAT)
+    server_ds = util.DoubleState(STATE_SERVER_MAIN, STATE_SERVER)
 
     camera_dses = {}
     for key in camera_dqs.keys():
-        camera_ds = util.DoubleState(CAMERA_MAIN_STATE, CAMERA_STATE)
+        camera_ds = util.DoubleState(STATE_CAMERA_MAIN, STATE_CAMERA)
         camera_dses[key] = camera_ds
 
     base_key = None if video_capture_zero else "webcam1"
@@ -337,6 +327,7 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
     while not killer.kill_now and not hazmat_ds.s1["quit"]:
         fps_controller.update()
 
+        # -------------------------------------------------------------------- #
         frames = {}
         frame_read_time_ns = time.time_ns()
         for key, camera_dq in camera_dqs.items():
@@ -360,7 +351,10 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
             fps_text(ir_frame, camera_dses["ir"].s2["fps"])
 
             fps_text(frames["webcam2"], camera_dses["webcam2"].s2["fps"])
+        # -------------------------------------------------------------------- #
+        
 
+        # -------------------------------------------------------------------- #
         hazmat_ds.update_s2(hazmat_dq)
 
         if hazmat_ds.s2["hazmat_frame"] is not None:
@@ -370,8 +364,6 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
         frame_to_pass_to_hazmat = frame.copy()
 
-        hazmat_ds.s1["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
-
         time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
         ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
         w = ratio * (frame.shape[1] - 10)
@@ -379,7 +371,10 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
         cv2.line(
             hazmat_frame, (5, 5), (5 + int(w), 5), (255, 255, 0) if not hazmat_ds.s1["run_hazmat"] else (0, 0, 255), 3
         )
+        # -------------------------------------------------------------------- #
 
+
+        # -------------------------------------------------------------------- #
         if run_qr_toggler:
             start = time.time()
 
@@ -407,16 +402,16 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
         all_qr_found = list(set(all_qr_found))
         all_qr_found.sort()
-
-        # print(fps_controller.fps())
-        fps_text(frame, camera_dses[base_key].s2["fps"])
-        fps_text(hazmat_frame, hazmat_ds.s2["hazmat_fps"])
+        # -------------------------------------------------------------------- #
 
 
+        # -------------------------------------------------------------------- #
         server_ds.update_s2(server_dq)
 
         if hazmat_tk.down(key_down(server_ds.s2, HAZMAT_TOGGLE_KEY)):
             run_hazmat_toggler.toggle()
+        run_hazmat_hold = key_down(server_ds.s2, HAZMAT_HOLD_KEY)
+        
         if qr_tk.down(key_down(server_ds.s2, QR_TOGGLE_KEY)):
             run_qr_toggler.toggle()
 
@@ -439,9 +434,12 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
             view_mode.zoom_on = 2
         elif key_down(server_ds.s2, "4"):
             view_mode.mode = util.ViewMode.ZOOM
-            view_mode.zoom_on = 3
+            view_mode.zoom_on = 3        
+        # -------------------------------------------------------------------- #
 
-        run_hazmat_hold = key_down(server_ds.s2, HAZMAT_HOLD_KEY)
+
+        # -------------------------------------------------------------------- #
+        hazmat_ds.s1["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
 
         if hazmat_ds.s1["clear_all_found"] == 1:
             hazmat_ds.s1["clear_all_found"] = 2
@@ -450,6 +448,12 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
         hazmat_ds.s1["frame"] = frame_to_pass_to_hazmat
         hazmat_ds.put_s1(hazmat_dq)
+        # -------------------------------------------------------------------- #
+
+
+        # -------------------------------------------------------------------- #
+        fps_text(frame, camera_dses[base_key].s2["fps"])
+        fps_text(hazmat_frame, hazmat_ds.s2["hazmat_fps"])
 
         if view_mode.mode == util.ViewMode.GRID:
             top_combined = cv2.hconcat([frame, hazmat_frame])
@@ -474,36 +478,34 @@ def main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
             bottom_combined = all_frames[view_mode.zoom_on]
 
         combined = cv2.vconcat([top_combined, bottom_combined])
-
         combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
+        # -------------------------------------------------------------------- #
+
+
+        # -------------------------------------------------------------------- #
         server_ds.s1["frame"] = base64.b64encode(cv2.imencode(".jpg", combine_downscaled)[1]).decode()
 
         server_ds.s1["w"] = combine_downscaled.shape[1]
         server_ds.s1["h"] = combine_downscaled.shape[0]
 
-        hazmats_found = hazmat_ds.s2["hazmats_found"]
-        hazmats_found = list(set(hazmats_found))
-        hazmats_found.sort()
-
-        server_ds.s1["hazmats_found"] = hazmats_found
+        server_ds.s1["hazmats_found"] = hazmat_ds.s2["hazmats_found"]
         server_ds.s1["qr_found"] = all_qr_found
 
         server_ds.s1["ns"] = frame_read_time_ns
 
         if video_capture_zero:
+            # webcam1, webcam2, ir
             fpses = [camera_dses[base_key].s2["fps"]] * 3
         else:
             fpses = []
             for key in camera_dses.keys():
                 fpses.append(camera_dses[key].s2["fps"])
-        fpses.append(hazmat_ds.s2["hazmat_fps"])
-        fpses.append(fps_controller.fps())
+        fpses.append(hazmat_ds.s2["hazmat_fps"]) # hazmat
+        fpses.append(fps_controller.fps()) # main/master
         server_ds.s1["fpses"] = fpses
 
-
         server_ds.put_s1(server_dq)
-
-
+        # -------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
 
 
@@ -516,6 +518,7 @@ args = vars(ap.parse_args())
 
 # ---------------------------------------------------------------------------- #
 if __name__ == "__main__":
+    # ------------------------------------------------------------------------ #
     print("\nStarting camera threads...")
 
     camera_dqs = {}
@@ -533,7 +536,9 @@ if __name__ == "__main__":
         camera_threads[key] = camera_thread
 
     time.sleep(CAMERA_WAKEUP_TIME * 2)
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     print("\nStarting hazmat thread...")
 
     hazmat_dq = util.DoubleQueue()
@@ -541,7 +546,9 @@ if __name__ == "__main__":
     hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq,))
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     print("\nStarting server...")
 
     log = logging.getLogger("werkzeug")
@@ -550,7 +557,9 @@ if __name__ == "__main__":
     flask_thread = Process(target=app.run, kwargs={"debug": False, "port": 5000, "host": "0.0.0.0"})
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     print("\nStarting main thread...\n")
 
     try:
@@ -558,29 +567,39 @@ if __name__ == "__main__":
     except Exception as e:
         # print(e)
         pass
+    # ------------------------------------------------------------------------ #
+
 
     print("\n\nExiting...")
 
+
+    # ------------------------------------------------------------------------ #
     print("Closing camera threads...")
     for key in camera_threads.keys():
         print(f"Closing camera {key} capture and thread...")
-        CAMERA_MAIN_STATE["quit"] = True
+        STATE_CAMERA_MAIN["quit"] = True
 
         camera_dq = camera_dqs[key]
-        camera_dq.put_q1(CAMERA_MAIN_STATE)
+        camera_dq.put_q1(STATE_CAMERA_MAIN)
 
         camera_thread = camera_threads[key]
         util.close_thread(camera_thread)
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     print("Closing hazmat thread...")
-    START_STATE_MAIN["quit"] = True
-    hazmat_dq.put_q1(START_STATE_MAIN)
+    STATE_HAZMAT_MAIN["quit"] = True
+    hazmat_dq.put_q1(STATE_HAZMAT_MAIN)
 
     util.close_thread(hazmat_thread)
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     print("Closing server...")
     util.close_thread(flask_thread)
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     print("Closing queues...")
 
     hazmat_dq.close()
@@ -588,5 +607,6 @@ if __name__ == "__main__":
 
     for camera_dq in camera_dqs.values():
         camera_dq.close()
+    # ------------------------------------------------------------------------ #
 
     print("Done.")
