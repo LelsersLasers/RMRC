@@ -110,10 +110,12 @@ span {
 	background-color: #A3BE8C;
 }
 
-#rambar, #cpubar {
-	background-color: #4C566A;
+#rambar {
+	background-color: #EBCB8B;
 }
-
+#cpubar {
+	background-color: #D08770;
+}
 
 
 #main {
@@ -262,7 +264,7 @@ span {
 						frame_ele.style.height = h + "px";
 
 
-						const ms = data["ns"] / 1000000;
+						const ms = data["time"] * 1000;
 						const now = Date.now()
 						const diff = now - ms;
 						

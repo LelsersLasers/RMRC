@@ -269,8 +269,7 @@ def camera_main(camera_dq, key):
                 print(f"Camera {key} read failed.")
                 break
 
-            # camera_ds.s2["ns"] = time.time_ns()
-            camera_ds.s2["ns"] = time.time() * 1e9
+            camera_ds.s2["time"] = time.time()
 
             if not ret or frame is None:
                 print("Exiting ...")
@@ -340,20 +339,19 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
     killer = util.GracefulKiller()
 
-    frame_read_time_ns = time.time() * 1e9
-
     while not killer.kill_now and not hazmat_ds.s1["quit"]:
         fps_controller.update()
 
         # -------------------------------------------------------------------- #
         frames = {}
+        frame_read_time = time.time()
         for key, camera_dq in camera_dqs.items():
             camera_ds = camera_dses[key]
             camera_ds.update_s2(camera_dq)
             frames[key] = camera_ds.s2["frame"]
 
             if key == base_key:
-                frame_read_time_ns = camera_ds.s2["ns"]
+                frame_read_time = camera_ds.s2["time"]
                 frame_to_pass_to_hazmat = frames[key].copy()
 
         frame = frames[base_key]
@@ -508,7 +506,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
         server_ds.s1["hazmats_found"] = hazmat_ds.s2["hazmats_found"]
         server_ds.s1["qr_found"] = all_qr_found
 
-        server_ds.s1["ns"] = frame_read_time_ns
+        server_ds.s1["time"] = frame_read_time
 
         if video_capture_zero:
             fpses = [
