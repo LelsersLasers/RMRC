@@ -584,7 +584,6 @@ if __name__ == "__main__":
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.WARNING)
 
-    # flask_thread = Process(target=app.run, kwargs={"debug": False, "port": 5000, "host": "0.0.0.0"})
     flask_thread = Process(target=server_main, args=(server_dq,))
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
