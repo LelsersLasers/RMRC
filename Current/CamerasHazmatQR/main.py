@@ -306,6 +306,14 @@ def fps_text(frame, fps):
     text = "FPS: %.0f" % fps
     cv2.putText(frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
+def ratio_bar(frame, ratio, active):
+    ratio = min(ratio, 1)
+    w = ratio * (frame.shape[1] - 10)
+
+    color =  (0, 0, 255) if active else (255, 255, 0)
+
+    cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
+
 
 def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
@@ -382,12 +390,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
             hazmat_frame = np.zeros_like(frame)
 
         time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
-        ratio = min(time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, 1)
-        w = ratio * (frame.shape[1] - 10)
-
-        cv2.line(
-            hazmat_frame, (5, 5), (5 + int(w), 5), (255, 255, 0) if not hazmat_ds.s1["run_hazmat"] else (0, 0, 255), 3
-        )
+        ratio_bar(hazmat_frame, time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, hazmat_ds.s1["run_hazmat"])
         # -------------------------------------------------------------------- #
 
 
@@ -410,10 +413,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
             end = time.time()
 
-            ratio = min((end - start) / QR_TIME_BAR_SCALE, 1)
-            w = ratio * (frame.shape[1] - 10)
-
-            cv2.line(frame, (5, 5), (5 + int(w), 5), (0, 0, 255), 3)
+            ratio_bar(frame, (end - start) / QR_TIME_BAR_SCALE, True)
         else:
             cv2.line(frame, (5, 5), (5, 5), (255, 255, 0), 3)
 
