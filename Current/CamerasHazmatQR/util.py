@@ -135,26 +135,19 @@ class CNT:
         self.cnt = cnt
         self.frame_shape = frame_shape
 
+        self.mask_shape = (frame_shape[0], frame_shape[1], 1)
+        mask1 = np.zeros(self.mask_shape, np.uint8)
+        cv2.drawContours(mask1, [cnt], -1, 255, -1)
+        self.pixel_count = cv2.countNonZero(mask1)
+
     def __eq__(self, other):
         # True if self and other overlap
-        return contours_overlap(self.frame_shape, self.cnt, other.cnt)
+        mask = np.zeros(self.mask_shape, np.uint8)
+        cv2.drawContours(mask, [self.cnt], -1, 255, -1)
+        cv2.drawContours(mask, [other.cnt], -1, 255, -1)
+        px_count = cv2.countNonZero(mask)
 
-
-def contours_overlap(frame_shape, c1, c2):
-    mask1 = np.zeros(frame_shape, np.uint8)
-    cv2.drawContours(mask1, [c1], -1, 255, -1)
-    px_count1 = cv2.countNonZero(mask1)
-
-    mask2 = np.zeros(frame_shape, np.uint8)
-    cv2.drawContours(mask2, [c2], -1, 255, -1)
-    px_count2 = cv2.countNonZero(mask2)
-
-    mask3 = np.zeros(frame_shape, np.uint8)
-    cv2.drawContours(mask3, [c1], -1, 255, -1)
-    cv2.drawContours(mask3, [c2], -1, 255, -1)
-    px_count3 = cv2.countNonZero(mask3)
-
-    return px_count3 < px_count1 + px_count2
+        return px_count < self.pixel_count + other.pixel_count
 # ---------------------------------------------------------------------------- #
 
 
