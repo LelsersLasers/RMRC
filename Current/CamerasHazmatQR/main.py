@@ -9,6 +9,8 @@ CAP_ARGS = {
 """
 TODO:
 ws vs not
+qr gets its own thread?
+hazmat/qr tanks other fps'es
 """
 
 

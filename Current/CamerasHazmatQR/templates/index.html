@@ -75,6 +75,7 @@ p {
 	margin: 0;
 	padding: 0;
 	padding-top: 0.1em;
+	min-width: 20px;
 }
 
 span {
@@ -85,9 +86,16 @@ span {
 	padding-bottom: 0.1em;
 }
 
-#delaybar {
+#initalbar {
 	background-color: #BF616A;
 }
+#totalbar {
+	background-color: #BF616A;
+}
+#pingbar {
+	background-color: #BF616A;
+}
+
 #webcam1bar {
 	background-color: #5E81AC;
 }
@@ -148,9 +156,15 @@ kbd {
 			<img id="frame" />
 		</div>
 		<div id="sidebar">
-			<h4>Initial Delay</h4>
-			<div class="bar" id="delaybar">
-				<span id="delay">0 MS</span>
+			<h4>Delays</h4>
+			<div class="bar" id="initalbar">
+				<span id="delay-inital">50 MS</span>
+			</div>
+			<div class="bar" id="totalbar">
+				<span id="delay-total">100 MS</span>
+			</div>
+			<div class="bar" id="pingbar">
+				<span id="delay-ping">100 MS</span>
 			</div>
 
 			<h4>FPS's</h4>
@@ -216,17 +230,22 @@ kbd {
 		let delta = DELAY;
 
 		let delays = [DELAY];
+		let last_frame = "";
 
 		let max_fpses = [1];
         const MAX_LEN = 1 * FRONT_END_FPS;
 
 		setInterval(function() {
 			const path = "/get";
+			const start_pref_ms = performance.now();
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
 				.then(data => {
 					try {
-						t1 = performance.now();
+						const now_ms = Date.now()
+						const now_pref_ms = performance.now();
+	
+						t1 = now_pref_ms;
 						delta = (t1 - t0) / 1000;
 						t0 = t1;
 
@@ -294,22 +313,46 @@ kbd {
 						sidebar_ele.style.width = sidebar_w + "px";
 
 
-						const ms = data["time"] * 1000;
-						const now = Date.now()
-						const diff = now - ms;
-						
-						delays.push(diff);
-						delays = delays.slice(-MAX_LEN);
-						const average = delays.reduce((a, b) => a + b, 0) / delays.length;
-						const rounded = average.toFixed(0);
+						{
+							const ms = data["time"] * 1000;
+							const diff = now_ms - ms;
 
-						const delay_ele = document.getElementById("delay");
-						delay_ele.innerHTML = rounded + " MS";
+							{
+								if (last_frame != data["frame"]) {
+									last_frame = data["frame"];
 
-						const delaybar = document.getElementById("delaybar");
-						delaybar.style.width = average / 5 + "%";
+									const rounded = diff.toFixed(0);
 
-						last_ms = ms;
+									const delay_ele = document.getElementById("delay-inital");
+									delay_ele.innerHTML = rounded + " MS (inital)";
+
+									const delaybar = document.getElementById("initalbar");
+									delaybar.style.width = (rounded / 250) * 100 + "%";
+								}
+							}
+							{
+								delays.push(diff);
+								delays = delays.slice(-MAX_LEN);
+								const average = delays.reduce((a, b) => a + b, 0) / delays.length;
+								const rounded = average.toFixed(0);
+
+								const delay_ele = document.getElementById("delay-total");
+								delay_ele.innerHTML = rounded + " MS (average)";
+
+								const delaybar = document.getElementById("totalbar");
+								delaybar.style.width = (average / 250) * 100 + "%";
+							}
+						}
+						{
+							const diff = now_pref_ms - start_pref_ms;
+							const rounded = diff.toFixed(0);
+
+							const delay_ele = document.getElementById("delay-ping")
+							delay_ele.innerHTML = rounded + " MS (ping)";
+
+							const delaybar = document.getElementById("pingbar");
+							delaybar.style.width = (diff / 250) * 100 + "%";
+						}
 					} catch (e) {
 						console.log(e);
 					}
