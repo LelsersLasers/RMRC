@@ -353,6 +353,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
     killer = util.GracefulKiller()
 
+    last_base_frame_time = time.time()
+
     while not killer.kill_now and not hazmat_ds.s1["quit"]:
         fps_controller.update()
 
@@ -364,10 +366,10 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
             camera_ds.update_s2(camera_dq)
             frames[key] = camera_ds.s2["frame"]
 
-            if key == base_key:
+            if key == base_key and frames[key] is not None and camera_ds.s2["time"] > last_base_frame_time:
                 frame_read_time = camera_ds.s2["time"]
-                if frames[key] is not None:
-                    frame_to_pass_to_hazmat = frames[key].copy()
+                last_base_frame_time = frame_read_time
+                frame_to_pass_to_hazmat = frames[key].copy()
 
         frame = frames[base_key]
 
