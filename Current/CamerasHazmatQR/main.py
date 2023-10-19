@@ -48,7 +48,7 @@ HAZMAT_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 15  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
-HAMZAT_POOL_SIZE = 2
+HAMZAT_POOL_SIZE = 3
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
