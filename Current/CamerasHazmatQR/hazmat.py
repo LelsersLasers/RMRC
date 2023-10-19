@@ -6,7 +6,7 @@ import util
 import levenshtein
 
 
-def processScreenshot(img, val):
+def processScreenshot(img, val, ratio_thresh):
     # CHANGE THRESHOLD AS NEEDED
     lowerThresh = np.array([0, 0, 0])  # lower thresh for black
     upperThresh = np.array([val, val, val])  # upper thresh for white
@@ -116,7 +116,7 @@ def processScreenshot(img, val):
         word = key
         closest, distance = levenshtein.checkList(word, words)
         ratio = distance / len(closest)
-        if ratio <= 0.55:
+        if ratio <= ratio_thresh:
             cnt = myDict[key]
             tup = (closest, cnt)
             correct_tups.append(tup)

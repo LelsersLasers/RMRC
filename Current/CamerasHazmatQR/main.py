@@ -41,6 +41,7 @@ QR_TOGGLE_KEY = "r"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
+HAZMAT_RATIO_THRESH = 0.33
 HAZMAT_DRY_FPS = 20
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
@@ -136,7 +137,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq):
+def hazmat_main(hazmat_dq, ratio_thresh):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -171,8 +172,8 @@ def hazmat_main(hazmat_dq):
                     with Pool(HAMZAT_POOL_SIZE) as pool:
                         threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
 
-                        args = [(frame, threshVal) for threshVal in threshVals]
-                        all_received_tups = pool.starmap(hazmat.processScreenshot, args)
+                        args = [(frame, threshVal, ratio_thresh) for threshVal in threshVals]
+                        all_received_tups = pool.starmap(hazmat.processScreenshot, args,)
 
                         found_this_frame = []
 
@@ -576,8 +577,9 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq,))
-    hazmat_thread.daemon = True
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH))
+    # Can't be daemon because then can't have subprocesses using Pool/map
+    # hazmat_thread.daemon = True
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
     # ------------------------------------------------------------------------ #
