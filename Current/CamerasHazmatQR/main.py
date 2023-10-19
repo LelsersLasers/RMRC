@@ -77,6 +77,7 @@ STATE_CAMERA = {
     "frame": None,
     "ns": 0,
     "fps": 20,
+    "time": 0,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -362,7 +363,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
             if key == base_key:
                 frame_read_time = camera_ds.s2["time"]
-                frame_to_pass_to_hazmat = frames[key].copy()
+                if frames[key] is not None:
+                    frame_to_pass_to_hazmat = frames[key].copy()
 
         frame = frames[base_key]
 
@@ -594,10 +596,10 @@ if __name__ == "__main__":
 
     try:
         master_main(hazmat_dq, server_dq, camera_dqs, args["video_capture_zero"])
-    # except Exception as e:
-        # print(e)
-    except:
-        pass
+    except Exception as e:
+        print(e)
+    # except:
+    #     pass
     # ------------------------------------------------------------------------ #
 
 

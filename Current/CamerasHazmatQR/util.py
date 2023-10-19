@@ -74,9 +74,14 @@ class FPSController:
 
 # ---------------------------------------------------------------------------- #
 def close_thread(t):
-    t.terminate()
-    time.sleep(1) # wait for thread to terminate
-    t.close()
+    # t.terminate()
+    # time.sleep(1) # wait for thread to terminate
+    # t.close()
+    t.join(1)
+    try:
+        t.close()
+    except:
+        pass
 
 def last_from_queue(q, last_value):
 	value = last_value
