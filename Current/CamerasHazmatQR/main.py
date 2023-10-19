@@ -41,14 +41,14 @@ QR_TOGGLE_KEY = "r"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
-HAZMAT_RATIO_THRESH = 0.33
-HAZMAT_DRY_FPS = 20
+HAZMAT_RATIO_THRESH = 0.4
+HAZMAT_DRY_FPS = 10
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
-HAZMAT_DELAY_BAR_SCALE = 5  # in seconds
+HAZMAT_DELAY_BAR_SCALE = 15  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
-HAMZAT_POOL_SIZE = 4
+HAMZAT_POOL_SIZE = 2
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
