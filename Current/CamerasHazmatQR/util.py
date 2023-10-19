@@ -74,9 +74,6 @@ class FPSController:
 
 # ---------------------------------------------------------------------------- #
 def close_thread(t):
-    # t.terminate()
-    # time.sleep(1) # wait for thread to terminate
-    # t.close()
     t.join(1)
     try:
         t.close()

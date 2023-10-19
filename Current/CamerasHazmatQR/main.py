@@ -283,6 +283,8 @@ def camera_main(camera_dq, key):
             camera_ds.s2["fps"] = fps_controller.fps()
 
             camera_ds.put_s2(camera_dq)
+    except KeyboardInterrupt:
+        pass
     finally:
         print(f"Releasing camera {key}...")
         cap.release()
@@ -559,6 +561,7 @@ if __name__ == "__main__":
         camera_dq = util.DoubleQueue()
 
         camera_thread = Process(target=camera_main, args=(camera_dq, key))
+        camera_thread.daemon = True
         camera_thread.start()
         print(f"Camera {key} thread pid: {camera_thread.pid}")
 
@@ -574,6 +577,7 @@ if __name__ == "__main__":
     hazmat_dq = util.DoubleQueue()
 
     hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq,))
+    hazmat_thread.daemon = True
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
     # ------------------------------------------------------------------------ #
@@ -587,6 +591,7 @@ if __name__ == "__main__":
     log.setLevel(logging.WARNING)
 
     flask_thread = Process(target=server_main, args=(server_dq,))
+    flask_thread.daemon = True
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
     # ------------------------------------------------------------------------ #
@@ -597,7 +602,7 @@ if __name__ == "__main__":
     try:
         master_main(hazmat_dq, server_dq, camera_dqs, args["video_capture_zero"])
     except Exception as e:
-        print(e)
+        print("AAA", e)
     # except:
     #     pass
     # ------------------------------------------------------------------------ #
