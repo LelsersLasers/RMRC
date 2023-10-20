@@ -39,18 +39,16 @@ def processScreenshot(img, val, ratio_thresh):
 
     imageList = []
     for i, cnt in enumerate(contours):
-        x1, y1 = cnt[0][0]
         approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
         if len(approx) == 4:
             x, y, w, h = cv2.boundingRect(cnt)
             ratio = float(w) / h
             if w > 63:
-                count = i
                 if ratio >= 0.8 and ratio <= 1.2:
-                    img = cv2.drawContours(img, [cnt], -1, (255, 0, 0), 3)
-                    cv2.putText(
-                        img, "Square", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2
-                    )
+                    # img = cv2.drawContours(img, [cnt], -1, (255, 0, 0), 3)
+                    # cv2.putText(
+                    #     img, "Square", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2
+                    # )
 
                     # if args["debug"]:
                     #     cv2.imshow("squares", img)
@@ -70,14 +68,16 @@ def processScreenshot(img, val, ratio_thresh):
                     matrixCW135 = cv2.getRotationMatrix2D((cols / 2, rows / 2), -135, 1)
                     cw135 = cv2.warpAffine(cropped, matrixCW135, (cols, rows))
 
-                    imageList.append((cw45, count, cnt))
-                    imageList.append((ccw45, count, cnt))
-                    imageList.append((ccw135, count, cnt))
-                    imageList.append((cw135, count, cnt))
-                    imageList.append((cropped, count, cnt))
+                    imageList.append((cw45, cnt))
+                    imageList.append((ccw45, cnt))
+                    imageList.append((ccw135, cnt))
+                    imageList.append((cw135, cnt))
+                    imageList.append((cropped, cnt))
+        # else:
+
 
     tesseract_results = []
-    for i, (image, count, cnt) in enumerate(imageList):
+    for i, (image, cnt) in enumerate(imageList):
         width, height, _ = image.shape
 
         # TODO: how do these calculations work???
