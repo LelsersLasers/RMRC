@@ -102,9 +102,9 @@ class DoubleQueue:
         self.q2 = Queue()
 
     def put_q1(self, item):
-        self.q1.put(item)
+        self.q1.put_nowait(item)
     def put_q2(self, item):
-        self.q2.put(item)
+        self.q2.put_nowait(item)
 
     def last_q1(self, value):
         return last_from_queue(self.q1, value)
