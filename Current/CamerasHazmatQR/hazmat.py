@@ -76,7 +76,7 @@ def processScreenshot(img, val, ratio_thresh):
                     imageList.append((cw135, count, cnt))
                     imageList.append((cropped, count, cnt))
 
-    myDict = {}
+    tesseract_results = []
     for i, (image, count, cnt) in enumerate(imageList):
         width, height, _ = image.shape
 
@@ -93,7 +93,7 @@ def processScreenshot(img, val, ratio_thresh):
         text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
         text = util.removeSpecialCharacter(text)
         if text != "":
-            myDict.update({text: (cnt)})
+            tesseract_results.append((text, cnt))
 
     words = [
         "explosive",
@@ -112,14 +112,12 @@ def processScreenshot(img, val, ratio_thresh):
     ]
 
     correct_tups = []
-    for key in myDict:
-        word = key
+    for tesseract_result in tesseract_results:
+        word, cnt = tesseract_result
         closest, distance = levenshtein.checkList(word, words)
         ratio = distance / len(closest)
         if ratio <= ratio_thresh:
-            cnt = myDict[key]
             tup = (closest, cnt)
             correct_tups.append(tup)
 
-    # correct_tups = util.remove_dups(correct_tups, lambda x: x[0])
     return correct_tups
