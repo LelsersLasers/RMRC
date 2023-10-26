@@ -180,12 +180,14 @@ def hazmat_main(hazmat_dq, ratio_thresh):
                         for received_tups in all_received_tups:
                             for r in received_tups:
                                 text = r[0].strip()
-                                cnt = util.CNT(r[1], frame.shape)
-                                found_this_frame.append((text, cnt))
+                                word = r[1].strip()
+                                cnt = util.CNT(r[2], frame.shape)
+                                string = text + " (" + word + ")"
+                                found_this_frame.append((text, word, string, cnt))
                                 all_found.append(text)
 
                     # uses util.CNT.__eq__
-                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[1])
+                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[3])
 
                     fontScale = 0.5
                     fontColor = (0, 0, 255)
@@ -193,7 +195,7 @@ def hazmat_main(hazmat_dq, ratio_thresh):
                     lineType = 2
 
                     for found in found_this_frame:
-                        text, cnt = found
+                        text, word, string, cnt = found
 
                         frame = cv2.drawContours(frame, [cnt.cnt], -1, (255, 0, 0), 3)
                         x, y, w, h = cv2.boundingRect(cnt.cnt)
@@ -204,7 +206,7 @@ def hazmat_main(hazmat_dq, ratio_thresh):
 
                         cv2.putText(
                             frame,
-                            text,
+                            string,
                             corner,
                             cv2.FONT_HERSHEY_SIMPLEX,
                             fontScale,
@@ -217,7 +219,7 @@ def hazmat_main(hazmat_dq, ratio_thresh):
                         all_found = list(set(all_found))
                         all_found.sort()
 
-                        print([x[0] for x in found_this_frame])
+                        print([x[2] for x in found_this_frame])
                         print(all_found)
 
                 unscale = 1 / HAZMAT_FRAME_SCALE
