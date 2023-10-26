@@ -51,11 +51,11 @@ def processScreenshot(img, val, ratio_thresh):
     contours, _ = cv2.findContours(thresh, 1, 2)
 
     imageList = []
-            if w > 63:
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         ratio = float(w) / h
+        if w > 30:
             if ratio >= 0.8 and ratio <= 1.2:
 
                 cropped = img[y : y + h, x : x + w]
