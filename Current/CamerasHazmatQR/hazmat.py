@@ -21,7 +21,7 @@ def rotate(cropped):
     return rotated
 
 
-def processScreenshot(img, val, ratio_thresh):
+def processScreenshot(img, val, ratio_thresh, min_size):
     # ------------------------------------------------------------------------ #
     lowerThresh = np.array([0, 0, 0])  # lower thresh for black
     upperThresh = np.array([val, val, val])  # upper thresh for white
@@ -54,32 +54,20 @@ def processScreenshot(img, val, ratio_thresh):
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        ratio = float(w) / h
-        if w > 30:
-            if ratio >= 0.8 and ratio <= 1.2:
+        if w < min_size or h < min_size:
+            continue
 
-                cropped = img[y : y + h, x : x + w]
-                # TODO: why bitwise_and?
-                cropped = cv2.bitwise_and(cropped, img[y : y + h, x : x + w])
-                rotated = rotate(cropped)
+        cropped = img[y : y + h, x : x + w]
+        rotated = rotate(cropped)
 
-                for image in rotated:
-                    imageList.append((image, cnt))
+        for image in rotated:
+            imageList.append((image, cnt))
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
     tesseract_results = []
     for image, cnt in imageList:
-        width, height, _ = image.shape
-
-        # TODO: how do these calculations work???
-        x1 = int(0)
-        y1 = int(height / 2 - (height * 0.15))
-        x2 = int(width)
-        y2 = int(height / 2 + (height * 0.25))
-
-        onlyText = image[y1:y2, x1:x2]
-        text = pytesseract.pytesseract.image_to_string(onlyText, config="--psm 6")
+        text = pytesseract.pytesseract.image_to_string(image, config="--psm 6")
         text = util.removeSpecialCharacter(text)
         if text != "":
             tesseract_results.append((text, cnt))

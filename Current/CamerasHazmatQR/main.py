@@ -42,10 +42,11 @@ HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
 HAZMAT_RATIO_THRESH = 0.4
+HAZMAT_MIN_SIZE = 30
 HAZMAT_DRY_FPS = 10
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
-HAZMAT_DELAY_BAR_SCALE = 20  # in seconds
+HAZMAT_DELAY_BAR_SCALE = 30  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
 HAMZAT_POOL_SIZE = 3
@@ -137,7 +138,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, ratio_thresh):
+def hazmat_main(hazmat_dq, ratio_thresh, min_size):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -172,7 +173,7 @@ def hazmat_main(hazmat_dq, ratio_thresh):
                     with Pool(HAMZAT_POOL_SIZE) as pool:
                         threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
 
-                        args = [(frame, threshVal, ratio_thresh) for threshVal in threshVals]
+                        args = [(frame, threshVal, ratio_thresh, min_size) for threshVal in threshVals]
                         all_received_tups = pool.starmap(hazmat.processScreenshot, args,)
 
                         found_this_frame = []
@@ -395,6 +396,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
         if hazmat_ds.s2["hazmat_frame"] is not None:
             hazmat_frame = hazmat_ds.s2["hazmat_frame"]
+            # hazmat_frame = cv2.Canny(hazmat_frame, 100, 200)
+            # hazmat_frame = cv2.cvtColor(hazmat_frame, cv2.COLOR_GRAY2BGR)
         else:
             hazmat_frame = np.zeros_like(frame)
 
@@ -581,7 +584,7 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH))
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH, HAZMAT_MIN_SIZE))
     # Can't be daemon because then can't have subprocesses using Pool/map
     # hazmat_thread.daemon = True
     hazmat_thread.start()
