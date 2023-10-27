@@ -171,8 +171,8 @@ def hazmat_main(hazmat_dq, ratio_thresh, min_size):
 
                 if hazmat_ds.s1["run_hazmat"]:
                     with Pool(HAMZAT_POOL_SIZE) as pool:
-                        threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
-
+                        # threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
+                        threshVals = [-1]
                         args = [(frame, threshVal, ratio_thresh, min_size) for threshVal in threshVals]
                         all_received_tups = pool.starmap(hazmat.processScreenshot, args,)
 
