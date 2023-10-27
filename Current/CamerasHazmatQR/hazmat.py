@@ -82,7 +82,6 @@ def processScreenshot(img, val, ratio_thresh, min_size):
     
     # ------------------------------------------------------------------------ #
     tesseract_results = []
-    # TODO: if keeping this stragegy, move the multiprocessing.Pool to here
     for image, cnt in imageList:
         text = pytesseract.pytesseract.image_to_string(image, config="--psm 6")
         text = util.removeSpecialCharacter(text)
