@@ -49,7 +49,7 @@ HAZMAT_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 30  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
-HAMZAT_POOL_SIZE = 3
+HAMZAT_POOL_SIZE = 5
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
@@ -168,11 +168,14 @@ def hazmat_main(hazmat_dq, ratio_thresh, min_size):
             if hazmat_ds.s1["frame"] is not None:
                 frame = hazmat_ds.s1["frame"]
                 frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
+                canny = cv2.Canny(frame, 100, 150)
+                not_canny = cv2.bitwise_not(canny)
+                frame = cv2.bitwise_and(frame, frame, mask=not_canny)
 
                 if hazmat_ds.s1["run_hazmat"]:
                     with Pool(HAMZAT_POOL_SIZE) as pool:
-                        # threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
-                        threshVals = [-1]
+                        threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
+                        # threshVals = [-1]
                         args = [(frame, threshVal, ratio_thresh, min_size) for threshVal in threshVals]
                         all_received_tups = pool.starmap(hazmat.processScreenshot, args,)
 
