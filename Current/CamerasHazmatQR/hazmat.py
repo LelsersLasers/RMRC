@@ -38,7 +38,7 @@ def mask_on_rotated(rotated):
     mask = np.zeros_like(rotated.image)
     boxes = pytesseract.pytesseract.image_to_boxes(rotated.image)
 
-    print("\n")
+    # print("\n")
 
     max_h = rotated.image.shape[0]
 
@@ -65,7 +65,7 @@ def mask_on_rotated(rotated):
         x2 = int(x2 + w / 2)
         y2 = int(y2 + h / 2)
 
-        print(box)
+        # print(box)
 
         cv2.rectangle(mask, (x1, y1), (x2, y2), (255, 255, 255), -1)
 
