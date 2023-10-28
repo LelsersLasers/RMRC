@@ -167,16 +167,11 @@ def hazmat_main(hazmat_dq, ratio_thresh, pool_size):
             if hazmat_ds.s1["frame"] is not None:
                 frame = hazmat_ds.s1["frame"]
                 frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
-                # canny = cv2.Canny(frame, 100, 150)
-                # not_canny = cv2.bitwise_not(canny)
-                # frame = cv2.bitwise_and(frame, frame, mask=not_canny)
 
                 if hazmat_ds.s1["run_hazmat"]:
 
                     received_tups, mask = hazmat.processScreenshot(frame, ratio_thresh, pool_size)
                     frame = cv2.bitwise_and(frame, frame, mask = mask)
-                    # mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-                    # frame = mask
 
                     found_this_frame = []
 
@@ -397,8 +392,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
         if hazmat_ds.s2["hazmat_frame"] is not None:
             hazmat_frame = hazmat_ds.s2["hazmat_frame"]
-            # hazmat_frame = cv2.Canny(hazmat_frame, 100, 200)
-            # hazmat_frame = cv2.cvtColor(hazmat_frame, cv2.COLOR_GRAY2BGR)
         else:
             hazmat_frame = np.zeros_like(frame)
 
