@@ -5,6 +5,7 @@ import mahotas
 import util
 import levenshtein
 import time
+from multiprocessing import Pool
 
 """
 TODO:
@@ -16,6 +17,7 @@ def rotate(cropped):
     rows, cols = cropped.shape[:2]
     center = (cols / 2, rows / 2)
 
+    # TODO: why these angels, and not 90, 180, 270 (every 45 degrees)?
     angles = [-45, 45, 135, -135]
     rotated = []
     for angel in angles:
@@ -27,7 +29,7 @@ def rotate(cropped):
     return rotated
 
 
-def processScreenshot(img, ratio_thresh):
+def processScreenshot(img, ratio_thresh, pool_size):
     # ------------------------------------------------------------------------ #
     h, w = img.shape[:2]
 
@@ -83,12 +85,15 @@ def processScreenshot(img, ratio_thresh):
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
-    tesseract_results = []
-    for image, cnt in imageList:
-        text = pytesseract.pytesseract.image_to_string(image, config="--psm 6")
-        text = util.removeSpecialCharacter(text)
-        if text != "":
-            tesseract_results.append((text, cnt))
+
+    with Pool(pool_size) as pool:
+        tesseract_results = pool.map(pytesseract.pytesseract.image_to_string, [image for image, _ in imageList])
+
+        results = []
+        for tesseract_result, (image, cnt) in zip(tesseract_results, imageList):
+            text = util.removeSpecialCharacter(tesseract_result)
+            if text != "":
+                results.append((text, cnt))
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
@@ -109,8 +114,7 @@ def processScreenshot(img, ratio_thresh):
     ]
 
     correct_tups = []
-    for tesseract_result in tesseract_results:
-        word, cnt = tesseract_result
+    for word, cnt in results:
         closest, distance = levenshtein.checkList(word, words)
         ratio = distance / len(closest)
         if ratio <= ratio_thresh:

@@ -137,7 +137,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, ratio_thresh):
+def hazmat_main(hazmat_dq, ratio_thresh, pool_size):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -173,7 +173,7 @@ def hazmat_main(hazmat_dq, ratio_thresh):
 
                 if hazmat_ds.s1["run_hazmat"]:
 
-                    received_tups, mask = hazmat.processScreenshot(frame, ratio_thresh)
+                    received_tups, mask = hazmat.processScreenshot(frame, ratio_thresh, pool_size)
                     frame = cv2.bitwise_and(frame, frame, mask = mask)
                     # mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
                     # frame = mask
@@ -585,7 +585,7 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH))
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH, HAMZAT_POOL_SIZE))
     # Can't be daemon because then can't have subprocesses using Pool/map
     # hazmat_thread.daemon = True
     hazmat_thread.start()
