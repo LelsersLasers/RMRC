@@ -1,16 +1,9 @@
 import cv2
 import numpy as np
 import pytesseract
-import mahotas
 import util
 import levenshtein
-import time
 from multiprocessing import Pool
-
-"""
-TODO:
-- Not create pool twice
-"""
 
 
 class Rotated:
@@ -33,6 +26,7 @@ def rotate(img):
         rotateds.append(rotated)
 
     return rotateds
+
 
 def mask_on_rotated(rotated):
     mask = np.zeros_like(rotated.image)
@@ -76,6 +70,7 @@ def mask_on_rotated(rotated):
 def processScreenshot(img, ratio_thresh, pool_size):
     # ------------------------------------------------------------------------ #
     with Pool(pool_size) as pool:
+        # -------------------------------------------------------------------- #
         rotateds = rotate(img)
         masks = pool.map(mask_on_rotated, rotateds)
 
@@ -85,32 +80,33 @@ def processScreenshot(img, ratio_thresh, pool_size):
 
 
         overall_mask = cv2.cvtColor(overall_mask, cv2.COLOR_BGR2GRAY)
-    # ------------------------------------------------------------------------ #
+        # -------------------------------------------------------------------- #
 
-    # ------------------------------------------------------------------------ #
-    contours, _ = cv2.findContours(overall_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        # -------------------------------------------------------------------- #
+        contours, _ = cv2.findContours(overall_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-    imageList = []
-    
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
+        imageList = []
+        
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
 
-        cropped = img[y : y + h, x : x + w]
-        rotateds = rotate(cropped)
+            cropped = img[y : y + h, x : x + w]
+            rotateds = rotate(cropped)
 
-        for rotated in rotateds:
-            imageList.append((rotated.image, cnt))
-    # ------------------------------------------------------------------------ #
-    
-    # ------------------------------------------------------------------------ #
-    with Pool(pool_size) as pool:
-        tesseract_results = pool.map(pytesseract.pytesseract.image_to_string, [image for image, _ in imageList])
+            for rotated in rotateds:
+                imageList.append((rotated.image, cnt))
+        # -------------------------------------------------------------------- #
+
+        # -------------------------------------------------------------------- #
+        images = [image for image, _ in imageList]
+        tesseract_results = pool.map(pytesseract.pytesseract.image_to_string, images)
 
         results = []
         for tesseract_result, (_, cnt) in zip(tesseract_results, imageList):
             text = util.removeSpecialCharacter(tesseract_result)
             if text != "":
                 results.append((text, cnt))
+        # -------------------------------------------------------------------- #
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
@@ -140,4 +136,3 @@ def processScreenshot(img, ratio_thresh, pool_size):
 
     return correct_tups, overall_mask
     # ------------------------------------------------------------------------ #
-
