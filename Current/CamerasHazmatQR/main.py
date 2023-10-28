@@ -42,7 +42,6 @@ HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
 HAZMAT_RATIO_THRESH = 0.4
-HAZMAT_MIN_SIZE = 30
 HAZMAT_DRY_FPS = 10
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
@@ -138,7 +137,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, ratio_thresh, min_size):
+def hazmat_main(hazmat_dq, ratio_thresh):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -168,27 +167,26 @@ def hazmat_main(hazmat_dq, ratio_thresh, min_size):
             if hazmat_ds.s1["frame"] is not None:
                 frame = hazmat_ds.s1["frame"]
                 frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
-                canny = cv2.Canny(frame, 100, 150)
-                not_canny = cv2.bitwise_not(canny)
-                frame = cv2.bitwise_and(frame, frame, mask=not_canny)
+                # canny = cv2.Canny(frame, 100, 150)
+                # not_canny = cv2.bitwise_not(canny)
+                # frame = cv2.bitwise_and(frame, frame, mask=not_canny)
 
                 if hazmat_ds.s1["run_hazmat"]:
-                    with Pool(HAMZAT_POOL_SIZE) as pool:
-                        threshVals = [90, 100, 110, 120, 130, 140, 150, 160, 170]
-                        # threshVals = [-1]
-                        args = [(frame, threshVal, ratio_thresh, min_size) for threshVal in threshVals]
-                        all_received_tups = pool.starmap(hazmat.processScreenshot, args,)
 
-                        found_this_frame = []
+                    received_tups, mask = hazmat.processScreenshot(frame, ratio_thresh)
+                    frame = cv2.bitwise_and(frame, frame, mask = mask)
+                    # mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+                    # frame = mask
 
-                        for received_tups in all_received_tups:
-                            for r in received_tups:
-                                text = r[0].strip()
-                                word = r[1].strip()
-                                cnt = util.CNT(r[2], frame.shape)
-                                string = text + " (" + word + ")"
-                                found_this_frame.append((text, word, string, cnt))
-                                all_found.append(text)
+                    found_this_frame = []
+
+                    for received_tup in received_tups:
+                        text = received_tup[0].strip()
+                        word = received_tup[1].strip()
+                        cnt = util.CNT(received_tup[2], frame.shape)
+                        string = text + " (" + word + ")"
+                        found_this_frame.append((text, word, string, cnt))
+                        all_found.append(text)
 
                     # uses util.CNT.__eq__
                     found_this_frame = util.remove_dups(found_this_frame, lambda x: x[3])
@@ -587,7 +585,7 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH, HAZMAT_MIN_SIZE))
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH))
     # Can't be daemon because then can't have subprocesses using Pool/map
     # hazmat_thread.daemon = True
     hazmat_thread.start()
