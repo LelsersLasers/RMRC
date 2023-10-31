@@ -35,6 +35,7 @@ def mask_on_rotated(rotated):
     # print("\n")
 
     max_h = rotated.image.shape[0]
+    characters = []
 
     for box in boxes.splitlines():
         box = box.lower().strip().split()
@@ -42,9 +43,11 @@ def mask_on_rotated(rotated):
         if len(box) != 6:
             continue
 
-        text = box[0]
-        if text == "~" or not text.isalpha():
+        character = box[0]
+        if character == "" or character == "~" or not character.isalpha():
             continue
+
+        characters.append(character)
 
         x1 = int(box[1])
         y1 = max_h - int(box[2])
@@ -59,12 +62,13 @@ def mask_on_rotated(rotated):
         x2 = int(x2 + w / 2)
         y2 = int(y2 + h / 2)
 
-        # print(box)
+        print(box)
 
         cv2.rectangle(mask, (x1, y1), (x2, y2), (255, 255, 255), -1)
 
     mask = cv2.warpAffine(mask, rotated.undo_matrix, (rotated.image.shape[1], rotated.image.shape[0]))
-    return mask
+    text = "".join(characters)
+    return mask, text
 
 
 def processScreenshot(img, ratio_thresh, pool_size):
@@ -72,11 +76,13 @@ def processScreenshot(img, ratio_thresh, pool_size):
     with Pool(pool_size) as pool:
         # -------------------------------------------------------------------- #
         rotateds = rotate(img)
-        masks = pool.map(mask_on_rotated, rotateds)
+        mask_and_texts = pool.map(mask_on_rotated, rotateds)
 
         overall_mask = np.zeros_like(img)
-        for mask in masks:
+        texts = []
+        for mask, text in mask_and_texts:
             overall_mask = cv2.bitwise_or(overall_mask, mask)
+            texts.append(text)
 
 
         overall_mask = cv2.cvtColor(overall_mask, cv2.COLOR_BGR2GRAY)
@@ -101,7 +107,9 @@ def processScreenshot(img, ratio_thresh, pool_size):
         images = [image for image, _ in imageList]
         tesseract_results = pool.map(pytesseract.pytesseract.image_to_string, images)
 
-        results = []
+        full_cnt = np.array([[0, 0], [0, img.shape[0]], [img.shape[1], img.shape[0]], [img.shape[1], 0]])
+        results = [(text, full_cnt) for text in texts if text != ""]
+
         for tesseract_result, (_, cnt) in zip(tesseract_results, imageList):
             text = util.removeSpecialCharacter(tesseract_result)
             if text != "":
