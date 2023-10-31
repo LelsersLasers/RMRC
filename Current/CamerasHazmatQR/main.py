@@ -324,6 +324,7 @@ def ratio_bar(frame, ratio, active):
 
 def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
+    print(f"Press '{HAZMAT_HOLD_KEY}' to run hazmat detection while holding key.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
