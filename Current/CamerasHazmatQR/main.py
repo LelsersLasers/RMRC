@@ -181,9 +181,11 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, gpu):
                     for received_tup in received_tups:
                         text = received_tup[0].strip()
                         word = received_tup[1].strip()
-                        conf = float(received_tup[2])
-                        cnt = util.CNT(received_tup[3], frame.shape)
-                        string = f'{text} ({word}) {conf:.2f}' 
+                        conf = float(received_tup[2]) * 100
+                        ratio = received_tup[3]
+                        cnt = util.CNT(received_tup[4], frame.shape)
+
+                        string = f'{text} (\'{word}\', {conf:.0f}%, {ratio:.2f})' 
                         found_this_frame.append((text, word, string, cnt))
                         all_found.append(text)
 
@@ -203,7 +205,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, gpu):
 
                         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
 
-                        corner = (x + 5, y + 15)
+                        corner = (x + 5, y - 10)
 
                         cv2.putText(
                             frame,

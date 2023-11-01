@@ -5,6 +5,7 @@ import levenshtein
 """
 TODO:
 - multiline label detection
+- unrotate correctly
 """
 
 
@@ -46,6 +47,7 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
             if confidence < ocr_thresh:
                 continue
 
+            # TODO: unrotate correctly!
             for i in range(4):
                 r[0][i] = np.dot(r[0][i], rotated.undo_matrix)[:2]
             cnt = np.array(r[0], dtype=np.int32)
@@ -75,7 +77,7 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
         closest, distance = levenshtein.checkList(word, words)
         ratio = distance / len(closest)
         if ratio <= levenshtein_thresh:
-            tup = (closest, word, confidence, cnt)
+            tup = (closest, word, confidence, ratio, cnt)
             correct_tups.append(tup)
 
     return correct_tups
