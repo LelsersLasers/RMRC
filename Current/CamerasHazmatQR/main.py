@@ -29,7 +29,9 @@ import qr_detect
 import cv2
 import numpy as np
 
-from multiprocessing import Process, Pool
+from multiprocessing import Process
+import easyocr
+
 
 from flask import Flask, render_template, jsonify
 import logging
@@ -41,8 +43,9 @@ QR_TOGGLE_KEY = "r"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
-HAZMAT_RATIO_THRESH = 0.4
-HAZMAT_DRY_FPS = 10
+HAZMAT_LEVENSHTEIN_THRESH = 0.4
+HAZMAT_OCR_THRESH = 0.8
+HAZMAT_DRY_FPS = 15
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 30  # in seconds
@@ -137,7 +140,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, ratio_thresh, pool_size):
+def hazmat_main(hazmat_dq, ratio_thresh, pool_size, gpu):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -146,6 +149,8 @@ def hazmat_main(hazmat_dq, ratio_thresh, pool_size):
     frame = None
 
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
+
+    reader = easyocr.Reader(["en"], gpu=gpu)
 
     try:
         while not hazmat_ds.s1["quit"]:
@@ -168,22 +173,22 @@ def hazmat_main(hazmat_dq, ratio_thresh, pool_size):
                 frame = hazmat_ds.s1["frame"]
                 frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
                 
-                kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-                frame = cv2.filter2D(frame, -1, kernel)
+                # kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+                # frame = cv2.filter2D(frame, -1, kernel)
 
 
                 if hazmat_ds.s1["run_hazmat"]:
 
-                    received_tups, mask = hazmat.processScreenshot(frame, ratio_thresh, pool_size)
-                    frame = cv2.bitwise_and(frame, frame, mask = mask)
+                    received_tups = hazmat.processScreenshot(frame, reader, ratio_thresh, pool_size)
 
                     found_this_frame = []
 
                     for received_tup in received_tups:
                         text = received_tup[0].strip()
                         word = received_tup[1].strip()
-                        cnt = util.CNT(received_tup[2], frame.shape)
-                        string = text + " (" + word + ")"
+                        conf = float(received_tup[2])
+                        cnt = util.CNT(received_tup[3], frame.shape)
+                        string = f'{text} ({word}) {conf:.2f}' 
                         found_this_frame.append((text, word, string, cnt))
                         all_found.append(text)
 
@@ -583,7 +588,7 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_RATIO_THRESH, HAMZAT_POOL_SIZE))
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH, HAMZAT_POOL_SIZE, not args["video_capture_zero"]))
     # Can't be daemon because then can't have subprocesses using Pool/map
     # hazmat_thread.daemon = True
     hazmat_thread.start()

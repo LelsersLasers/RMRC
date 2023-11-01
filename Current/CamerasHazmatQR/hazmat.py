@@ -1,9 +1,14 @@
 import cv2
 import numpy as np
-import pytesseract
-import util
+# import util
 import levenshtein
 from multiprocessing import Pool
+
+"""
+TODO:
+- multithreaded ocr
+- multiline label detection
+"""
 
 
 class Rotated:
@@ -28,93 +33,28 @@ def rotate(img):
     return rotateds
 
 
-def mask_on_rotated(rotated):
-    mask = np.zeros_like(rotated.image)
-    boxes = pytesseract.pytesseract.image_to_boxes(rotated.image)
-
-    # print("\n")
-
-    max_h = rotated.image.shape[0]
-    characters = []
-
-    for box in boxes.splitlines():
-        box = box.lower().strip().split()
-
-        if len(box) != 6:
-            continue
-
-        character = box[0]
-        if character == "" or character == "~" or not character.isalpha():
-            continue
-
-        characters.append(character)
-
-        x1 = int(box[1])
-        y1 = max_h - int(box[2])
-        x2 = int(box[3])
-        y2 = max_h - int(box[4])
-
-        w = x2 - x1
-        h = y2 - y1
-        
-        x1 = int(x1 - w / 2)
-        y1 = int(y1 - h / 2)
-        x2 = int(x2 + w / 2)
-        y2 = int(y2 + h / 2)
-
-        print(box)
-
-        cv2.rectangle(mask, (x1, y1), (x2, y2), (255, 255, 255), -1)
-
-    mask = cv2.warpAffine(mask, rotated.undo_matrix, (rotated.image.shape[1], rotated.image.shape[0]))
-    text = "".join(characters)
-    return mask, text
+def ocr_and_rotated(reader, rotated):
+    return reader.readtext(rotated.image), rotated
 
 
-def processScreenshot(img, ratio_thresh, pool_size):
+def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh, pool_size):
     # ------------------------------------------------------------------------ #
     with Pool(pool_size) as pool:
-        # -------------------------------------------------------------------- #
         rotateds = rotate(img)
-        mask_and_texts = pool.map(mask_on_rotated, rotateds)
 
-        overall_mask = np.zeros_like(img)
-        texts = []
-        for mask, text in mask_and_texts:
-            overall_mask = cv2.bitwise_or(overall_mask, mask)
-            texts.append(text)
+        result_tups = []
+        for rotated in rotateds:
+            result = reader.readtext(rotated.image)
+            for r in result:
+                confidence = r[2]
+                if confidence < ocr_thresh:
+                    continue
 
-
-        overall_mask = cv2.cvtColor(overall_mask, cv2.COLOR_BGR2GRAY)
-        # -------------------------------------------------------------------- #
-
-        # -------------------------------------------------------------------- #
-        contours, _ = cv2.findContours(overall_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-        imageList = []
-        
-        for cnt in contours:
-            x, y, w, h = cv2.boundingRect(cnt)
-
-            cropped = img[y : y + h, x : x + w]
-            rotateds = rotate(cropped)
-
-            for rotated in rotateds:
-                imageList.append((rotated.image, cnt))
-        # -------------------------------------------------------------------- #
-
-        # -------------------------------------------------------------------- #
-        images = [image for image, _ in imageList]
-        tesseract_results = pool.map(pytesseract.pytesseract.image_to_string, images)
-
-        full_cnt = np.array([[0, 0], [0, img.shape[0]], [img.shape[1], img.shape[0]], [img.shape[1], 0]])
-        results = [(text, full_cnt) for text in texts if text != ""]
-
-        for tesseract_result, (_, cnt) in zip(tesseract_results, imageList):
-            text = util.removeSpecialCharacter(tesseract_result)
-            if text != "":
-                results.append((text, cnt))
-        # -------------------------------------------------------------------- #
+                for i in range(4):
+                    r[0][i] = np.dot(r[0][i], rotated.undo_matrix)[:2]
+                cnt = np.array(r[0], dtype=np.int32)
+                text = r[1]
+                result_tups.append((text, cnt, confidence))    
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
@@ -135,12 +75,12 @@ def processScreenshot(img, ratio_thresh, pool_size):
     ]
 
     correct_tups = []
-    for word, cnt in results:
+    for word, cnt, confidence in result_tups:
         closest, distance = levenshtein.checkList(word, words)
         ratio = distance / len(closest)
-        if ratio <= ratio_thresh:
-            tup = (closest, word, cnt)
+        if ratio <= levenshtein_thresh:
+            tup = (closest, word, confidence, cnt)
             correct_tups.append(tup)
 
-    return correct_tups, overall_mask
+    return correct_tups
     # ------------------------------------------------------------------------ #
