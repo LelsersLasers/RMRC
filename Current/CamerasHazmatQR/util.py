@@ -147,11 +147,22 @@ class CNT:
         cv2.drawContours(mask1, [cnt], -1, 255, -1)
         self.pixel_count = cv2.countNonZero(mask1)
 
-    def __eq__(self, other):
-        # True if self and other overlap
+    def draw_both(self, other):
         mask = np.zeros(self.mask_shape, np.uint8)
         cv2.drawContours(mask, [self.cnt], -1, 255, -1)
         cv2.drawContours(mask, [other.cnt], -1, 255, -1)
+
+        return mask
+    
+    def combine(self, other):
+        mask = self.draw_both(other)
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return CNT(contours[0], self.frame_shape)
+
+
+    def __eq__(self, other):
+        # True if self and other overlap
+        mask = self.draw_both(other)
         px_count = cv2.countNonZero(mask)
 
         return px_count < self.pixel_count + other.pixel_count

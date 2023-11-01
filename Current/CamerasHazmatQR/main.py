@@ -10,6 +10,9 @@ CAP_ARGS = {
 TODO:
 - qr gets its own thread?
 - multiline label detection
+    - Better solution than how it is now?
+        - Maybe make the CNT.__eq__ check work on expanded cnts?
+    - Fixed??
 - unrotate correctly
     - Fixed??
 - 90 vs 45
@@ -176,14 +179,14 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
                         word = received_tup[1].strip()
                         conf = float(received_tup[2]) * 100
                         ratio = received_tup[3]
-                        cnt = util.CNT(received_tup[4], frame.shape)
+                        cnt = received_tup[4]
 
                         string = f'{text} (\'{word}\', {conf:.0f}%, {ratio:.2f})' 
                         found_this_frame.append((text, word, string, cnt))
                         all_found.append(text)
 
                     # uses util.CNT.__eq__
-                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[4])
+                    # found_this_frame = util.remove_dups(found_this_frame, lambda x: x[4])
 
                     fontScale = 0.5
                     fontColor = (0, 0, 255)

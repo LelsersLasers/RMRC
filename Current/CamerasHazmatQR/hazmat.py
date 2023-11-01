@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import scipy
 import levenshtein
+import util
 
 
 class Rotated:
@@ -54,9 +55,31 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
             # ---------------------------------------------------------------- #
             cnt_rotated = np.array(r[0], dtype=np.int32)
             cnt = unrotate_cnt(cnt_rotated, rotated, img.shape)
+            cnt = util.CNT(cnt, img.shape)
             # ---------------------------------------------------------------- #
         
             result_tups.append((text, cnt, confidence))    
+    # ------------------------------------------------------------------------ #
+
+    # ------------------------------------------------------------------------ #
+    new_result_tups = []
+    for i, result_tup_a in enumerate(result_tups):
+        for j, result_tup_b in enumerate(result_tups):
+            if i == j:
+                continue
+
+            text_a, cnt_a, conf_a = result_tup_a
+            text_b, cnt_b, conf_b = result_tup_b
+
+            if cnt_a == cnt_b:
+                text = f'{text_a} {text_b}'
+                cnt = cnt_a.combine(cnt_b)
+                confidence = (conf_a + conf_b) / 2
+
+                new_result_tups.append((text, cnt, confidence))
+    
+    for result_tup in new_result_tups:
+        result_tups.append(result_tup)
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
