@@ -6,6 +6,10 @@ import levenshtein
 TODO:
 - multiline label detection
 - unrotate correctly
+- 90 vs 45
+    - likely bigger angle -> lower ocr_thresh
+        - lower ocr_thresh isn't terrible on performance
+    - smaller angle is harder on performance
 """
 
 
@@ -20,7 +24,8 @@ def rotate(img):
     center = tuple(np.array(img.shape[1::-1]) / 2)
 
     rotateds = []
-    for angel in range(0, 360, 45):
+    # TODO: 90 vs 45
+    for angel in range(0, 360, 90):
         matrix = cv2.getRotationMatrix2D(center, angel, 1)
         undo_matrix = cv2.getRotationMatrix2D(center, -angel, 1)
         rotated_image = cv2.warpAffine(img, matrix, img.shape[1::-1])
@@ -41,13 +46,27 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
         for r in result:
             confidence = r[2]
             if confidence < ocr_thresh:
+                print(r) # debug
+                continue
+
+            text = r[1]
+            if len(text) < 3:
                 continue
 
             # TODO: unrotate correctly!
-            for i in range(4):
-                r[0][i] = np.dot(r[0][i], rotated.undo_matrix)[:2]
+            # for i in range(4):
+            #     r[0][i] = np.dot(r[0][i], rotated.undo_matrix)[:2]
+            # cnt = np.array(r[0], dtype=np.int32)
+
             cnt = np.array(r[0], dtype=np.int32)
-            text = r[1]
+
+            mask = np.zeros(rotated.image.shape[:2], dtype=np.uint8)
+            cv2.drawContours(mask, [cnt], -1, 255, -1)
+            cv2.warpAffine(mask, rotated.undo_matrix, mask.shape[1::-1])
+            # mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cnt = contours[0]
+        
             result_tups.append((text, cnt, confidence))    
     # ------------------------------------------------------------------------ #
     
@@ -75,6 +94,8 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
         if ratio <= levenshtein_thresh:
             tup = (closest, word, confidence, ratio, cnt)
             correct_tups.append(tup)
+        else: # debug
+            print(word, confidence, ratio)
 
     return correct_tups
     # ------------------------------------------------------------------------ #
