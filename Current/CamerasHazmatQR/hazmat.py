@@ -31,10 +31,6 @@ def rotate(img):
     return rotateds
 
 
-def ocr_and_rotated(reader, rotated):
-    return reader.readtext(rotated.image), rotated
-
-
 def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
     # ------------------------------------------------------------------------ #
     rotateds = rotate(img)
