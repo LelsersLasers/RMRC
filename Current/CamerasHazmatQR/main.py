@@ -144,7 +144,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, gpu):
+def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -154,21 +154,14 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, gpu):
 
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
 
-    reader = easyocr.Reader(["en"], gpu=gpu)
+    reader = easyocr.Reader(["en"], gpu=True)
 
     try:
         while not hazmat_ds.s1["quit"]:
+            hazmat_ds.update_s1(hazmat_dq)
 
             # ---------------------------------------------------------------- #
-            clear_all_found = False
-            while True:
-                try:
-                    hazmat_ds.s1 = hazmat_dq.q1.get_nowait()
-                    clear_all_found = clear_all_found or hazmat_ds.s1["clear_all_found"] > 0
-                except queue.Empty:
-                    break
-
-            if clear_all_found:
+            if hazmat_ds.s1["clear_all_found"] > 0:
                 all_found = []
                 print("Cleared all found hazmat labels.")
             # ---------------------------------------------------------------- #
@@ -593,7 +586,7 @@ if __name__ == "__main__":
 
     hazmat_thread = Process(
         target=hazmat_main,
-        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH, not zero_video_capture)
+        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH)
     )
     hazmat_thread.daemon = True
     hazmat_thread.start()
