@@ -1,36 +1,20 @@
 import cv2
 import numpy as np
+import scipy
 import levenshtein
-
-"""
-TODO:
-- multiline label detection
-- unrotate correctly
-- 90 vs 45
-    - likely bigger angle -> lower ocr_thresh
-        - lower ocr_thresh isn't terrible on performance
-    - smaller angle is harder on performance
-"""
 
 
 class Rotated:
-    def __init__(self, image, angle, matrix, undo_matrix):
+    def __init__(self, image, angle):
         self.image = image
         self.angle = angle
-        self.matrix = matrix
-        self.undo_matrix = undo_matrix
 
 def rotate(img):
-    center = tuple(np.array(img.shape[1::-1]) / 2)
-
     rotateds = []
     # TODO: 90 vs 45
-    for angel in range(0, 360, 90):
-        matrix = cv2.getRotationMatrix2D(center, angel, 1)
-        undo_matrix = cv2.getRotationMatrix2D(center, -angel, 1)
-        rotated_image = cv2.warpAffine(img, matrix, img.shape[1::-1])
-
-        rotated = Rotated(rotated_image, angel, matrix, undo_matrix)
+    for angle in range(0, 360, 90):
+        rotated_image = scipy.ndimage.rotate(img, angle)
+        rotated = Rotated(rotated_image, angle)
         rotateds.append(rotated)
 
     return rotateds
@@ -39,6 +23,7 @@ def rotate(img):
 def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
     # ------------------------------------------------------------------------ #
     rotateds = rotate(img)
+    img_h, img_w = img.shape[:2]
 
     result_tups = []
     for rotated in rotateds:
@@ -53,19 +38,21 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
             if len(text) < 3:
                 continue
 
-            # TODO: unrotate correctly!
-            # for i in range(4):
-            #     r[0][i] = np.dot(r[0][i], rotated.undo_matrix)[:2]
-            # cnt = np.array(r[0], dtype=np.int32)
-
-            cnt = np.array(r[0], dtype=np.int32)
+            # ---------------------------------------------------------------- #
+            cnt_rotated = np.array(r[0], dtype=np.int32)
 
             mask = np.zeros(rotated.image.shape[:2], dtype=np.uint8)
-            cv2.drawContours(mask, [cnt], -1, 255, -1)
-            cv2.warpAffine(mask, rotated.undo_matrix, mask.shape[1::-1])
-            # mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+            cv2.drawContours(mask, [cnt_rotated], -1, 255, -1)
+            
+            mask = scipy.ndimage.rotate(mask, -rotated.angle)
+            h, w = mask.shape[:2]
+            x = int((w - img_w) / 2)
+            y = int((h - img_h) / 2)
+            mask = mask[y:y+img_h, x:x+img_w]
+
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             cnt = contours[0]
+            # ---------------------------------------------------------------- #
         
             result_tups.append((text, cnt, confidence))    
     # ------------------------------------------------------------------------ #

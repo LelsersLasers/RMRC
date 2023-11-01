@@ -8,9 +8,14 @@ CAP_ARGS = {
 
 """
 TODO:
-ws vs not
-qr gets its own thread?
-hazmat/qr tanks other fps'es
+- qr gets its own thread?
+- multiline label detection
+- unrotate correctly
+    - Fixed??
+- 90 vs 45
+    - likely bigger angle -> lower ocr_thresh
+        - lower ocr_thresh isn't terrible on performance
+    - smaller angle is harder on performance
 """
 
 
@@ -190,7 +195,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, gpu):
                         all_found.append(text)
 
                     # uses util.CNT.__eq__
-                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[3])
+                    found_this_frame = util.remove_dups(found_this_frame, lambda x: x[4])
 
                     fontScale = 0.5
                     fontColor = (0, 0, 255)
