@@ -1,12 +1,9 @@
 import cv2
 import numpy as np
-# import util
 import levenshtein
-from multiprocessing import Pool
 
 """
 TODO:
-- multithreaded ocr
 - multiline label detection
 """
 
@@ -37,24 +34,23 @@ def ocr_and_rotated(reader, rotated):
     return reader.readtext(rotated.image), rotated
 
 
-def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh, pool_size):
+def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
     # ------------------------------------------------------------------------ #
-    with Pool(pool_size) as pool:
-        rotateds = rotate(img)
+    rotateds = rotate(img)
 
-        result_tups = []
-        for rotated in rotateds:
-            result = reader.readtext(rotated.image)
-            for r in result:
-                confidence = r[2]
-                if confidence < ocr_thresh:
-                    continue
+    result_tups = []
+    for rotated in rotateds:
+        result = reader.readtext(rotated.image)
+        for r in result:
+            confidence = r[2]
+            if confidence < ocr_thresh:
+                continue
 
-                for i in range(4):
-                    r[0][i] = np.dot(r[0][i], rotated.undo_matrix)[:2]
-                cnt = np.array(r[0], dtype=np.int32)
-                text = r[1]
-                result_tups.append((text, cnt, confidence))    
+            for i in range(4):
+                r[0][i] = np.dot(r[0][i], rotated.undo_matrix)[:2]
+            cnt = np.array(r[0], dtype=np.int32)
+            text = r[1]
+            result_tups.append((text, cnt, confidence))    
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #

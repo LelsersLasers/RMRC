@@ -51,7 +51,6 @@ HAZMAT_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 30  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
-HAMZAT_POOL_SIZE = 5
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
@@ -140,7 +139,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, pool_size, gpu):
+def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, gpu):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -175,7 +174,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, pool_size, gpu):
 
                 if hazmat_ds.s1["run_hazmat"]:
 
-                    received_tups = hazmat.processScreenshot(frame, reader, levenshtein_thresh, ocr_thresh, pool_size)
+                    received_tups = hazmat.processScreenshot(frame, reader, levenshtein_thresh, ocr_thresh)
 
                     found_this_frame = []
 
@@ -587,10 +586,9 @@ if __name__ == "__main__":
 
     hazmat_thread = Process(
         target=hazmat_main,
-        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH, HAMZAT_POOL_SIZE, not zero_video_capture)
+        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH, not zero_video_capture)
     )
-    # Can't be daemon because then can't have subprocesses using Pool/map
-    # hazmat_thread.daemon = True
+    hazmat_thread.daemon = True
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
     # ------------------------------------------------------------------------ #
