@@ -172,10 +172,6 @@ def hazmat_main(hazmat_dq, ratio_thresh, pool_size, gpu):
             if hazmat_ds.s1["frame"] is not None:
                 frame = hazmat_ds.s1["frame"]
                 frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
-                
-                # kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-                # frame = cv2.filter2D(frame, -1, kernel)
-
 
                 if hazmat_ds.s1["run_hazmat"]:
 
