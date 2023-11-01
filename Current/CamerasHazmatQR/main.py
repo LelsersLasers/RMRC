@@ -140,7 +140,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, ratio_thresh, pool_size, gpu):
+def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh, pool_size, gpu):
     time.sleep(CAMERA_WAKEUP_TIME)
 
     fps_controller = util.FPSController()
@@ -175,7 +175,7 @@ def hazmat_main(hazmat_dq, ratio_thresh, pool_size, gpu):
 
                 if hazmat_ds.s1["run_hazmat"]:
 
-                    received_tups = hazmat.processScreenshot(frame, reader, ratio_thresh, pool_size)
+                    received_tups = hazmat.processScreenshot(frame, reader, levenshtein_thresh, ocr_thresh, pool_size)
 
                     found_this_frame = []
 
