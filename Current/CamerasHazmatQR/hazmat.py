@@ -11,7 +11,7 @@ class Rotated:
 
 def rotate(img):
     rotateds = []
-    # TODO: 90 vs 45
+    # TODO: 90 vs 45 (vs 60)
     for angle in range(0, 360, 90):
         rotated_image = scipy.ndimage.rotate(img, angle)
         rotated = Rotated(rotated_image, angle)
@@ -19,6 +19,20 @@ def rotate(img):
 
     return rotateds
 
+def unrotate_cnt(cnt_rotated, rotated, img_shape):
+    img_h, img_w = img_shape[:2]
+
+    mask = np.zeros(rotated.image.shape[:2], dtype=np.uint8)
+    cv2.drawContours(mask, [cnt_rotated], -1, 255, -1)
+    
+    mask = scipy.ndimage.rotate(mask, -rotated.angle)
+    h, w = mask.shape[:2]
+    x = int((w - img_w) / 2)
+    y = int((h - img_h) / 2)
+    mask = mask[y:y+img_h, x:x+img_w]
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return contours[0]
 
 def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
     # ------------------------------------------------------------------------ #
@@ -40,18 +54,7 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
 
             # ---------------------------------------------------------------- #
             cnt_rotated = np.array(r[0], dtype=np.int32)
-
-            mask = np.zeros(rotated.image.shape[:2], dtype=np.uint8)
-            cv2.drawContours(mask, [cnt_rotated], -1, 255, -1)
-            
-            mask = scipy.ndimage.rotate(mask, -rotated.angle)
-            h, w = mask.shape[:2]
-            x = int((w - img_w) / 2)
-            y = int((h - img_h) / 2)
-            mask = mask[y:y+img_h, x:x+img_w]
-
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            cnt = contours[0]
+            cnt = unrotate_cnt(cnt_rotated, rotated, img.shape)
             # ---------------------------------------------------------------- #
         
             result_tups.append((text, cnt, confidence))    

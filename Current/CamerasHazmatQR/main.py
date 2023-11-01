@@ -21,11 +21,8 @@ TODO:
 
 import time
 import argparse
-import argparse
 import base64
-import queue
-
-import psutil
+from multiprocessing import Process
 
 import util
 import hazmat
@@ -33,10 +30,8 @@ import qr_detect
 
 import cv2
 import numpy as np
-
-from multiprocessing import Process
+import psutil
 import easyocr
-
 
 from flask import Flask, render_template, jsonify
 import logging
