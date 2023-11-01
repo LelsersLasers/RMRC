@@ -562,13 +562,14 @@ args = vars(ap.parse_args())
 
 # ---------------------------------------------------------------------------- #
 if __name__ == "__main__":
+    zero_video_capture = args["video_capture_zero"]
     # ------------------------------------------------------------------------ #
     print("\nStarting camera threads...")
 
     camera_dqs = {}
     camera_threads = {}
 
-    cap_arg_keys = [None] if args["video_capture_zero"] else CAP_ARGS.keys()
+    cap_arg_keys = [None] if zero_video_capture else CAP_ARGS.keys()
     for key in cap_arg_keys:
         camera_dq = util.DoubleQueue()
 
@@ -588,7 +589,10 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH, HAMZAT_POOL_SIZE, not args["video_capture_zero"]))
+    hazmat_thread = Process(
+        target=hazmat_main,
+        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH, HAMZAT_POOL_SIZE, not zero_video_capture)
+    )
     # Can't be daemon because then can't have subprocesses using Pool/map
     # hazmat_thread.daemon = True
     hazmat_thread.start()
@@ -613,7 +617,7 @@ if __name__ == "__main__":
     print("\nStarting master thread...\n")
 
     try:
-        master_main(hazmat_dq, server_dq, camera_dqs, args["video_capture_zero"])
+        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture)
     except Exception as e:
         print("AAA", e)
     # except:
