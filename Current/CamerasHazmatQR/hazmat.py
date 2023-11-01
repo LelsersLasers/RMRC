@@ -37,7 +37,6 @@ def unrotate_cnt(cnt_rotated, rotated, img_shape):
 def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
     # ------------------------------------------------------------------------ #
     rotateds = rotate(img)
-    img_h, img_w = img.shape[:2]
 
     result_tups = []
     for rotated in rotateds:
@@ -49,7 +48,7 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
                 continue
 
             text = r[1]
-            if len(text) < 3:
+            if len(text) < 2:
                 continue
 
             # ---------------------------------------------------------------- #
