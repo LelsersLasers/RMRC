@@ -55,7 +55,7 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
             # ---------------------------------------------------------------- #
             cnt_rotated = np.array(r[0], dtype=np.int32)
             cnt = unrotate_cnt(cnt_rotated, rotated, img.shape)
-            cnt = util.CNT(cnt, img.shape)
+            cnt = util.CNT(cnt, img.shape, True)
             # ---------------------------------------------------------------- #
         
             result_tups.append((text, cnt, confidence))    

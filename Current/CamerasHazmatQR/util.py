@@ -138,13 +138,18 @@ class DoubleState:
 
 # ---------------------------------------------------------------------------- #
 class CNT:
-    def __init__(self, cnt, frame_shape):
+    def __init__(self, cnt, frame_shape, expand):
         self.cnt = cnt
         self.frame_shape = frame_shape
 
         self.mask_shape = (frame_shape[0], frame_shape[1], 1)
         mask1 = np.zeros(self.mask_shape, np.uint8)
+
         cv2.drawContours(mask1, [cnt], -1, 255, -1)
+        
+        if expand:
+            cv2.drawContours(mask1, [cnt], -1, 255, 20)
+        
         self.pixel_count = cv2.countNonZero(mask1)
 
     def draw_both(self, other):
@@ -157,7 +162,7 @@ class CNT:
     def combine(self, other):
         mask = self.draw_both(other)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        return CNT(contours[0], self.frame_shape)
+        return CNT(contours[0], self.frame_shape, False)
 
 
     def __eq__(self, other):

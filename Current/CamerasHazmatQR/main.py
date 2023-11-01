@@ -185,9 +185,6 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
                         found_this_frame.append((text, word, string, cnt))
                         all_found.append(text)
 
-                    # uses util.CNT.__eq__
-                    # found_this_frame = util.remove_dups(found_this_frame, lambda x: x[4])
-
                     fontScale = 0.5
                     fontColor = (0, 0, 255)
                     thickness = 1
