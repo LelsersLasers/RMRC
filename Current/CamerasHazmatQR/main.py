@@ -13,6 +13,7 @@ TODO:
     - Better solution than how it is now?
         - Maybe make the CNT.__eq__ check work on expanded cnts?
     - Fixed??
+    - Do we need 3 words per label?
 - unrotate correctly
     - Fixed??
 - 90 vs 45

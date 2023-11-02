@@ -35,6 +35,20 @@ def unrotate_cnt(cnt_rotated, rotated, img_shape):
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours[0]
 
+def combine_nearby(detection_results):
+    new_detection_results = []
+    for i, detection_result_a in enumerate(detection_results):
+        for j, detection_result_b in enumerate(detection_results):
+            if i == j:
+                continue
+
+            if detection_result_a.overlaps(detection_result_b):
+                new_detection_result = detection_result_a.combine(detection_result_b)
+                new_detection_results.append(new_detection_result)
+    
+    for new_detection_result in new_detection_results:
+        detection_results.append(new_detection_result)
+
 def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
     # ------------------------------------------------------------------------ #
     rotateds = rotate(img)
@@ -63,18 +77,10 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    new_detection_results = []
-    for i, detection_result_a in enumerate(detection_results):
-        for j, detection_result_b in enumerate(detection_results):
-            if i == j:
-                continue
+    combine_nearby(detection_results) # support for 2 words per label
 
-            if detection_result_a.overlaps(detection_result_b):
-                new_detection_result = detection_result_a.combine(detection_result_b)
-                new_detection_results.append(new_detection_result)
-    
-    for new_detection_result in new_detection_results:
-        detection_results.append(new_detection_result)
+    # TODO: is this needed
+    combine_nearby(detection_results) # support for 3 words per label
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
