@@ -59,7 +59,6 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
         for r in result:
             confidence = r[2]
             if confidence < ocr_thresh:
-                print(r) # debug
                 continue
 
             text = r[1]
@@ -107,8 +106,9 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
         if ratio <= levenshtein_thresh:
             levenshtein_result = util.LevenshteinResult(detection_result, closest, ratio)
             levenshtein_results.append(levenshtein_result)
-        else: # debug
-            print(detection_result.text, detection_result.confidence, ratio)
+
+    # TODO: is needed?
+    levenshtein_results = util.remove_dups(levenshtein_results, lambda x: x.detection_result.cnt)
 
     return levenshtein_results
     # ------------------------------------------------------------------------ #

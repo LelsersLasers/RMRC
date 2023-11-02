@@ -200,7 +200,6 @@ class DetectionResult:
     def overlaps(self, other):
         return self.cnt == other.cnt
 
-
     def combine(self, other):
         cnt = self.cnt.combine(other.cnt)
         text = f'{self.text} {other.text}'
@@ -237,11 +236,4 @@ def remove_dups(list, comp):
         if comp(item) not in [comp(x) for x in new_list]:
             new_list.append(item)
     return new_list
-
-def removeSpecialCharacter(s):
-    t = ""
-    for i in s:
-        if i >= 'A' and i <= 'Z' or i == " ":
-            t += i
-    return t
 # ---------------------------------------------------------------------------- #
