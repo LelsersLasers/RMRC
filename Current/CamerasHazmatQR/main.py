@@ -170,39 +170,26 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
 
                 if hazmat_ds.s1["run_hazmat"]:
 
-                    received_tups = hazmat.processScreenshot(frame, reader, levenshtein_thresh, ocr_thresh)
-
-                    found_this_frame = []
-
-                    for received_tup in received_tups:
-                        text = received_tup[0].strip()
-                        word = received_tup[1].strip()
-                        conf = float(received_tup[2]) * 100
-                        ratio = received_tup[3]
-                        cnt = received_tup[4]
-
-                        string = f'{text} (\'{word}\', {conf:.0f}%, {ratio:.2f})' 
-                        found_this_frame.append((text, word, string, cnt))
-                        all_found.append(text)
+                    levenshtein_results = hazmat.processScreenshot(frame, reader, levenshtein_thresh, ocr_thresh)
 
                     fontScale = 0.5
                     fontColor = (0, 0, 255)
                     thickness = 1
                     lineType = 2
 
-                    for found in found_this_frame:
-                        text, word, string, cnt = found
+                    for levenshtein_result in levenshtein_results:
+                        all_found.append(levenshtein_result.closest)
 
-                        frame = cv2.drawContours(frame, [cnt.cnt], -1, (255, 0, 0), 3)
-                        x, y, w, h = cv2.boundingRect(cnt.cnt)
+                        frame = cv2.drawContours(frame, [levenshtein_result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
 
+                        x, y, w, h = cv2.boundingRect(levenshtein_result.detection_result.cnt.cnt)
                         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
 
                         corner = (x + 5, y - 10)
 
                         cv2.putText(
                             frame,
-                            string,
+                            levenshtein_result.string,
                             corner,
                             cv2.FONT_HERSHEY_SIMPLEX,
                             fontScale,
@@ -211,11 +198,11 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
                             lineType,
                         )
 
-                    if len(found_this_frame) > 0:
+                    if len(levenshtein_results) > 0:
                         all_found = list(set(all_found))
                         all_found.sort()
 
-                        print([x[2] for x in found_this_frame])
+                        print([levenshtein_result.string for levenshtein_result in levenshtein_results])
                         print(all_found)
 
                 unscale = 1 / HAZMAT_FRAME_SCALE

@@ -1,8 +1,11 @@
 import time
 import signal
+import queue
+
 import numpy as np
 import cv2
-import queue
+import scipy
+
 from multiprocessing import Queue
 
 # ---------------------------------------------------------------------------- #
@@ -171,6 +174,48 @@ class CNT:
         px_count = cv2.countNonZero(mask)
 
         return px_count < self.pixel_count + other.pixel_count
+    
+
+def unrotate_cnt(cnt_rotated, rotated, img_shape):
+    img_h, img_w = img_shape[:2]
+
+    mask = np.zeros(rotated.image.shape[:2], dtype=np.uint8)
+    cv2.drawContours(mask, [cnt_rotated], -1, 255, -1)
+    
+    mask = scipy.ndimage.rotate(mask, -rotated.angle)
+    h, w = mask.shape[:2]
+    x = int((w - img_w) / 2)
+    y = int((h - img_h) / 2)
+    mask = mask[y:y+img_h, x:x+img_w]
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return contours[0]
+
+class DetectionResult:
+    def __init__(self, cnt, text, confidence):
+        self.cnt = cnt
+        self.text = text.strip()
+        self.confidence = confidence
+
+    def overlaps(self, other):
+        return self.cnt == other.cnt
+
+
+    def combine(self, other):
+        cnt = self.cnt.combine(other.cnt)
+        text = f'{self.text} {other.text}'
+        confidence = (self.confidence + other.confidence) / 2
+
+        return DetectionResult(cnt, text, confidence)
+    
+class LevenshteinResult:
+    def __init__(self, detection_result, closest, ratio):
+        self.detection_result = detection_result
+        self.closest = closest
+        self.ratio = ratio
+        
+        display_confidence = detection_result.confidence * 100
+        self.string = f'{closest} (\'{detection_result.text}\', {display_confidence:.0f}%, {ratio:.2f})' 
 # ---------------------------------------------------------------------------- #
 
 
