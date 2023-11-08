@@ -144,8 +144,6 @@ def server_main(server_dq):
 
 # ---------------------------------------------------------------------------- #
 def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
-    time.sleep(CAMERA_WAKEUP_TIME)
-
     fps_controller = util.FPSController()
 
     all_found = []
