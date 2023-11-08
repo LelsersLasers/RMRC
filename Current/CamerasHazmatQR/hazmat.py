@@ -49,7 +49,7 @@ def combine_nearby(detection_results):
     for new_detection_result in new_detection_results:
         detection_results.append(new_detection_result)
 
-def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
+def processScreenshot(img, reader, levenshtein_thresh):
     # ------------------------------------------------------------------------ #
     rotateds = rotate(img)
 
@@ -102,7 +102,6 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
             levenshtein_result = util.LevenshteinResult(detection_result, closest, ratio)
             levenshtein_results.append(levenshtein_result)
 
-    # TODO: is needed?
     levenshtein_results = util.remove_dups(levenshtein_results, lambda x: x.detection_result.cnt)
 
     return levenshtein_results

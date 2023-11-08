@@ -8,18 +8,16 @@ CAP_ARGS = {
 
 """
 TODO:
-- qr gets its own thread?
-- multiline label detection
-    - Better solution than how it is now?
-        - Maybe make the CNT.__eq__ check work on expanded cnts?
-    - Fixed??
-    - Do we need 3 words per label?
-- unrotate correctly
-    - Fixed??
-- 90 vs 45
-    - likely bigger angle -> lower ocr_thresh
-        - lower ocr_thresh isn't terrible on performance
-    - smaller angle is harder on performance
+- Frame rate: try to get 30fps on all, or at least webcam1
+- QR gets its own thread?
+    - I don't think the Jetson has enough threads...
+- Needed? 2x hazmat.combine_nearby()
+- Angle: 90 vs 60 vs 45
+- Tweak levenshtein_thresh
+- Startup sometimes fails on opencv.cpp resize error
+    - Can't catch with python try/except
+- hazmat_main() as a long startup
+    - Maybe just caused by the easyocr reader creation
 """
 
 
@@ -48,11 +46,10 @@ HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
 HAZMAT_LEVENSHTEIN_THRESH = 0.4
-HAZMAT_OCR_THRESH = 0.5
 HAZMAT_DRY_FPS = 15
 CAMERA_WAKEUP_TIME = 0.5
 HAZMAT_FRAME_SCALE = 1
-HAZMAT_DELAY_BAR_SCALE = 30  # in seconds
+HAZMAT_DELAY_BAR_SCALE = 10  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
 
@@ -84,7 +81,7 @@ STATE_CAMERA = {
     "frame": None,
     "ns": 0,
     "fps": 20,
-    "time": 0,
+    "time": time.time(),
 }
 # ---------------------------------------------------------------------------- #
 
@@ -143,7 +140,7 @@ def server_main(server_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
+def hazmat_main(hazmat_dq, levenshtein_thresh):
     fps_controller = util.FPSController()
 
     all_found = []
@@ -151,7 +148,9 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
 
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
 
+    print("Creating easyocr reader...")
     reader = easyocr.Reader(["en"], gpu=True)
+    print("easyocr reader created.")
 
     try:
         while not hazmat_ds.s1["quit"]:
@@ -169,7 +168,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh, ocr_thresh):
 
                 if hazmat_ds.s1["run_hazmat"]:
 
-                    levenshtein_results = hazmat.processScreenshot(frame, reader, levenshtein_thresh, ocr_thresh)
+                    levenshtein_results = hazmat.processScreenshot(frame, reader, levenshtein_thresh)
 
                     fontScale = 0.5
                     fontColor = (0, 0, 255)
@@ -294,11 +293,11 @@ def fps_text(frame, fps):
     text = "FPS: %.0f" % fps
     cv2.putText(frame, text, bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
-def ratio_bar(frame, ratio, active):
+def ratio_bar(frame, ratio, active, loading = False):
     ratio = min(ratio, 1)
     w = ratio * (frame.shape[1] - 10)
 
-    color =  (0, 0, 255) if active else (255, 255, 0)
+    color = (0, 255, 0) if loading else ((0, 0, 255) if active else (255, 255, 0))
 
     cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
 
@@ -382,7 +381,12 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
             hazmat_frame = np.zeros_like(frame)
 
         time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
-        ratio_bar(hazmat_frame, time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE, hazmat_ds.s1["run_hazmat"])
+        ratio_bar(
+            hazmat_frame,
+            time_since_last_hazmat_update / HAZMAT_DELAY_BAR_SCALE,
+            hazmat_ds.s1["run_hazmat"],
+            hazmat_ds.s2["hazmat_frame"] is None
+        )
         # -------------------------------------------------------------------- #
 
 
@@ -407,7 +411,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
             ratio_bar(frame, (end - start) / QR_TIME_BAR_SCALE, True)
         else:
-            cv2.line(frame, (5, 5), (5, 5), (255, 255, 0), 3)
+            ratio_bar(frame, 0, False)
 
         all_qr_found = list(set(all_qr_found))
         all_qr_found.sort()
@@ -567,7 +571,7 @@ if __name__ == "__main__":
 
     hazmat_thread = Process(
         target=hazmat_main,
-        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH, HAZMAT_OCR_THRESH)
+        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH)
     )
     hazmat_thread.daemon = True
     hazmat_thread.start()
