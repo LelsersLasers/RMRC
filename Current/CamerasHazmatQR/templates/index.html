@@ -115,11 +115,14 @@ span {
 	background-color: #A3BE8C;
 }
 
-#rambar {
-	background-color: #EBCB8B;
-}
 #cpubar {
 	background-color: #D08770;
+}
+#gpubar {
+	background-color: #D08770;
+}
+#rambar {
+	background-color: #EBCB8B;
 }
 
 kbd {
@@ -189,6 +192,9 @@ kbd {
 			<h4>Host stats</h4>
 			<div class="bar" id="cpubar">
 				<span id="stats-cpu">10%</span>
+			</div>
+			<div class="bar" id="gpubar">
+				<span id="stats-gpu">10%</span>
 			</div>
 			<div class="bar" id="rambar">
 				<span id="stats-ram">20%</span>
@@ -271,7 +277,7 @@ kbd {
 						}
 
 						
-						const stats_ids = ["cpu", "ram"];
+						const stats_ids = ["cpu", "gpu", "ram"];
 
 						for (let i = 0; i < stats_ids.length; i++) {
 							const stats_id = stats_ids[i];

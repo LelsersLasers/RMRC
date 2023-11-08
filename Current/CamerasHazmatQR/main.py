@@ -47,6 +47,7 @@ QR_TOGGLE_KEY = "r"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
+GPU_LOG_FILENAME = "tegrastats.log"
 HAZMAT_LEVENSHTEIN_THRESH = 0.4
 HAZMAT_DRY_FPS = 15
 CAMERA_WAKEUP_TIME = 1.0
@@ -99,6 +100,7 @@ STATE_SERVER_MASTER = {
     "fpses": [-1, -1, -1, -1, -1],
     "ram": 0,
     "cpu": 0,
+    "gpu": -1,
 }
 STATE_SERVER = {} # keys
 # ---------------------------------------------------------------------------- #
@@ -304,7 +306,7 @@ def ratio_bar(frame, ratio, active, loading = False):
     cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
 
 
-def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
+def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_HOLD_KEY}' to run hazmat detection while holding key.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
@@ -529,6 +531,12 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
         server_ds.s1["ram"] = psutil.virtual_memory().percent
         server_ds.s1["cpu"] = psutil.cpu_percent()
 
+        if gpu_log_file is not None:
+            last_line = util.read_last_line(gpu_log_file)
+            peices = last_line.split()
+            for i, peice in enumerate(peices):
+                if peice == "GR3D_FREQ":
+                    server_ds.s1["gpu"] = float(peices[i + 1][:-1])            
 
         server_ds.put_s1(server_dq)
         # -------------------------------------------------------------------- #
@@ -598,11 +606,15 @@ if __name__ == "__main__":
     print("\nStarting master thread...\n")
 
     try:
-        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture)
+        gpu_log_file = None if zero_video_capture else open(GPU_LOG_FILENAME, 'rb')
+        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture, gpu_log_file)
     except Exception as e:
         print("AAA", e)
     # except:
     #     pass
+    finally:
+        if gpu_log_file is not None:
+            gpu_log_file.close()
     # ------------------------------------------------------------------------ #
 
 

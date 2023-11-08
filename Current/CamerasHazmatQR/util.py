@@ -1,6 +1,7 @@
 import time
 import signal
 import queue
+import os
 
 import numpy as np
 import cv2
@@ -236,4 +237,19 @@ def remove_dups(list, comp):
         if comp(item) not in [comp(x) for x in new_list]:
             new_list.append(item)
     return new_list
+# ---------------------------------------------------------------------------- #
+
+
+# ---------------------------------------------------------------------------- #
+def read_last_line(f):
+    # with open('filename.txt', 'rb') as f:
+    try:  # catch OSError in case of a one line file 
+        f.seek(-2, os.SEEK_END)
+        while f.read(1) != b'\n':
+            f.seek(-2, os.SEEK_CUR)
+    except OSError:
+        f.seek(0)
+        
+    last_line = f.readline().decode()
+    return last_line
 # ---------------------------------------------------------------------------- #
