@@ -58,12 +58,7 @@ def processScreenshot(img, reader, levenshtein_thresh, ocr_thresh):
         result = reader.readtext(rotated.image)
         for r in result:
             confidence = r[2]
-            if confidence < ocr_thresh:
-                continue
-
             text = r[1]
-            if len(text) < 2:
-                continue
 
             # ---------------------------------------------------------------- #
             cnt_rotated = np.array(r[0], dtype=np.int32)
