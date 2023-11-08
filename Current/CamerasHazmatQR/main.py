@@ -16,8 +16,6 @@ TODO:
 - Tweak levenshtein_thresh
 - Startup sometimes fails on opencv.cpp resize error
     - Can't catch with python try/except
-- hazmat_main() as a long startup
-    - Maybe just caused by the easyocr reader creation
 - show gpu usage
     - Maybe?
         - tegrastats --logfile
