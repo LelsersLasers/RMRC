@@ -71,7 +71,7 @@ STATE_HAZMAT = {
     "hazmat_fps": HAZMAT_DRY_FPS,
     "hazmat_frame": None,
     "hazmats_found": [],
-    "last_update": 0,
+    "last_update": time.time(),
 }
 # ---------------------------------------------------------------------------- #
 
