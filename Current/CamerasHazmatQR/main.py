@@ -8,18 +8,11 @@ CAP_ARGS = {
 
 """
 TODO:
-- Frame rate: try to get 30fps on all, or at least webcam1
-- QR gets its own thread?
-    - I don't think the Jetson has enough threads...
 - Needed? 2x hazmat.combine_nearby()
 - Angle: 90 vs 60 vs 45
 - Tweak levenshtein_thresh
 - Startup sometimes fails on opencv.cpp resize error
     - Can't catch with python try/except
-- show gpu usage
-    - Maybe?
-        - tegrastats --logfile
-        - read last line
 """
 
 
