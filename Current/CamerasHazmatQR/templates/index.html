@@ -221,9 +221,9 @@ kbd {
 	</div>
 
 	<script>
-		// const FLASK_SERVER = "http://192.168.1.6:5000";
-		const FLASK_SERVER = "http://localhost:5000";
-		const FRONT_END_FPS = 20;
+        const current_url = window.location.href;
+        const FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
+        const FRONT_END_FPS = 20;
 
 		const DELAY = 1000 / FRONT_END_FPS;
 
@@ -242,7 +242,7 @@ kbd {
         const MAX_LEN = 1 * FRONT_END_FPS;
 
 		setInterval(function() {
-			const path = "/get";
+			const path = "get";
 			const start_pref_ms = performance.now();
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
@@ -366,7 +366,7 @@ kbd {
 		}, DELAY);
 
 		function send_state() {
-			const base_path = "/set";
+			const base_path = "set";
 			for (const key in STATE) {
 				const path = base_path + "/" + key + "/" + STATE[key];
 				fetch(FLASK_SERVER + path);
