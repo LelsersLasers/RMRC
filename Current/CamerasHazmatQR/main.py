@@ -46,7 +46,7 @@ HAZMAT_DRY_FPS = 15
 CAMERA_WAKEUP_TIME = 1.0
 HAZMAT_FRAME_SCALE = 1
 HAZMAT_ANGLE = 90
-HAZMAT_DELAY_BAR_SCALE = 10  # in seconds
+HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
 
@@ -200,7 +200,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
                                 lineType,
                             )
 
-                    if len(levenshtein_results.get(hazmat_ds.s2["angle"], [])) > 0:
+                    if len(levenshtein_results[hazmat_ds.s2["angle"]]) > 0:
                         all_found = list(set(all_found))
                         all_found.sort()
 
