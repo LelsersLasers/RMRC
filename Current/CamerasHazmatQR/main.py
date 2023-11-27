@@ -287,10 +287,7 @@ def camera_main(camera_dq, key):
 
 # ---------------------------------------------------------------------------- #
 def key_down(keys, key):
-    try:
-        return keys[key] == "true"
-    except KeyError:
-        return False
+    return keys.get(key, "false") == "true"
     
 def fps_text(frame, fps):
     font = cv2.FONT_HERSHEY_SIMPLEX
