@@ -45,6 +45,7 @@ HAZMAT_LEVENSHTEIN_THRESH = 0.4
 HAZMAT_DRY_FPS = 15
 CAMERA_WAKEUP_TIME = 1.0
 HAZMAT_FRAME_SCALE = 1
+HAZMAT_ANGLE = 90
 HAZMAT_DELAY_BAR_SCALE = 10  # in seconds
 QR_TIME_BAR_SCALE = 0.1  # in seconds
 SERVER_FRAME_SCALE = 1
@@ -64,6 +65,7 @@ STATE_HAZMAT = {
     "hazmat_frame": None,
     "hazmats_found": [],
     "last_update": time.time(),
+    "angle": 0,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -94,6 +96,7 @@ STATE_SERVER_MASTER = {
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
+    "angle": 0,
 }
 STATE_SERVER = {} # keys
 # ---------------------------------------------------------------------------- #
@@ -143,6 +146,8 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
     all_found = []
     frame = None
 
+    levenshtein_results = {}
+
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
 
     print("Creating easyocr reader...")
@@ -163,42 +168,50 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
                 frame = hazmat_ds.s1["frame"]
                 frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
 
-                if hazmat_ds.s1["run_hazmat"]:
+                if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
 
-                    levenshtein_results = hazmat.processScreenshot(frame, reader, levenshtein_thresh)
+                    frame_results = hazmat.processScreenshot(frame, hazmat_ds.s2["angle"], reader, levenshtein_thresh)
+                    levenshtein_results[hazmat_ds.s2["angle"]] = frame_results
 
                     fontScale = 0.5
                     fontColor = (0, 0, 255)
                     thickness = 1
                     lineType = 2
 
-                    for levenshtein_result in levenshtein_results:
-                        all_found.append(levenshtein_result.closest)
+                    for results in levenshtein_results.values():
+                        for result in results:
+                            all_found.append(result.closest)
 
-                        frame = cv2.drawContours(frame, [levenshtein_result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
+                            frame = cv2.drawContours(frame, [result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
 
-                        x, y, w, h = cv2.boundingRect(levenshtein_result.detection_result.cnt.cnt)
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
+                            x, y, w, h = cv2.boundingRect(result.detection_result.cnt.cnt)
+                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
 
-                        corner = (x + 5, y - 10)
+                            corner = (x + 5, y - 10)
 
-                        cv2.putText(
-                            frame,
-                            levenshtein_result.string,
-                            corner,
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            fontScale,
-                            fontColor,
-                            thickness,
-                            lineType,
-                        )
+                            cv2.putText(
+                                frame,
+                                result.string,
+                                corner,
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                fontScale,
+                                fontColor,
+                                thickness,
+                                lineType,
+                            )
 
-                    if len(levenshtein_results) > 0:
+                    if len(levenshtein_results.get(hazmat_ds.s2["angle"], [])) > 0:
                         all_found = list(set(all_found))
                         all_found.sort()
 
-                        print([levenshtein_result.string for levenshtein_result in levenshtein_results])
+                        print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
                         print(all_found)
+
+                    hazmat_ds.s2["angle"] += HAZMAT_ANGLE
+                    hazmat_ds.s2["angle"] %= 360
+                else:
+                    hazmat_ds.s2["angle"] = 0
+                    levenshtein_results = {}
 
                 unscale = 1 / HAZMAT_FRAME_SCALE
                 hazmat_ds.s2["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
@@ -499,6 +512,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         server_ds.s1["h"] = combine_downscaled.shape[0]
 
         server_ds.s1["hazmats_found"] = hazmat_ds.s2["hazmats_found"]
+        server_ds.s1["angle"] = hazmat_ds.s2["angle"]
         server_ds.s1["qr_found"] = all_qr_found
 
         server_ds.s1["time"] = frame_read_time

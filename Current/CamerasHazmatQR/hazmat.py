@@ -10,15 +10,10 @@ class Rotated:
         self.image = image
         self.angle = angle
 
-def rotate(img):
-    rotateds = []
-    # TODO: 90 vs 45 (vs 60)
-    for angle in range(0, 360, 90):
-        rotated_image = scipy.ndimage.rotate(img, angle)
-        rotated = Rotated(rotated_image, angle)
-        rotateds.append(rotated)
-
-    return rotateds
+def rotate(image, angle):
+    rotated_image = scipy.ndimage.rotate(image, angle)
+    rotated = Rotated(rotated_image, angle)
+    return rotated
 
 def unrotate_cnt(cnt_rotated, rotated, img_shape):
     img_h, img_w = img_shape[:2]
@@ -49,25 +44,24 @@ def combine_nearby(detection_results):
     for new_detection_result in new_detection_results:
         detection_results.append(new_detection_result)
 
-def processScreenshot(img, reader, levenshtein_thresh):
+def processScreenshot(img, angle, reader, levenshtein_thresh):
     # ------------------------------------------------------------------------ #
-    rotateds = rotate(img)
+    rotated = rotate(img, angle)
 
     detection_results = []
-    for rotated in rotateds:
-        result = reader.readtext(rotated.image)
-        for r in result:
-            confidence = r[2]
-            text = r[1]
+    result = reader.readtext(rotated.image)
+    for r in result:
+        confidence = r[2]
+        text = r[1]
 
-            # ---------------------------------------------------------------- #
-            cnt_rotated = np.array(r[0], dtype=np.int32)
-            cnt = unrotate_cnt(cnt_rotated, rotated, img.shape)
-            cnt = util.CNT(cnt, img.shape, True)
-            # ---------------------------------------------------------------- #
-        
-            detection_result = util.DetectionResult(cnt, text, confidence)
-            detection_results.append(detection_result)
+        # ---------------------------------------------------------------- #
+        cnt_rotated = np.array(r[0], dtype=np.int32)
+        cnt = unrotate_cnt(cnt_rotated, rotated, img.shape)
+        cnt = util.CNT(cnt, img.shape, True)
+        # ---------------------------------------------------------------- #
+    
+        detection_result = util.DetectionResult(cnt, text, confidence)
+        detection_results.append(detection_result)
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #

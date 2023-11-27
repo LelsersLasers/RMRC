@@ -125,6 +125,10 @@ span {
 	background-color: #EBCB8B;
 }
 
+#anglebar {
+	background-color: #A3BE8C;
+}
+
 kbd {
 	background-color: #4C566A;
 	border-radius: 0.2em;
@@ -201,6 +205,9 @@ kbd {
 			</div>
 
 			<h4>Detected Hazmat Labels:</h4>
+			<div class="bar" id="anglebar">
+				<span id="angle">0°</span>
+			</div>
 			<p id="hazmats"></p>
 
 			<h4>Detected QR Codes:</h4>
@@ -277,6 +284,7 @@ kbd {
 						}
 
 						
+						
 						const stats_ids = ["cpu", "gpu", "ram"];
 
 						for (let i = 0; i < stats_ids.length; i++) {
@@ -288,6 +296,13 @@ kbd {
 							const statbar = document.getElementById(stats_id + "bar");
 							statbar.style.width = stat + "%";
 						}
+
+						const angle = data["angle"] == 0 ? 360 : data["angle"];
+						const angle_ele = document.getElementById("angle");
+						angle_ele.innerHTML = `${angle.toFixed(0)}°`;
+
+						const anglebar = document.getElementById("anglebar");
+						anglebar.style.width = (angle / 360) * 100 + "%";
 
 
 						const frame_ele = document.getElementById("frame");
