@@ -24,6 +24,7 @@ from multiprocessing import Process
 import util
 import hazmat
 import qr_detect
+import motion_detect
 
 import cv2
 import numpy as np
@@ -37,6 +38,7 @@ import logging
 HAZMAT_TOGGLE_KEY = "h"
 HAZMAT_HOLD_KEY = "g"
 QR_TOGGLE_KEY = "r"
+MOTION_TOGGLE_KEY = "m"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
@@ -47,7 +49,10 @@ CAMERA_WAKEUP_TIME = 1.0
 HAZMAT_FRAME_SCALE = 1
 HAZMAT_ANGLE = 90
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
-QR_TIME_BAR_SCALE = 0.1  # in seconds
+QR_TIME_BAR_SCALE = 0.1     # in seconds
+MOTION_TIME_BAR_SCALE = 0.1 # in seconds
+MOTION_MIN_AREA = 800
+MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
 
 # ---------------------------------------------------------------------------- #
@@ -323,13 +328,18 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     run_hazmat_toggler = util.Toggler(False)
     run_hazmat_hold = False
     run_qr_toggler = util.Toggler(False)
+    run_motion_toggler = util.Toggler(False)
 
     hazmat_tk = util.ToggleKey()
     qr_tk = util.ToggleKey()
+    motion_tk = util.ToggleKey()
 
     view_mode = util.ViewMode()
 
     all_qr_found = []
+
+    average_frame = None
+    update_average_frame = False
 
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
     server_ds = util.DoubleState(STATE_SERVER_MASTER, STATE_SERVER)
@@ -340,7 +350,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         camera_dses[key] = camera_ds
 
     base_key = None if video_capture_zero else "webcam1"
-    frame_to_pass_to_hazmat = None
+    frame_copy = None
 
     killer = util.GracefulKiller()
 
@@ -360,9 +370,14 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             if key == base_key and frames[key] is not None and camera_ds.s2["time"] > last_base_frame_time:
                 frame_read_time = camera_ds.s2["time"]
                 last_base_frame_time = frame_read_time
-                frame_to_pass_to_hazmat = frames[key].copy()
 
-        frame = frames[base_key]
+                frame_copy = frames[key].copy()
+
+                if average_frame is None:
+                    average_frame = frames[key].copy().astype("float")
+                update_average_frame = True
+
+        frame = frames[base_key]            
 
         if frame is None:
             time.sleep(0.5)
@@ -417,8 +432,18 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             end = time.time()
 
             ratio_bar(frame, (end - start) / QR_TIME_BAR_SCALE, True)
+        elif run_motion_toggler:
+            start = time.time()
+            motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, MOTION_MIN_AREA)
+            end = time.time()
+
+            ratio_bar(frame, (end - start) / MOTION_TIME_BAR_SCALE, True, True)
         else:
             ratio_bar(frame, 0, False)
+
+        if update_average_frame:
+            update_average_frame = False
+            cv2.accumulateWeighted(frame_copy.astype("float"), average_frame, MOTION_NEW_FRAME_WEIGHT)
 
         all_qr_found = list(set(all_qr_found))
         all_qr_found.sort()
@@ -434,6 +459,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         
         if qr_tk.down(key_down(server_ds.s2, QR_TOGGLE_KEY)):
             run_qr_toggler.toggle()
+        if motion_tk.down(key_down(server_ds.s2, MOTION_TOGGLE_KEY)):
+            run_motion_toggler.toggle()
 
         if key_down(server_ds.s2, QR_CLEAR_KEY):
             all_qr_found = []
@@ -466,7 +493,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         elif hazmat_ds.s1["clear_all_found"] == 2:
             hazmat_ds.s1["clear_all_found"] = 0
 
-        hazmat_ds.s1["frame"] = frame_to_pass_to_hazmat
+        hazmat_ds.s1["frame"] = frame_copy
         hazmat_ds.put_s1(hazmat_dq)
         # -------------------------------------------------------------------- #
 
@@ -613,7 +640,7 @@ if __name__ == "__main__":
         gpu_log_file = None if zero_video_capture else open(GPU_LOG_FILENAME, 'rb')
         master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture, gpu_log_file)
     except Exception as e:
-        print("AAA", e)
+        print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
     # except:
     #     pass
     finally:
