@@ -79,6 +79,7 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
         "inhalation hazard",
         "infectious substance",
         "flammable liquid",
+        "flammable solid",
         "spontaneously combustible",
         "dangerous when wet",
         "oxidizer",
