@@ -20,9 +20,6 @@ def motion_detect(frame, avg, threshold_lower):
 	_, thresh = cv2.threshold(frame_diff, threshold_lower, 255, cv2.THRESH_BINARY)
 	cv2.dilate(thresh, None, iterations=2)
 
-	cv2.imshow("thresh", thresh)
-	cv2.waitKey(1)
-
 	thresh_grayscale = cv2.cvtColor(np.float32(thresh), cv2.COLOR_BGR2GRAY)
 	contours, _ = cv2.findContours(thresh_grayscale.astype("uint8"), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
