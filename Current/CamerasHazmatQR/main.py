@@ -52,6 +52,7 @@ HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
 MOTION_TIME_BAR_SCALE = 0.1 # in seconds
 MOTION_MIN_AREA = 800
+MOTION_THRESHOLD = 50
 MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
 
@@ -434,7 +435,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             ratio_bar(frame, (end - start) / QR_TIME_BAR_SCALE, True)
         elif run_motion_toggler:
             start = time.time()
-            motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, MOTION_MIN_AREA)
+            motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, MOTION_MIN_AREA, MOTION_THRESHOLD)
             end = time.time()
 
             ratio_bar(frame, (end - start) / MOTION_TIME_BAR_SCALE, True, True)
