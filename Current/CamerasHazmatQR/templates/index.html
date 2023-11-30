@@ -125,6 +125,10 @@ span {
 	background-color: #EBCB8B;
 }
 
+#anglebar {
+	background-color: #A3BE8C;
+}
+
 kbd {
 	background-color: #4C566A;
 	border-radius: 0.2em;
@@ -201,6 +205,9 @@ kbd {
 			</div>
 
 			<h4>Detected Hazmat Labels:</h4>
+			<div class="bar" id="anglebar">
+				<span id="angle">0°</span>
+			</div>
 			<p id="hazmats"></p>
 
 			<h4>Detected QR Codes:</h4>
@@ -213,6 +220,7 @@ kbd {
 				Press <kbd>c</kbd> to clear all found hazmat labels.<br />
 				Press <kbd>r</kbd> to toggle running QR detection.<br />
 				Press <kbd>x</kbd> to clear all found QR codes.<br />
+				Press <kbd>m</kbd> to toggle running motion detection.<br />
 				Press <kbd>1-4</kbd> to switched focused feed.<br />
 				Press <kbd>0</kbd> to show camera grid.<br />
 				Press <kbd>5</kbd> to toggle sidebar.<br />
@@ -277,6 +285,7 @@ kbd {
 						}
 
 						
+						
 						const stats_ids = ["cpu", "gpu", "ram"];
 
 						for (let i = 0; i < stats_ids.length; i++) {
@@ -288,6 +297,13 @@ kbd {
 							const statbar = document.getElementById(stats_id + "bar");
 							statbar.style.width = stat + "%";
 						}
+
+						const angle = data["angle"] == 0 ? 360 : data["angle"];
+						const angle_ele = document.getElementById("angle");
+						angle_ele.innerHTML = `${angle.toFixed(0)}°`;
+
+						const anglebar = document.getElementById("anglebar");
+						anglebar.style.width = (angle / 360) * 100 + "%";
 
 
 						const frame_ele = document.getElementById("frame");
