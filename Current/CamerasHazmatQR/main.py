@@ -321,6 +321,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
+    print(f"Press '{MOTION_TOGGLE_KEY}' to toggle running motion detection.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
