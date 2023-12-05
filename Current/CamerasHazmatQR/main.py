@@ -373,11 +373,14 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             time.sleep(0.5)
             continue
 
-        base_frame_shape = frames[base_key].shape
+        base_frame_shape = frame.shape
         if video_capture_zero:
             ir_frame = frames[base_key]
         else:
-            ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
+            if frames["ir"] is None:
+                ir_frame = np.zeros_like(frame)
+            else:
+                ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
             fps_text(ir_frame, camera_dses["ir"].s2["fps"])
 
             fps_text(frames["webcam2"], camera_dses["webcam2"].s2["fps"])
