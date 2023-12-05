@@ -1,19 +1,10 @@
-# Runs 2 webcams, IR, QR detection, and hazmat detection.
+# Runs 2 webcams, IR, QR detection, motion detection, and hazmat detection.
 
 CAP_ARGS = {
     "webcam1": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_2D4AA0A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videorate ! video/x-raw,framerate=30/1 ! videoconvert ! appsink",
     "webcam2": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_348E60A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videorate ! video/x-raw,framerate=30/1 ! videoconvert ! appsink",
     "ir": "v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! appsink",
 }
-
-"""
-TODO:
-- Needed? 2x hazmat.combine_nearby()
-- Angle: 90 vs 60 vs 45
-- Tweak levenshtein_thresh
-- Startup sometimes fails on opencv.cpp resize error
-    - Can't catch with python try/except
-"""
 
 
 import time
@@ -46,7 +37,6 @@ GPU_LOG_FILENAME = "tegrastats.log"
 HAZMAT_LEVENSHTEIN_THRESH = 0.4
 HAZMAT_DRY_FPS = 15
 CAMERA_WAKEUP_TIME = 1.0
-HAZMAT_FRAME_SCALE = 1
 HAZMAT_ANGLE = 90
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
@@ -172,7 +162,6 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
 
             if hazmat_ds.s1["frame"] is not None:
                 frame = hazmat_ds.s1["frame"]
-                frame = cv2.resize(frame, (0, 0), fx=HAZMAT_FRAME_SCALE, fy=HAZMAT_FRAME_SCALE)
 
                 if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
 
@@ -219,8 +208,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
                     hazmat_ds.s2["angle"] = 0
                     levenshtein_results = {}
 
-                unscale = 1 / HAZMAT_FRAME_SCALE
-                hazmat_ds.s2["hazmat_frame"] = cv2.resize(frame, (0, 0), fx=unscale, fy=unscale)
+                hazmat_ds.s2["hazmat_frame"] = frame
 
             # ---------------------------------------------------------------- #
             fps_controller.update()
