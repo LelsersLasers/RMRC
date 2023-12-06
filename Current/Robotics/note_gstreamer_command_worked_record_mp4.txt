@@ -1,0 +1,1 @@
+gst-launch-1.0 nvarguscamerasrc sensor_id=1 ! queue ! omxh264enc ! 'video/x-h264, width=1280, height=720, framerate=30/1, stream-format=(string)byte-stream'  ! h264parse ! qtmux ! filesink location=large.mp4 -e sync=false
