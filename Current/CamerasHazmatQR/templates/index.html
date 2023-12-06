@@ -226,7 +226,7 @@ kbd {
 				Press <kbd>5</kbd> to toggle sidebar.<br />
 			</p>
 
-            <h5>Keys Down</h5>
+            <h4>Keys Down</h4>
             <p id="keys"></p>
 		</div>
 	</div>
@@ -238,7 +238,7 @@ kbd {
 
 		const DELAY = 1000 / FRONT_END_FPS;
 
-		const STATE = {}; // STATE[key] = true/false
+		const keys = {}; // keys[key] = true | if key is down
 
 		let show_sidebar = true;
 
@@ -384,18 +384,26 @@ kbd {
 				});
 		}, DELAY);
 
-		function send_state() {
-			const base_path = "set";
-			for (const key in STATE) {
-				const path = base_path + "/" + key + "/" + STATE[key];
-				fetch(FLASK_SERVER + path);
-			}
+
+		function display_keys() {
+            const object_keys = Object.keys(keys);
+			const keys_ele = document.getElementById("keys");
+            keys_ele.innerHTML = object_keys.sort().join(", ");
 		}
 
+        function send_keys() {
+            const base_path = "keys";
+            const object_keys = Object.keys(keys);
+            const keys_str = object_keys.join("-");
+            const path = base_path + "/" + keys_str;
+            fetch(FLASK_SERVER + path);
+
+			display_keys();
+        }
 		function keydown(e) {
-			const key = e.key;
-			STATE[key] = true;
-			send_state();
+			const key = e.key.toLowerCase();
+			keys[key] = true;
+            send_keys();
 
 			if (key == 5) {
 				show_sidebar = !show_sidebar;
@@ -405,8 +413,8 @@ kbd {
 		}
 		function keyup(e) {
 			const key = e.key;
-			STATE[key] = false;
-			send_state();
+            delete keys[key];
+            send_keys();
 		}
 
 		window.addEventListener("keydown", keydown);
