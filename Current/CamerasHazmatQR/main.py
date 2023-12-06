@@ -94,7 +94,9 @@ STATE_SERVER_MASTER = {
     "gpu": -1,
     "angle": 0,
 }
-STATE_SERVER = {} # keys
+STATE_SERVER = {
+    "keys": [],
+}
 # ---------------------------------------------------------------------------- #
 
 
@@ -103,15 +105,14 @@ def server_main(server_dq):
     app = Flask(__name__)
     server_ds = util.DoubleState(STATE_SERVER_MASTER, STATE_SERVER)
 
-
     @app.route("/")
     def index():
         return render_template("index.html")
 
-
-    @app.route("/set/<key>/<value>", methods=["GET"])
-    def set_key(key, value):
-        server_ds.s2[key] = value
+    @app.route("/keys/<keys_str>", methods=["GET"])
+    def keys(keys_str):
+        keys = keys_str.split("-")
+        server_ds.s2["keys"] = keys
 
         server_ds.put_s2(server_dq)
 
@@ -119,7 +120,6 @@ def server_main(server_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
 
         return response
-
 
     @app.route("/get", methods=["GET"])
     def get():
@@ -129,7 +129,6 @@ def server_main(server_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
 
         return response
-    
 
     app.run(debug=False, port=5000, host="0.0.0.0")
 # ---------------------------------------------------------------------------- #
@@ -281,7 +280,7 @@ def camera_main(camera_dq, key):
 
 # ---------------------------------------------------------------------------- #
 def key_down(keys, key):
-    return keys.get(key, "false") == "true"
+    return key in keys
     
 def fps_text(frame, fps):
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -446,33 +445,33 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         # -------------------------------------------------------------------- #
         server_ds.update_s2(server_dq)
 
-        if hazmat_tk.down(key_down(server_ds.s2, HAZMAT_TOGGLE_KEY)):
+        if hazmat_tk.down(key_down(server_ds.s2["keys"], HAZMAT_TOGGLE_KEY)):
             run_hazmat_toggler.toggle()
-        run_hazmat_hold = key_down(server_ds.s2, HAZMAT_HOLD_KEY)
+        run_hazmat_hold = key_down(server_ds.s2["keys"], HAZMAT_HOLD_KEY)
         
-        if qr_tk.down(key_down(server_ds.s2, QR_TOGGLE_KEY)):
+        if qr_tk.down(key_down(server_ds.s2["keys"], QR_TOGGLE_KEY)):
             run_qr_toggler.toggle()
-        if motion_tk.down(key_down(server_ds.s2, MOTION_TOGGLE_KEY)):
+        if motion_tk.down(key_down(server_ds.s2["keys"], MOTION_TOGGLE_KEY)):
             run_motion_toggler.toggle()
 
-        if key_down(server_ds.s2, QR_CLEAR_KEY):
+        if key_down(server_ds.s2["keys"], QR_CLEAR_KEY):
             all_qr_found = []
 
-        if key_down(server_ds.s2, HAZMAT_CLEAR_KEY):
+        if key_down(server_ds.s2["keys"], HAZMAT_CLEAR_KEY):
             hazmat_ds.s1["clear_all_found"] = 1
 
-        if key_down(server_ds.s2, "0"):
+        if key_down(server_ds.s2["keys"], "0"):
             view_mode.mode = util.ViewMode.GRID
-        elif key_down(server_ds.s2, "1"):
+        elif key_down(server_ds.s2["keys"], "1"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 0
-        elif key_down(server_ds.s2, "2"):
+        elif key_down(server_ds.s2["keys"], "2"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 1
-        elif key_down(server_ds.s2, "3"):
+        elif key_down(server_ds.s2["keys"], "3"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 2
-        elif key_down(server_ds.s2, "4"):
+        elif key_down(server_ds.s2["keys"], "4"):
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 3        
         # -------------------------------------------------------------------- #
