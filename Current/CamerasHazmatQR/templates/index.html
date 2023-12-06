@@ -226,7 +226,7 @@ kbd {
 				Press <kbd>5</kbd> to toggle sidebar.<br />
 			</p>
 
-            <h5>Keys Down</h5>
+            <h4>Keys Down</h4>
             <p id="keys"></p>
 		</div>
 	</div>
@@ -385,6 +385,12 @@ kbd {
 		}, DELAY);
 
 
+		function display_keys() {
+            const object_keys = Object.keys(keys);
+			const keys_ele = document.getElementById("keys");
+            keys_ele.innerHTML = object_keys.sort().join(", ");
+		}
+
         function send_keys() {
             const base_path = "keys";
             const object_keys = Object.keys(keys);
@@ -392,11 +398,10 @@ kbd {
             const path = base_path + "/" + keys_str;
             fetch(FLASK_SERVER + path);
 
-            const keys_ele = document.getElementById("keys");
-            keys_ele.innerHTML = object_keys.sort().join(", ");
+			display_keys();
         }
 		function keydown(e) {
-			const key = e.key;
+			const key = e.key.toLowerCase();
 			keys[key] = true;
             send_keys();
 
@@ -409,6 +414,7 @@ kbd {
 		function keyup(e) {
 			const key = e.key;
             delete keys[key];
+            send_keys();
 		}
 
 		window.addEventListener("keydown", keydown);

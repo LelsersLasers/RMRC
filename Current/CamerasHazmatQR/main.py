@@ -108,6 +108,17 @@ def server_main(server_dq):
     @app.route("/")
     def index():
         return render_template("index.html")
+    
+    @app.route("/keys/", methods=["GET"])
+    def no_keys_down():
+        server_ds.s2["keys"] = []
+
+        server_ds.put_s2(server_dq)
+
+        response = jsonify(server_ds.s2)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+
+        return response
 
     @app.route("/keys/<keys_str>", methods=["GET"])
     def keys(keys_str):
