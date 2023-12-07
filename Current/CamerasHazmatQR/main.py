@@ -48,9 +48,7 @@ MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
 
 # TODO
-SLOW_SPEED_TOGGLE_KEY = "t"
 MAX_SPEED = 32767
-SLOW_SPEED_MULTIPLIER = 0.12
 DIAGONAL_MULTIPLIER = 0.4
 
 # ---------------------------------------------------------------------------- #
@@ -107,6 +105,7 @@ STATE_SERVER_MASTER = {
 }
 STATE_SERVER = {
     "keys": [],
+    "power": 100,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -119,6 +118,17 @@ def server_main(server_dq):
     @app.route("/")
     def index():
         return render_template("index.html")
+    
+    @app.route("/power/<value>", methods=["GET"])
+    def power(value):
+        server_ds.s2["power"] = float(value) / 100
+
+        server_ds.put_s2(server_dq)
+
+        response = jsonify(server_ds.s2)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+
+        return response
     
     @app.route("/keys/", methods=["GET"])
     def no_keys_down():
@@ -331,7 +341,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
     print(f"Press '{MOTION_TOGGLE_KEY}' to toggle running motion detection.")
-    print(f"Press '{SLOW_SPEED_TOGGLE_KEY}' to toggle slow speed.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
@@ -350,8 +359,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
 
     if not video_capture_zero:
         dxl_controller.set_torque_status(True)
-        slow_speed_toggler = util.Toggler(False)
-        slow_speed_tk = util.ToggleKey()
 
     all_qr_found = []
 
@@ -508,10 +515,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
         # -------------------------------------------------------------------- #
         if not video_capture_zero:
             # TODO
-            if slow_speed_tk.down(key_down(server_ds.s2["keys"], SLOW_SPEED_TOGGLE_KEY)):
-                slow_speed_toggler.toggle()
-
-            base_speed = MAX_SPEED * (SLOW_SPEED_MULTIPLIER if slow_speed_toggler else 1)
+            base_speed = MAX_SPEED * server_ds.s2["power"]
 
             x_input = 0
             y_input = 0

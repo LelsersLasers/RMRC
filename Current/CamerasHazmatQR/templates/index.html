@@ -145,11 +145,52 @@ kbd {
 	padding-left: 0.2em;
 	padding-right: 0.2em;
 
-
 	margin: 0;
 	font-size: 1em;
 	font-family: monospace;
 	color: #EBCB8B;
+}
+
+input {
+	height: 1.2em;
+	font-size: 1em;
+	padding: 0.8em 0.5em;
+	box-sizing: border-box;
+	background-color: #4C566A;
+	color: #ECEFF4;
+	border-radius: 7px;
+	/* width: 100%; */
+	border: none;
+	outline: none !important;
+}
+input:focus {
+	outline: 2px solid #EBCB8B !important;
+}
+input[type="color"] {
+	width: default;
+	padding: 0.15em;
+	height: 1.8em;
+	transform: translate(0, 0.2em);
+}
+input[type="checkbox"] {
+	width: 0.9em;
+	height: 1.1em;
+	padding: 0px;
+	margin: 0px;
+	margin-bottom: 0.15em;
+	vertical-align: middle;
+	position: relative;
+	color: #ECEFF4;
+	outline: none !important;
+	cursor: pointer;
+}
+input[type="range"] {
+	width: 100%;
+	color: #ECEFF4;
+	outline: none !important;
+	border: none !important;
+	padding: 0;
+	margin: 0;
 }
 
 #main {
@@ -181,6 +222,10 @@ kbd {
 			</div>
 
 			<h4>Motors</h4>
+			<label for="power">Power: </label>
+            <output id="power-ouput">100%</output>
+            <input type="range" id="power" name="power" min="1" max="100" step="1" value="100" oninput="powerSlider()" />
+			
 			<div class="bar forwardbar" id="leftbar">
 				<span id="motor-left">0% (left)</span>
 			</div>
@@ -418,6 +463,18 @@ kbd {
 					}
 				});
 		}, DELAY);
+
+		function powerSlider() {
+			const ele = document.getElementById("power");
+			const value = ele.value;
+
+			const base_path = "power";
+			const path = base_path + "/" + value;
+			fetch(FLASK_SERVER + path);
+
+			const output = document.getElementById("power-ouput");
+			output.innerHTML = value + "%";
+		}
 
 
 		function display_keys() {
