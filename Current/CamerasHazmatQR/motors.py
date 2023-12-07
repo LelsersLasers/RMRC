@@ -6,10 +6,10 @@ BAUDRATE = 57600
 ADDR_TORQUE_ENABLE = 64
 ADDR_GOAL_VELOCITY = 104
 DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2] # TODO!!!
-	"left": [1, 2],
-	"right": [3, 4],
+	"left": [1, 3],
+	"right": [2, 4],
 }
-ORIENTATIONS = { # ORIENTATIONS[id] = directions
+ORIENTATIONS = { # ORIENTATIONS[id] = directions # TODO!!!
 	 1: 1,
 	 2: -1,
 	 3: -1,

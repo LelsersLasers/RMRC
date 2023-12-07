@@ -47,6 +47,12 @@ MOTION_THRESHOLD = 65
 MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
 
+# TODO
+SLOW_SPEED_TOGGLE_KEY = "t"
+MAX_SPEED = 32767
+SLOW_SPEED_MULTIPLIER = 0.12
+DIAGONAL_MULTIPLIER = 0.4
+
 # ---------------------------------------------------------------------------- #
 # What master thread sends
 STATE_HAZMAT_MASTER = {
@@ -321,6 +327,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
     print(f"Press '{MOTION_TOGGLE_KEY}' to toggle running motion detection.")
+    print(f"Press '{SLOW_SPEED_TOGGLE_KEY}' to toggle slow speed.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
@@ -339,6 +346,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
 
     if not video_capture_zero:
         dxl_controller.set_torque_status(True)
+        slow_speed_toggler = util.Toggler(False)
+        slow_speed_tk = util.ToggleKey()
 
     all_qr_found = []
 
@@ -494,11 +503,44 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
 
         # -------------------------------------------------------------------- #
         if not video_capture_zero:
-            # TODO:
-            print("Calculate motor speeds...")
+            # TODO
+            if slow_speed_tk.down(key_down(server_ds.s2["keys"], SLOW_SPEED_TOGGLE_KEY)):
+                slow_speed_toggler.toggle()
 
-            dxl_controller.speeds["left"] = 0
-            dxl_controller.speeds["right"] = 0
+            base_speed = MAX_SPEED * (SLOW_SPEED_MULTIPLIER if slow_speed_toggler else 1)
+
+            x_input = 0
+            y_input = 0
+
+            if key_down(server_ds.s2["keys"], "w"):
+                y_input += 1
+            if key_down(server_ds.s2["keys"], "s"):
+                y_input -= -1
+            if key_down(server_ds.s2["keys"], "a"):
+                x_input -= 1
+            if key_down(server_ds.s2["keys"], "d"):
+                x_input += 1
+
+            def match_x(x): # in terms of left side
+                if x < 0:   return -1
+                elif x > 0: return 1
+                else:       return 0
+
+            if y_input == 0:
+                dxl_controller.speeds["left"] = match_x(x_input) * base_speed
+                dxl_controller.speeds["right"] = -match_x(x_input) * base_speed
+            else:
+                dxl_controller.speeds["left"] = y_input * base_speed
+                dxl_controller.speeds["right"] = y_input * base_speed
+
+                if x_input < 0:
+                    dxl_controller.speeds["left"] *= DIAGONAL_MULTIPLIER
+                elif x_input > 0:
+                    dxl_controller.speeds["right"] *= DIAGONAL_MULTIPLIER
+
+            print(dxl_controller.speeds)
+
+            dxl_controller.update_speed()
         # -------------------------------------------------------------------- #
 
 
