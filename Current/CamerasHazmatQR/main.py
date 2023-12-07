@@ -10,6 +10,7 @@ CAP_ARGS = {
 import time
 import argparse
 import base64
+import traceback
 from multiprocessing import Process
 
 import util
@@ -630,10 +631,10 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
         server_ds.s1["ram"] = psutil.virtual_memory().percent
         server_ds.s1["cpu"] = psutil.cpu_percent()
 
-        server_ds.s1["motors"]["left"] = dxl_controller.speeds["left"] / MAX_SPEED
-        server_ds.s1["motors"]["right"] = dxl_controller.speeds["right"] / MAX_SPEED
+        if not zero_video_capture:
+            server_ds.s1["motors"]["left"] = dxl_controller.speeds["left"] / MAX_SPEED
+            server_ds.s1["motors"]["right"] = dxl_controller.speeds["right"] / MAX_SPEED
 
-        if gpu_log_file is not None:
             last_line = util.read_last_line(gpu_log_file)
             peices = last_line.split()
             for i, peice in enumerate(peices):
@@ -713,6 +714,7 @@ if __name__ == "__main__":
         master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, zero_video_capture, gpu_log_file)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
+        print(traceback.format_exc())
     # except:
     #     pass
     finally:
