@@ -63,6 +63,8 @@ class DynamixelController:
 					print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
 				elif dxl_error != 0:
 					print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
+	
+	# TODO? getCurrentSpeed?
 
 
 """
