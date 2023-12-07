@@ -100,6 +100,10 @@ STATE_SERVER_MASTER = {
     "cpu": 0,
     "gpu": -1,
     "angle": 0,
+    "motors": {
+        "left": 0,
+        "right": 0,
+    }
 }
 STATE_SERVER = {
     "keys": [],
@@ -621,6 +625,9 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
 
         server_ds.s1["ram"] = psutil.virtual_memory().percent
         server_ds.s1["cpu"] = psutil.cpu_percent()
+
+        server_ds.s1["motors"]["left"] = dxl_controller.speeds["left"] / MAX_SPEED
+        server_ds.s1["motors"]["right"] = dxl_controller.speeds["right"] / MAX_SPEED
 
         if gpu_log_file is not None:
             last_line = util.read_last_line(gpu_log_file)

@@ -96,6 +96,13 @@ span {
 	background-color: #BF616A;
 }
 
+.forwardbar {
+	background-color: #A3BE8C;
+}
+.backwardbar {
+	background-color: #BF616A;
+}
+
 #webcam1bar {
 	background-color: #5E81AC;
 }
@@ -171,6 +178,14 @@ kbd {
 			</div>
 			<div class="bar" id="pingbar">
 				<span id="delay-ping">20 MS (ping)</span>
+			</div>
+
+			<h4>Motors</h4>
+			<div class="bar forwardbar" id="leftbar">
+				<span id="motor-left">0% (left)</span>
+			</div>
+			<div class="bar forwardbar" id="rightbar">
+				<span id="motor-right">0% (right)</span>
 			</div>
 
 			<h4>FPS's</h4>
@@ -288,7 +303,26 @@ kbd {
 							fpsbar.style.width = ratio * 100 + "%";
 						}
 
-						
+						const motors = data["motors"];
+						const motors_ids = ["left", "right"];
+						for (let i = 0; i < motors_ids.length; i++) {
+							const motors_id = motors_ids[i];
+							const percent = motors[motors_id] * 100;
+
+							const motor_ele = document.getElementById("motor-" + motors_id);
+							motor_ele.innerHTML = `${percent.toFixed(0)}% (${motors_id})`;
+
+							const motorbar = document.getElementById(motors_id + "bar");
+							const width = Math.abs(percent);
+							motorbar.style.width = width + "%";
+							if (percent < 0) {
+								motorbar.classList.add("backwardbar");
+								motorbar.classList.remove("forwardbar");
+							} else {
+								motorbar.classList.add("forwardbar");
+								motorbar.classList.remove("backwardbar");
+							}
+						}
 						
 						const stats_ids = ["cpu", "gpu", "ram"];
 
