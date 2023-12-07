@@ -342,6 +342,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
     print(f"Press '{MOTION_TOGGLE_KEY}' to toggle running motion detection.")
+    print(f"Press 't' to increase power by 20% (wrappping around).")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 

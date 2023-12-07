@@ -282,6 +282,7 @@ input[type="range"] {
 				Press <kbd>x</kbd> to clear all found QR codes.<br />
 				Press <kbd>m</kbd> to toggle running motion detection.<br />
                 Press <kbd>m</kbd> to toggle to toggle slow speed.<br />
+                Press <kbd>t</kbd> to increase power by 20% (wrappping around).<br />
 				Press <kbd>1-4</kbd> to switched focused feed.<br />
 				Press <kbd>0</kbd> to show camera grid.<br />
 				Press <kbd>5</kbd> to toggle sidebar.<br />
@@ -300,6 +301,9 @@ input[type="range"] {
 		const DELAY = 1000 / FRONT_END_FPS;
 
 		const keys = {}; // keys[key] = true | if key is down
+
+		const POWER_STATE_STEP = 20;
+		let power_state = 100;
 
 		let show_sidebar = true;
 
@@ -464,16 +468,19 @@ input[type="range"] {
 				});
 		}, DELAY);
 
-		function powerSlider() {
-			const ele = document.getElementById("power");
-			const value = ele.value;
-
+		function setPower(value) {	
 			const base_path = "power";
 			const path = base_path + "/" + value;
 			fetch(FLASK_SERVER + path);
 
 			const output = document.getElementById("power-ouput");
 			output.innerHTML = value + "%";
+		}
+
+		function powerSlider() {
+			const ele = document.getElementById("power");
+			const value = ele.value;
+			setPower(value);
 		}
 
 
@@ -501,6 +508,18 @@ input[type="range"] {
 				show_sidebar = !show_sidebar;
 				const sidebar = document.getElementById("sidebar");
 				sidebar.style.display = show_sidebar ? "block" : "none";
+			}
+			if (key == "t") {
+				power_state += POWER_STATE_STEP;
+				power_state %= 100;
+				if (power_state == 0) {
+					power_state = 100;
+				}
+				
+				setPower(power_state);
+
+				const range_ele = document.getElementById("power");
+				range_ele.value = power_state;
 			}
 		}
 		function keyup(e) {
