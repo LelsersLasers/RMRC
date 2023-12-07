@@ -447,7 +447,7 @@ kbd {
 			}
 		}
 		function keyup(e) {
-			const key = e.key;
+			const key = e.key.toLowerCase();
             delete keys[key];
             send_keys();
 		}
