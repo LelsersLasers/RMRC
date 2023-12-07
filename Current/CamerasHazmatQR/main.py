@@ -16,6 +16,7 @@ import util
 import hazmat
 import qr_detect
 import motion_detect
+import motors
 
 import cv2
 import numpy as np
@@ -313,7 +314,7 @@ def ratio_bar(frame, ratio, active, loading = False):
     cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
 
 
-def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
+def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_zero, gpu_log_file):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_HOLD_KEY}' to run hazmat detection while holding key.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
@@ -335,6 +336,9 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     motion_tk = util.ToggleKey()
 
     view_mode = util.ViewMode()
+
+    if not video_capture_zero:
+        dxl_controller.set_torque_status(True)
 
     all_qr_found = []
 
@@ -484,7 +488,17 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             view_mode.zoom_on = 2
         elif key_down(server_ds.s2["keys"], "4"):
             view_mode.mode = util.ViewMode.ZOOM
-            view_mode.zoom_on = 3        
+            view_mode.zoom_on = 3
+        # -------------------------------------------------------------------- #
+
+
+        # -------------------------------------------------------------------- #
+        if not video_capture_zero:
+            # TODO:
+            print("Calculate motor speeds...")
+
+            dxl_controller.speeds["left"] = 0
+            dxl_controller.speeds["right"] = 0
         # -------------------------------------------------------------------- #
 
 
@@ -640,14 +654,18 @@ if __name__ == "__main__":
     print("\nStarting master thread...\n")
 
     try:
+        dxl_controller = None if zero_video_capture else motors.DynamixelController()
         gpu_log_file = None if zero_video_capture else open(GPU_LOG_FILENAME, 'rb')
-        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture, gpu_log_file)
+        master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, zero_video_capture, gpu_log_file)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
     # except:
     #     pass
     finally:
-        if gpu_log_file is not None:
+        if not zero_video_capture:
+            dxl_controller.set_torque_status(False)
+            dxl_controller.close_port()
+
             gpu_log_file.close()
     # ------------------------------------------------------------------------ #
 
