@@ -12,10 +12,10 @@ DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2] # TODO!!!
 	"right": [2, 4],
 }
 ORIENTATIONS = { # ORIENTATIONS[id] = directions # TODO!!!
-	 1: 1,
-	 2: -1,
-	 3: -1,
-	 4: 1,
+	1: 1,
+	2: -1,
+	3: -1,
+	4: 1,
  }
 
 class DynamixelController:
@@ -73,14 +73,18 @@ class DynamixelController:
 					print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
 
 	def check_errors(self):
-		for side, side_ids in DYNAMIXEL_IDS.items():
+		error_codes = {}
+		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
 				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
-				if error_code > 0:
-					print(f"error_code {side} {id} {error_code}")
-					self.reset_motors()
+				error_codes[id] = error_code
+				
+		for id, error_code in error_codes.items():
+			if error_code > 0:
+				print(f"error_code {id} {error_code}")
+				self.reset_motors()
 
-	# TODO: needed?
+	# TODO: needed? RN: never used
 	def update_status(self):
 		for id in self.statuses:
 			dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
