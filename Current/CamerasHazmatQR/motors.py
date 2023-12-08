@@ -98,6 +98,8 @@ class DynamixelController:
 
 
 """
+# Code used for the flipper arm, not currently implemented/recreated
+
 import smbus
 
 bus = smbus.SMBus(1)
