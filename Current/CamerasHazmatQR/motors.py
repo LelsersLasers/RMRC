@@ -13,9 +13,9 @@ DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2] # TODO!!!
 }
 ORIENTATIONS = { # ORIENTATIONS[id] = direction multiplier # TODO!!!
 	1: 1,
-	2: -1,
+	2: 1,
 	3: -1,
-	4: 1,
+	4: -1,
  }
 
 class DynamixelController:
