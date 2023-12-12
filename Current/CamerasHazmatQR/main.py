@@ -120,6 +120,13 @@ def server_main(server_dq):
     def index():
         return render_template("index.html")
     
+    @app.route("/calibrate", methods=["GET"])
+    def calibrate():
+        now = time.time()
+        response = jsonify(now)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
     @app.route("/power/<value>", methods=["GET"])
     def power(value):
         server_ds.s2["power"] = float(value) / 100
@@ -128,7 +135,6 @@ def server_main(server_dq):
 
         response = jsonify(server_ds.s2)
         response.headers.add("Access-Control-Allow-Origin", "*")
-
         return response
     
     @app.route("/keys/", methods=["GET"])
@@ -139,7 +145,6 @@ def server_main(server_dq):
 
         response = jsonify(server_ds.s2)
         response.headers.add("Access-Control-Allow-Origin", "*")
-
         return response
 
     @app.route("/keys/<keys_str>", methods=["GET"])
@@ -151,7 +156,6 @@ def server_main(server_dq):
 
         response = jsonify(server_ds.s2)
         response.headers.add("Access-Control-Allow-Origin", "*")
-
         return response
 
     @app.route("/get", methods=["GET"])
@@ -160,7 +164,6 @@ def server_main(server_dq):
 
         response = jsonify(server_ds.s1)
         response.headers.add("Access-Control-Allow-Origin", "*")
-
         return response
 
     app.run(debug=False, port=5000, host="0.0.0.0")

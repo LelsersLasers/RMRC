@@ -299,6 +299,7 @@ input[type="range"] {
         const FRONT_END_FPS = 20;
 
 		const DELAY = 1000 / FRONT_END_FPS;
+		const CALIBRATE_FREQUENCE = 10 * FRONT_END_FPS;
 
 		const keys = {}; // keys[key] = true | if key is down
 
@@ -317,6 +318,46 @@ input[type="range"] {
 		let max_fpses = [1];
         const MAX_LEN = 1 * FRONT_END_FPS;
 
+		let ms_offset = 0;
+		let calibrated = false;
+
+		function try_calibrate() {
+			// recalibrate every X seconds
+			if (calibrated) {
+				calibrated = !(frames % CALIBRATE_FREQUENCE == 0);
+			}
+
+			// if we need to calibrate
+			if (!calibrated) {
+				try {
+					calibrate();
+					calibrated = true;
+				} catch (e) {
+					console.log(e);
+				}
+			}
+		}
+
+		function calibrate() {
+			const path = "calibrate"
+			const start_pref_ms = performance.now();
+			fetch(FLASK_SERVER + path)
+				.then(response => response.json())
+				.then(data => {
+					const now_ms = Date.now()
+
+					const now_pref_ms = performance.now();
+					const pref_diff = now_pref_ms - start_pref_ms;
+
+					const ms = data * 1000;
+					const diff = now_ms - ms;
+
+					ms_offset = diff - pref_diff;
+					console.log({ ms_offset, diff, pref_diff });
+				});
+		}
+
+		let frames = 0;
 		setInterval(function() {
 			const path = "get";
 			const start_pref_ms = performance.now();
@@ -324,6 +365,9 @@ input[type="range"] {
 				.then(response => response.json())
 				.then(data => {
 					try {
+						try_calibrate();
+						frames += 1;
+
 						const now_ms = Date.now()
 						const now_pref_ms = performance.now();
 	
@@ -424,7 +468,7 @@ input[type="range"] {
 
 						{
 							const ms = data["time"] * 1000;
-							const diff = now_ms - ms;
+							const diff = now_ms - ms - ms_offset;
 
 							{
 								if (last_frame != data["frame"]) {
@@ -465,6 +509,9 @@ input[type="range"] {
 					} catch (e) {
 						console.log(e);
 					}
+				})
+				.catch(error => {
+					calibrated = false;
 				});
 		}, DELAY);
 
