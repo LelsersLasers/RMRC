@@ -336,6 +336,9 @@ input[type="range"] {
 			if (!calibrated) {
 				try {
 					calibrate();
+
+					powerSlider();
+
 					calibrated = true;
 				} catch (e) {
 					console.log(e);
