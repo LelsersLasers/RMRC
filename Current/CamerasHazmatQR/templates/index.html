@@ -96,6 +96,10 @@ span {
 	background-color: #BF616A;
 }
 
+.blankbar {
+	width: 100%;
+	background-color: #4C566A;
+}
 .forwardbar {
 	background-color: #A3BE8C;
 }
@@ -226,10 +230,10 @@ input[type="range"] {
             <output id="power-ouput">100%</output>
             <input type="range" id="power" name="power" min="1" max="100" step="1" value="100" oninput="powerSlider()" />
 			
-			<div class="bar forwardbar" id="leftbar">
+			<div class="bar blankbar" id="leftbar">
 				<span id="motor-left">0% (left)</span>
 			</div>
-			<div class="bar forwardbar" id="rightbar">
+			<div class="bar blankbar" id="rightbar">
 				<span id="motor-right">0% (right)</span>
 			</div>
 
@@ -417,13 +421,22 @@ input[type="range"] {
 
 							const motorbar = document.getElementById(motors_id + "bar");
 							const width = Math.abs(percent);
-							motorbar.style.width = width + "%";
-							if (percent < 0) {
-								motorbar.classList.add("backwardbar");
+							if (percent == 0) {
 								motorbar.classList.remove("forwardbar");
-							} else {
-								motorbar.classList.add("forwardbar");
 								motorbar.classList.remove("backwardbar");
+								motorbar.classList.add("blankbar");
+								motorbar.style.width = "100%";
+							} else {
+								motorbar.style.width = width + "%";
+								if (percent < 0) {
+									motorbar.classList.remove("blankbar");
+									motorbar.classList.remove("forwardbar");
+									motorbar.classList.add("backwardbar");
+								} else {
+									motorbar.classList.remove("blankbar");
+									motorbar.classList.remove("backwardbar");
+									motorbar.classList.add("forwardbar");
+								}
 							}
 						}
 						
