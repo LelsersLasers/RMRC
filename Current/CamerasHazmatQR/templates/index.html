@@ -290,6 +290,11 @@ input[type="range"] {
 
             <h4>Keys Down</h4>
             <p id="keys"></p>
+
+            <h4>Debug Info</h4>
+            <p id="debug"></p>
+
+
 		</div>
 	</div>
 
@@ -353,7 +358,9 @@ input[type="range"] {
 					const diff = now_ms - ms;
 
 					ms_offset = diff - pref_diff;
-					console.log({ ms_offset, diff, pref_diff });
+
+					const debug_ele = document.getElementById("debug");
+					debug_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
 				});
 		}
 
