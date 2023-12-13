@@ -282,7 +282,7 @@ input[type="range"] {
 				Press <kbd>x</kbd> to clear all found QR codes.<br />
 				Press <kbd>m</kbd> to toggle running motion detection.<br />
                 Press <kbd>m</kbd> to toggle to toggle slow speed.<br />
-                Press <kbd>t</kbd> to increase power by 20% (wrappping around).<br />
+                Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
 				Press <kbd>1-4</kbd> to switched focused feed.<br />
 				Press <kbd>0</kbd> to show camera grid.<br />
 				Press <kbd>5</kbd> to toggle sidebar.<br />
@@ -526,7 +526,8 @@ input[type="range"] {
 
 		function powerSlider() {
 			const ele = document.getElementById("power");
-			const value = ele.value;
+			const value = parseInt(ele.value);
+            power_state = value;
 			setPower(value);
 		}
 
@@ -557,8 +558,10 @@ input[type="range"] {
 				sidebar.style.display = show_sidebar ? "block" : "none";
 			}
 			if (key == "t") {
-				power_state += POWER_STATE_STEP;
-				power_state %= 100;
+                const mod = Object.keys(keys).includes("shift") ? -1 : 1;
+				power_state += POWER_STATE_STEP * mod;
+
+				power_state = (power_state + 100) % 100;
 				if (power_state == 0) {
 					power_state = 100;
 				}
