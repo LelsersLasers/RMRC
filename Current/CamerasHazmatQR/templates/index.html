@@ -323,6 +323,7 @@ input[type="range"] {
 		let last_frame = "";
 
 		let max_fpses = [1];
+        let max_delays = [250];
         const MAX_LEN = 1 * FRONT_END_FPS;
 
 		let ms_offset = 0;
@@ -386,14 +387,16 @@ input[type="range"] {
 						t1 = now_pref_ms;
 						delta = (t1 - t0) / 1000;
 						t0 = t1;
+                        // -------------------------------------------------- //
 
+                        // -------------------------------------------------- //
 						const fpses = data["fpses"];
 						const fps_values = [...fpses, 1 / delta];
 						
 						const max_fps = Math.max(...fps_values);
 						max_fpses.push(max_fps);
 						max_fpses = max_fpses.slice(-MAX_LEN);
-						const max_ratio = Math.max(...max_fpses);
+						const max_ratio_fps = Math.max(...max_fpses);
 
 						const fps_ids = ["webcam1", "hazmat", "webcam2", "ir", "master", "frontend"];
 
@@ -404,10 +407,12 @@ input[type="range"] {
 							fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
 
 							const fpsbar = document.getElementById(fps_id + "bar");
-							const ratio = fps / max_ratio;
+							const ratio = fps / max_ratio_fps;
 							fpsbar.style.width = ratio * 100 + "%";
 						}
+                        // -------------------------------------------------- //
 
+                        // -------------------------------------------------- //
 						const motors = data["motors"];
 						const motors_ids = ["left", "right"];
 						for (let i = 0; i < motors_ids.length; i++) {
@@ -437,7 +442,9 @@ input[type="range"] {
 								}
 							}
 						}
+                        // -------------------------------------------------- //
 						
+                        // -------------------------------------------------- //
 						const stats_ids = ["cpu", "gpu", "ram"];
 
 						for (let i = 0; i < stats_ids.length; i++) {
@@ -449,27 +456,34 @@ input[type="range"] {
 							const statbar = document.getElementById(stats_id + "bar");
 							statbar.style.width = stat + "%";
 						}
+                        // -------------------------------------------------- //
 
+                        // -------------------------------------------------- //
 						const angle = data["angle"] == 0 ? 360 : data["angle"];
 						const angle_ele = document.getElementById("angle");
 						angle_ele.innerHTML = `${angle.toFixed(0)}°`;
 
 						const anglebar = document.getElementById("anglebar");
 						anglebar.style.width = (angle / 360) * 100 + "%";
+                        // -------------------------------------------------- //
 
 
+                        // -------------------------------------------------- //
 						const frame_ele = document.getElementById("frame");
 						const frame = data["frame"];
 						frame_ele.src = "data:image/jpg;base64," + frame;
+                        // -------------------------------------------------- //
 
-
+                        // -------------------------------------------------- //
 						const hazmats_ele = document.getElementById("hazmats");
 						hazmats_ele.innerHTML = data["hazmats_found"].sort().join("<br />");
 
 						const qrs_ele = document.getElementById("qrs");
 						qrs_ele.innerHTML = data["qr_found"].sort().join("<br />");
+                        // -------------------------------------------------- //
 
 
+                        // -------------------------------------------------- //
 						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
 
 						const EM = 16; // 1em = 16px (usually)
@@ -485,48 +499,45 @@ input[type="range"] {
 						const sidebar_w = (window.innerWidth * w - 3 * EM) * (show_sidebar ? 1 : 0);
 						const sidebar_ele = document.getElementById("sidebar");
 						sidebar_ele.style.width = sidebar_w + "px";
+                        // -------------------------------------------------- //
 
+                        // -------------------------------------------------- //
+                        const ms = data["time"] * 1000;
+                        const diff = now_ms - ms - ms_offset;
+                        const inital_delay = diff.toFixed(0);
 
-						{
-							const ms = data["time"] * 1000;
-							const diff = now_ms - ms - ms_offset;
+                        delays.push(diff);
+                        delays = delays.slice(-MAX_LEN);
+                        const average = delays.reduce((a, b) => a + b, 0) / delays.length;
+                        const average_delay = average.toFixed(0);
 
-							{
-								if (last_frame != data["frame"]) {
-									last_frame = data["frame"];
+                        const wait_time = now_pref_ms - start_pref_ms;
+                        const wait_time_delay = wait_time.toFixed(0);
 
-									const rounded = diff.toFixed(0);
+                        const max_delay = Math.max([inital_delay, average_delay, wait_time_delay, 250]);
+						max_delays.push(max_delay);
+						max_delays = max_delays.slice(-MAX_LEN);
+						const max_ratio_delay = Math.max(...max_delays);
 
-									const delay_ele = document.getElementById("delay-inital");
-									delay_ele.innerHTML = rounded + " MS (inital)";
+                        if (last_frame != data["frame"]) {
+                            last_frame = data["frame"];
 
-									const delaybar = document.getElementById("initalbar");
-									delaybar.style.width = (rounded / 250) * 100 + "%";
-								}
-							}
-							{
-								delays.push(diff);
-								delays = delays.slice(-MAX_LEN);
-								const average = delays.reduce((a, b) => a + b, 0) / delays.length;
-								const rounded = average.toFixed(0);
+                            const delay_inital_ele = document.getElementById("delay-inital");
+                            delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
+                            const delaybar_inital = document.getElementById("initalbar");
+                            delaybar_inital.style.width = (inital_delay / max_ratio_delay) * 100 + "%";
+                        }
 
-								const delay_ele = document.getElementById("delay-total");
-								delay_ele.innerHTML = rounded + " MS (average)";
+                        const delay_total_ele = document.getElementById("delay-total");
+                        delay_total_ele.innerHTML = average_delay + " MS (average)";
+                        const delaybar_total = document.getElementById("totalbar");
+                        delaybar_total.style.width = (average_delay / max_ratio_delay) * 100 + "%";
 
-								const delaybar = document.getElementById("totalbar");
-								delaybar.style.width = (average / 250) * 100 + "%";
-							}
-						}
-						{
-							const diff = now_pref_ms - start_pref_ms;
-							const rounded = diff.toFixed(0);
-
-							const delay_ele = document.getElementById("delay-ping")
-							delay_ele.innerHTML = rounded + " MS (ping)";
-
-							const delaybar = document.getElementById("pingbar");
-							delaybar.style.width = (diff / 250) * 100 + "%";
-						}
+                        const delay_ping_ele = document.getElementById("delay-ping")
+                        delay_ping_ele.innerHTML = rounded + " MS (ping)";
+                        const delaybar_ping = document.getElementById("pingbar");
+                        delaybar_ping.style.width = (diff / max_ratio_delay) * 100 + "%";
+                        // -------------------------------------------------- //
 					} catch (e) {
 						console.log(e);
 					}
