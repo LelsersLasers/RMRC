@@ -234,6 +234,7 @@ class GracefulKiller:
 def remove_dups(list, comp):
     new_list = []
     for item in list:
+        # x in xs uses __eq__ to compare
         if comp(item) not in [comp(x) for x in new_list]:
             new_list.append(item)
     return new_list

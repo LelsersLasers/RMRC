@@ -80,7 +80,7 @@ p {
 
 .outerbar {
 	border-radius: 10px;
-	transition: width 0.1s linear;
+	transition: width 0.1s linear, background-color 0.1s linear;
 	margin: 0;
 	padding: 0;
 }
@@ -255,7 +255,7 @@ input[type="range"] {
 			<div class="outerbar blankbar" id="left-outline">
 				<div class="outerbar" id="left-target">
 					<div class="innerbar" id="left-current">
-						<span id="motor-left">0% (left)</span>
+						<span id="motor-left">0% (0%) (left)</span>
 					</div>
 				</div>
 			</div>
@@ -263,7 +263,7 @@ input[type="range"] {
 			<div class="outerbar blankbar" id="right-outline">
 				<div class="outerbar" id="right-target">
 					<div class="innerbar" id="right-current">
-						<span id="motor-right">0% (right)</span>
+						<span id="motor-right">0% (0%) (right)</span>
 					</div>
 				</div>
 			</div>
@@ -343,6 +343,8 @@ input[type="range"] {
 
 		const POWER_STATE_STEP = 20;
 		let power_state = 100;
+
+		const DIAGONAL_MULTIPLIER = 0.4;
 
 		let show_sidebar = true;
 
@@ -449,8 +451,8 @@ input[type="range"] {
 						for (let i = 0; i < motors_ids.length; i++) {
 							const motors_id = motors_ids[i];
 
-							const target = motors[motors_id]["target"] * 100;
-							const current = motors[motors_id]["current"] * 100;
+							const target = motors["target"][motors_id] * 100;
+							const current = motors["current"][motors_id] * 100;
 
 							const target_ele = document.getElementById(motors_id + "-target");
 							target_ele.style.width = Math.abs(target) + "%";
@@ -582,12 +584,9 @@ input[type="range"] {
 		}, DELAY);
 
 		function setPower(value) {	
-			const base_path = "power";
-			const path = base_path + "/" + value;
-			fetch(FLASK_SERVER + path);
-
 			const output = document.getElementById("power-ouput");
 			output.innerHTML = value + "%";
+			calculate_power();
 		}
 
 		function powerSlider() {
@@ -604,6 +603,42 @@ input[type="range"] {
             keys_ele.innerHTML = object_keys.sort().join(", ");
 		}
 
+
+		function calculate_power() {
+            let x_input = 0
+            let y_input = 0
+
+            if (keys['w'])	y_input += 1
+			if (keys['s'])	y_input -= 1
+			if (keys['a'])	x_input -= 1
+			if (keys['d'])	x_input += 1
+
+			function match_x(x) { // in terms of left side
+				if (x < 0)		return -1
+				else if (x > 0)	return 1
+				else			return 0
+			}
+
+			const base_speed = power_state / 100;
+			let speed_left = 0;
+			let speed_right = 0;
+
+			if (y_input == 0) {
+				speed_left = 	match_x(x_input) * base_speed;
+				speed_right =  -match_x(x_input) * base_speed;
+			} else {
+				speed_left = y_input * base_speed;
+				speed_right = y_input * base_speed;
+
+				if (x_input < 0)		speed_left  *= DIAGONAL_MULTIPLIER;
+				else if (x_input > 0)	speed_right *= DIAGONAL_MULTIPLIER;
+			}
+
+			const base_path = "motors";
+			const path = base_path + "/" + speed_left + "/" + speed_right;
+			fetch(FLASK_SERVER + path);
+		}
+
         function send_keys() {
             const base_path = "keys";
             const object_keys = Object.keys(keys);
@@ -616,6 +651,10 @@ input[type="range"] {
 		function keydown(e) {
 			const key = e.key.toLowerCase();
 			keys[key] = true;
+
+			if (key == "w" || key == "a" || key == "s" || key == "d") {
+				calculate_power();
+			}
             send_keys();
 
 			if (key == 5) {
@@ -641,6 +680,10 @@ input[type="range"] {
 		function keyup(e) {
 			const key = e.key.toLowerCase();
             delete keys[key];
+
+			if (key == "w" || key == "a" || key == "s" || key == "d") {
+				calculate_power();
+			}
             send_keys();
 		}
 

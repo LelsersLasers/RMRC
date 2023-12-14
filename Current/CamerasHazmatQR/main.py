@@ -48,9 +48,6 @@ MOTION_THRESHOLD = 65
 MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
 
-# TODO
-MAX_SPEED = 330
-DIAGONAL_MULTIPLIER = 0.4
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
@@ -60,7 +57,6 @@ STATE_HAZMAT_MASTER = {
     "quit": False,
     "clear_all_found": 0,
 }
-
 # What hazmat thread sends
 STATE_HAZMAT = {
     "hazmat_fps": HAZMAT_DRY_FPS,
@@ -71,12 +67,10 @@ STATE_HAZMAT = {
 }
 # ---------------------------------------------------------------------------- #
 
-
 # ---------------------------------------------------------------------------- #
 STATE_CAMERA_MASTER = {
     "quit": False,
 }
-
 STATE_CAMERA = {
     "frame": None,
     "ns": 0,
@@ -84,7 +78,6 @@ STATE_CAMERA = {
     "time": time.time(),
 }
 # ---------------------------------------------------------------------------- #
-
 
 # ---------------------------------------------------------------------------- #
 STATE_SERVER_MASTER = {
@@ -99,10 +92,6 @@ STATE_SERVER_MASTER = {
     "cpu": 0,
     "gpu": -1,
     "angle": 0,
-    "motors": {
-        "left": 0,
-        "right": 0,
-    }
 }
 STATE_SERVER = {
     "keys": [],
@@ -110,11 +99,70 @@ STATE_SERVER = {
 }
 # ---------------------------------------------------------------------------- #
 
+# ---------------------------------------------------------------------------- #
+STATE_MOTOR_SERVER = {
+    "left": 0,
+    "right": 0,
+}
+STATE_MOTOR = {
+    "motors": {
+        "target": {
+            "left": 0,
+            "right": 0,
+        },
+        "current": {
+            "left": 0,
+            "right": 0,
+        }
+    }
+}
+# ---------------------------------------------------------------------------- #
+
 
 # ---------------------------------------------------------------------------- #
-def server_main(server_dq):
+def motor_main(server_motor_dq, zero_video_capture):
+    server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
+
+    if not zero_video_capture:
+        dxl_controller = motors.DynamixelController()
+        dxl_controller.set_torque_status(True)
+
+    try:
+        while True:
+            server_motor_ds.update_s1(server_motor_dq)
+
+            if not zero_video_capture:
+                dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
+                dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
+
+                dxl_controller.update_speed()
+                dxl_controller.update_status()
+
+                server_motor_ds.s2["motors"]["target"]["left"] = dxl_controller.speeds["left"]
+                server_motor_ds.s2["motors"]["target"]["right"] = dxl_controller.speeds["right"]
+
+                server_motor_ds.s2["motors"]["current"]["left"] = dxl_controller.statuses["left"]
+                server_motor_ds.s2["motors"]["current"]["right"] = dxl_controller.statuses["right"]
+            else:
+                server_motor_ds.s2["motors"]["target"]["left"] = server_motor_ds.s1["left"]
+                server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
+
+            server_motor_ds.put_s2(server_motor_dq)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print("Closing dynamixel controller...")
+        if not zero_video_capture:
+            dxl_controller.set_torque_status(False)
+            dxl_controller.close_port()
+# ---------------------------------------------------------------------------- #
+
+
+# ---------------------------------------------------------------------------- #
+def server_main(server_dq, server_motor_dq):
     app = Flask(__name__)
     server_ds = util.DoubleState(STATE_SERVER_MASTER, STATE_SERVER)
+    server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
 
     @app.route("/")
     def index():
@@ -127,13 +175,15 @@ def server_main(server_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/power/<value>", methods=["GET"])
-    def power(value):
-        server_ds.s2["power"] = float(value) / 100
+    @app.route("/motors/<left>/<right>/", methods=["GET"])
+    def motors(left, right):
+        # Has percent power built into values
+        server_motor_ds.s1["left"] = float(left)
+        server_motor_ds.s1["right"] = float(right)
 
-        server_ds.put_s2(server_dq)
+        server_motor_ds.put_s1(server_motor_dq)
 
-        response = jsonify(server_ds.s2)
+        response = jsonify(server_motor_ds.s1)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
@@ -161,6 +211,10 @@ def server_main(server_dq):
     @app.route("/get", methods=["GET"])
     def get():
         server_ds.update_s1(server_dq)
+        server_motor_ds.update_s2(server_motor_dq)
+
+        # combine main info with motor info
+        server_ds.s1.update(server_motor_ds.s2)
 
         response = jsonify(server_ds.s1)
         response.headers.add("Access-Control-Allow-Origin", "*")
@@ -338,7 +392,7 @@ def ratio_bar(frame, ratio, active, loading = False):
     cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
 
 
-def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_zero, gpu_log_file):
+def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_HOLD_KEY}' to run hazmat detection while holding key.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
@@ -361,9 +415,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
     motion_tk = util.ToggleKey()
 
     view_mode = util.ViewMode()
-
-    if not video_capture_zero:
-        dxl_controller.set_torque_status(True)
 
     all_qr_found = []
 
@@ -515,46 +566,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
             view_mode.mode = util.ViewMode.ZOOM
             view_mode.zoom_on = 3
         # -------------------------------------------------------------------- #
-
-
-        # -------------------------------------------------------------------- #
-        if not video_capture_zero:
-            # TODO
-            base_speed = MAX_SPEED * server_ds.s2["power"]
-
-            x_input = 0
-            y_input = 0
-
-            if key_down(server_ds.s2["keys"], "w"):
-                y_input += 1
-            if key_down(server_ds.s2["keys"], "s"):
-                y_input -= -1
-            if key_down(server_ds.s2["keys"], "a"):
-                x_input -= 1
-            if key_down(server_ds.s2["keys"], "d"):
-                x_input += 1
-
-            def match_x(x): # in terms of left side
-                if x < 0:   return -1
-                elif x > 0: return 1
-                else:       return 0
-
-            if y_input == 0:
-                dxl_controller.speeds["left"] = match_x(x_input) * base_speed
-                dxl_controller.speeds["right"] = -match_x(x_input) * base_speed
-            else:
-                dxl_controller.speeds["left"] = y_input * base_speed
-                dxl_controller.speeds["right"] = y_input * base_speed
-
-                if x_input < 0:
-                    dxl_controller.speeds["left"] *= DIAGONAL_MULTIPLIER
-                elif x_input > 0:
-                    dxl_controller.speeds["right"] *= DIAGONAL_MULTIPLIER
-
-            dxl_controller.update_speed()
-            dxl_controller.check_errors()
-        # -------------------------------------------------------------------- #
-
+            
 
         # -------------------------------------------------------------------- #
         hazmat_ds.s1["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
@@ -634,9 +646,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
         server_ds.s1["cpu"] = psutil.cpu_percent()
 
         if not zero_video_capture:
-            server_ds.s1["motors"]["left"] = dxl_controller.speeds["left"] / MAX_SPEED
-            server_ds.s1["motors"]["right"] = dxl_controller.speeds["right"] / MAX_SPEED
-
             last_line = util.read_last_line(gpu_log_file)
             peices = last_line.split()
             for i, peice in enumerate(peices):
@@ -699,23 +708,32 @@ if __name__ == "__main__":
     print("\nStarting server...")
 
     server_dq = util.DoubleQueue()
+    server_motor_dq = util.DoubleQueue()
 
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.WARNING)
 
-    flask_thread = Process(target=server_main, args=(server_dq,))
+    flask_thread = Process(target=server_main, args=(server_dq, server_motor_dq))
     flask_thread.daemon = True
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
+    print("\nStarting motor thread...")
+
+    motor_thread = Process(target=motor_main, args=(server_motor_dq, zero_video_capture))
+    motor_thread.daemon = True
+    motor_thread.start()
+    print(f"Motor thread pid: {motor_thread.pid}")
+    # ------------------------------------------------------------------------ #
+
+    # ------------------------------------------------------------------------ #
     print("\nStarting master thread...\n")
 
     try:
-        dxl_controller = None if zero_video_capture else motors.DynamixelController()
         gpu_log_file = None if zero_video_capture else open(GPU_LOG_FILENAME, 'rb')
-        master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, zero_video_capture, gpu_log_file)
+        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture, gpu_log_file)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
@@ -723,9 +741,6 @@ if __name__ == "__main__":
     #     pass
     finally:
         if not zero_video_capture:
-            dxl_controller.set_torque_status(False)
-            dxl_controller.close_port()
-
             gpu_log_file.close()
     # ------------------------------------------------------------------------ #
 
@@ -760,10 +775,16 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
+    print("Closing motor thread...")
+    util.close_thread(motor_thread)
+    # ------------------------------------------------------------------------ #
+
+    # ------------------------------------------------------------------------ #
     print("Closing queues...")
 
     hazmat_dq.close()
     server_dq.close()
+    server_motor_dq.close()
 
     for camera_dq in camera_dqs.values():
         camera_dq.close()
