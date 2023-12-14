@@ -11,12 +11,10 @@ DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2]
 	"left": [1, 3],
 	"right": [2, 4],
 }
-ORIENTATIONS = { # ORIENTATIONS[id] = direction multiplier
-	1: 1,
-	2: -1,
-	3: 1,
-	4: -1,
- }
+ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
+	"left": 1,
+	"right": -1,
+}
 
 class DynamixelController:
 	def __init__(self):
@@ -36,6 +34,8 @@ class DynamixelController:
 			"left": 0,
 			"right": 0,
 		}
+		
+		# TODO: needed? RN: never used
 		self.statuses = {
 			1: 0,
 			2: 0,
@@ -63,9 +63,10 @@ class DynamixelController:
 
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
+			orientation = ORIENTATIONS[side]
+	
 			for id in side_ids:
 				speed = self.speeds[side]
-				orientation = ORIENTATIONS[id]
 				power = int(speed * orientation)
 				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
 				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
@@ -75,27 +76,38 @@ class DynamixelController:
 
 	def check_errors(self):
 		error_codes = {}
+		any_errors = []
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
 				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
 				error_codes[id] = error_code
+				any_errors.append(error_code > 0)
 				
-		for id, error_code in error_codes.items():
-			if error_code > 0:
-				print(f"error_code {id} {error_code}")
-				self.reset_motors()
+		if any(any_errors):
+			for id, error_code in error_codes.items():
+				if error_code > 0:
+					print(f"error_code {id} {error_code}")
+					self.reset_motors()
 
 	# TODO: needed? RN: never used
 	def update_status(self):
+		error_codes = {}
+		any_errors = []
+
 		for id in self.statuses:
 			dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
 			error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
 			
-			if error_code > 0:
-				print(f"error_code {id} {error_code}")
-				self.reset_motors()
+			error_codes[id] = error_code
+			any_errors.append(error_code > 0)
 			
 			self.statuses[id] = dxl_present_velocity
+
+		if any(any_errors):
+			for id, error_code in error_codes.items():
+				if error_code > 0:
+					print(f"error_code {id} {error_code}")
+					self.reset_motors()
 
 
 """
