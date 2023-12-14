@@ -96,6 +96,17 @@ span {
 	background-color: #BF616A;
 }
 
+.blankbar {
+	width: 100%;
+	background-color: #4C566A;
+}
+.forwardbar {
+	background-color: #A3BE8C;
+}
+.backwardbar {
+	background-color: #BF616A;
+}
+
 #webcam1bar {
 	background-color: #5E81AC;
 }
@@ -138,11 +149,52 @@ kbd {
 	padding-left: 0.2em;
 	padding-right: 0.2em;
 
-
 	margin: 0;
 	font-size: 1em;
 	font-family: monospace;
 	color: #EBCB8B;
+}
+
+input {
+	height: 1.2em;
+	font-size: 1em;
+	padding: 0.8em 0.5em;
+	box-sizing: border-box;
+	background-color: #4C566A;
+	color: #ECEFF4;
+	border-radius: 7px;
+	/* width: 100%; */
+	border: none;
+	outline: none !important;
+}
+input:focus {
+	outline: 2px solid #EBCB8B !important;
+}
+input[type="color"] {
+	width: default;
+	padding: 0.15em;
+	height: 1.8em;
+	transform: translate(0, 0.2em);
+}
+input[type="checkbox"] {
+	width: 0.9em;
+	height: 1.1em;
+	padding: 0px;
+	margin: 0px;
+	margin-bottom: 0.15em;
+	vertical-align: middle;
+	position: relative;
+	color: #ECEFF4;
+	outline: none !important;
+	cursor: pointer;
+}
+input[type="range"] {
+	width: 100%;
+	color: #ECEFF4;
+	outline: none !important;
+	border: none !important;
+	padding: 0;
+	margin: 0;
 }
 
 #main {
@@ -171,6 +223,18 @@ kbd {
 			</div>
 			<div class="bar" id="pingbar">
 				<span id="delay-ping">20 MS (ping)</span>
+			</div>
+
+			<h4>Motors</h4>
+			<label for="power">Power: </label>
+            <output id="power-ouput">100%</output>
+            <input type="range" id="power" name="power" min="1" max="100" step="1" value="100" oninput="powerSlider()" />
+			
+			<div class="bar blankbar" id="leftbar">
+				<span id="motor-left">0% (left)</span>
+			</div>
+			<div class="bar blankbar" id="rightbar">
+				<span id="motor-right">0% (right)</span>
 			</div>
 
 			<h4>FPS's</h4>
@@ -221,10 +285,15 @@ kbd {
 				Press <kbd>r</kbd> to toggle running QR detection.<br />
 				Press <kbd>x</kbd> to clear all found QR codes.<br />
 				Press <kbd>m</kbd> to toggle running motion detection.<br />
+                Press <kbd>m</kbd> to toggle to toggle slow speed.<br />
+                Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
 				Press <kbd>1-4</kbd> to switched focused feed.<br />
 				Press <kbd>0</kbd> to show camera grid.<br />
 				Press <kbd>5</kbd> to toggle sidebar.<br />
 			</p>
+
+			<h4>Debug Info</h4>
+            <p id="debug"></p>
 
             <h4>Keys Down</h4>
             <p id="keys"></p>
@@ -237,8 +306,12 @@ kbd {
         const FRONT_END_FPS = 20;
 
 		const DELAY = 1000 / FRONT_END_FPS;
+		const CALIBRATE_FREQUENCE = 10 * FRONT_END_FPS;
 
 		const keys = {}; // keys[key] = true | if key is down
+
+		const POWER_STATE_STEP = 20;
+		let power_state = 100;
 
 		let show_sidebar = true;
 
@@ -252,6 +325,51 @@ kbd {
 		let max_fpses = [1];
         const MAX_LEN = 1 * FRONT_END_FPS;
 
+		let ms_offset = 0;
+		let calibrated = false;
+
+		function try_calibrate() {
+			// recalibrate every X seconds
+			if (calibrated) {
+				calibrated = !(frames % CALIBRATE_FREQUENCE == 0);
+			}
+
+			// if we need to calibrate
+			if (!calibrated) {
+				try {
+					calibrate();
+
+					powerSlider();
+
+					calibrated = true;
+				} catch (e) {
+					console.log(e);
+				}
+			}
+		}
+
+		function calibrate() {
+			const path = "calibrate"
+			const start_pref_ms = performance.now();
+			fetch(FLASK_SERVER + path)
+				.then(response => response.json())
+				.then(data => {
+					const now_ms = Date.now()
+
+					const now_pref_ms = performance.now();
+					const pref_diff = now_pref_ms - start_pref_ms;
+
+					const ms = data * 1000;
+					const diff = now_ms - ms;
+
+					ms_offset = diff - pref_diff;
+
+					const debug_ele = document.getElementById("debug");
+					debug_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
+				});
+		}
+
+		let frames = 0;
 		setInterval(function() {
 			const path = "get";
 			const start_pref_ms = performance.now();
@@ -259,6 +377,9 @@ kbd {
 				.then(response => response.json())
 				.then(data => {
 					try {
+						try_calibrate();
+						frames += 1;
+
 						const now_ms = Date.now()
 						const now_pref_ms = performance.now();
 	
@@ -287,7 +408,35 @@ kbd {
 							fpsbar.style.width = ratio * 100 + "%";
 						}
 
-						
+						const motors = data["motors"];
+						const motors_ids = ["left", "right"];
+						for (let i = 0; i < motors_ids.length; i++) {
+							const motors_id = motors_ids[i];
+							const percent = motors[motors_id] * 100;
+
+							const motor_ele = document.getElementById("motor-" + motors_id);
+							motor_ele.innerHTML = `${percent.toFixed(0)}% (${motors_id})`;
+
+							const motorbar = document.getElementById(motors_id + "bar");
+							const width = Math.abs(percent);
+							if (percent == 0) {
+								motorbar.classList.remove("forwardbar");
+								motorbar.classList.remove("backwardbar");
+								motorbar.classList.add("blankbar");
+								motorbar.style.width = "100%";
+							} else {
+								motorbar.style.width = width + "%";
+								if (percent < 0) {
+									motorbar.classList.remove("blankbar");
+									motorbar.classList.remove("forwardbar");
+									motorbar.classList.add("backwardbar");
+								} else {
+									motorbar.classList.remove("blankbar");
+									motorbar.classList.remove("backwardbar");
+									motorbar.classList.add("forwardbar");
+								}
+							}
+						}
 						
 						const stats_ids = ["cpu", "gpu", "ram"];
 
@@ -340,7 +489,7 @@ kbd {
 
 						{
 							const ms = data["time"] * 1000;
-							const diff = now_ms - ms;
+							const diff = now_ms - ms - ms_offset;
 
 							{
 								if (last_frame != data["frame"]) {
@@ -381,8 +530,27 @@ kbd {
 					} catch (e) {
 						console.log(e);
 					}
+				})
+				.catch(error => {
+					calibrated = false;
 				});
 		}, DELAY);
+
+		function setPower(value) {	
+			const base_path = "power";
+			const path = base_path + "/" + value;
+			fetch(FLASK_SERVER + path);
+
+			const output = document.getElementById("power-ouput");
+			output.innerHTML = value + "%";
+		}
+
+		function powerSlider() {
+			const ele = document.getElementById("power");
+			const value = parseInt(ele.value);
+            power_state = value;
+			setPower(value);
+		}
 
 
 		function display_keys() {
@@ -410,9 +578,23 @@ kbd {
 				const sidebar = document.getElementById("sidebar");
 				sidebar.style.display = show_sidebar ? "block" : "none";
 			}
+			if (key == "t") {
+                const mod = Object.keys(keys).includes("shift") ? -1 : 1;
+				power_state += POWER_STATE_STEP * mod;
+
+				power_state = (power_state + 100) % 100;
+				if (power_state == 0) {
+					power_state = 100;
+				}
+				
+				setPower(power_state);
+
+				const range_ele = document.getElementById("power");
+				range_ele.value = power_state;
+			}
 		}
 		function keyup(e) {
-			const key = e.key;
+			const key = e.key.toLowerCase();
             delete keys[key];
             send_keys();
 		}

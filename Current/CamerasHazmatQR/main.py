@@ -10,12 +10,14 @@ CAP_ARGS = {
 import time
 import argparse
 import base64
+import traceback
 from multiprocessing import Process
 
 import util
 import hazmat
 import qr_detect
 import motion_detect
+import motors
 
 import cv2
 import numpy as np
@@ -45,6 +47,10 @@ MOTION_MIN_AREA = 500
 MOTION_THRESHOLD = 65
 MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
+
+# TODO
+MAX_SPEED = 330
+DIAGONAL_MULTIPLIER = 0.4
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
@@ -93,9 +99,14 @@ STATE_SERVER_MASTER = {
     "cpu": 0,
     "gpu": -1,
     "angle": 0,
+    "motors": {
+        "left": 0,
+        "right": 0,
+    }
 }
 STATE_SERVER = {
     "keys": [],
+    "power": 100,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -109,6 +120,23 @@ def server_main(server_dq):
     def index():
         return render_template("index.html")
     
+    @app.route("/calibrate", methods=["GET"])
+    def calibrate():
+        now = time.time()
+        response = jsonify(now)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
+    @app.route("/power/<value>", methods=["GET"])
+    def power(value):
+        server_ds.s2["power"] = float(value) / 100
+
+        server_ds.put_s2(server_dq)
+
+        response = jsonify(server_ds.s2)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
     @app.route("/keys/", methods=["GET"])
     def no_keys_down():
         server_ds.s2["keys"] = []
@@ -117,7 +145,6 @@ def server_main(server_dq):
 
         response = jsonify(server_ds.s2)
         response.headers.add("Access-Control-Allow-Origin", "*")
-
         return response
 
     @app.route("/keys/<keys_str>", methods=["GET"])
@@ -129,7 +156,6 @@ def server_main(server_dq):
 
         response = jsonify(server_ds.s2)
         response.headers.add("Access-Control-Allow-Origin", "*")
-
         return response
 
     @app.route("/get", methods=["GET"])
@@ -138,7 +164,6 @@ def server_main(server_dq):
 
         response = jsonify(server_ds.s1)
         response.headers.add("Access-Control-Allow-Origin", "*")
-
         return response
 
     app.run(debug=False, port=5000, host="0.0.0.0")
@@ -313,13 +338,14 @@ def ratio_bar(frame, ratio, active, loading = False):
     cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
 
 
-def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
+def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_zero, gpu_log_file):
     print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_HOLD_KEY}' to run hazmat detection while holding key.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
     print(f"Press '{MOTION_TOGGLE_KEY}' to toggle running motion detection.")
+    print(f"Press 't'/'T' to increase/decrease power by 20%.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
@@ -335,6 +361,9 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     motion_tk = util.ToggleKey()
 
     view_mode = util.ViewMode()
+
+    if not video_capture_zero:
+        dxl_controller.set_torque_status(True)
 
     all_qr_found = []
 
@@ -484,7 +513,46 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             view_mode.zoom_on = 2
         elif key_down(server_ds.s2["keys"], "4"):
             view_mode.mode = util.ViewMode.ZOOM
-            view_mode.zoom_on = 3        
+            view_mode.zoom_on = 3
+        # -------------------------------------------------------------------- #
+
+
+        # -------------------------------------------------------------------- #
+        if not video_capture_zero:
+            # TODO
+            base_speed = MAX_SPEED * server_ds.s2["power"]
+
+            x_input = 0
+            y_input = 0
+
+            if key_down(server_ds.s2["keys"], "w"):
+                y_input += 1
+            if key_down(server_ds.s2["keys"], "s"):
+                y_input -= -1
+            if key_down(server_ds.s2["keys"], "a"):
+                x_input -= 1
+            if key_down(server_ds.s2["keys"], "d"):
+                x_input += 1
+
+            def match_x(x): # in terms of left side
+                if x < 0:   return -1
+                elif x > 0: return 1
+                else:       return 0
+
+            if y_input == 0:
+                dxl_controller.speeds["left"] = match_x(x_input) * base_speed
+                dxl_controller.speeds["right"] = -match_x(x_input) * base_speed
+            else:
+                dxl_controller.speeds["left"] = y_input * base_speed
+                dxl_controller.speeds["right"] = y_input * base_speed
+
+                if x_input < 0:
+                    dxl_controller.speeds["left"] *= DIAGONAL_MULTIPLIER
+                elif x_input > 0:
+                    dxl_controller.speeds["right"] *= DIAGONAL_MULTIPLIER
+
+            dxl_controller.update_speed()
+            dxl_controller.check_errors()
         # -------------------------------------------------------------------- #
 
 
@@ -565,12 +633,17 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         server_ds.s1["ram"] = psutil.virtual_memory().percent
         server_ds.s1["cpu"] = psutil.cpu_percent()
 
-        if gpu_log_file is not None:
+        if not zero_video_capture:
+            server_ds.s1["motors"]["left"] = dxl_controller.speeds["left"] / MAX_SPEED
+            server_ds.s1["motors"]["right"] = dxl_controller.speeds["right"] / MAX_SPEED
+
             last_line = util.read_last_line(gpu_log_file)
             peices = last_line.split()
             for i, peice in enumerate(peices):
                 if peice == "GR3D_FREQ":
-                    server_ds.s1["gpu"] = float(peices[i + 1][:-1])            
+                    section = peices[i + 1]
+                    server_ds.s1["gpu"] = float(section.split("%")[0])    
+                    break        
 
         server_ds.put_s1(server_dq)
         # -------------------------------------------------------------------- #
@@ -640,14 +713,19 @@ if __name__ == "__main__":
     print("\nStarting master thread...\n")
 
     try:
+        dxl_controller = None if zero_video_capture else motors.DynamixelController()
         gpu_log_file = None if zero_video_capture else open(GPU_LOG_FILENAME, 'rb')
-        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture, gpu_log_file)
+        master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, zero_video_capture, gpu_log_file)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
+        print(traceback.format_exc())
     # except:
     #     pass
     finally:
-        if gpu_log_file is not None:
+        if not zero_video_capture:
+            dxl_controller.set_torque_status(False)
+            dxl_controller.close_port()
+
             gpu_log_file.close()
     # ------------------------------------------------------------------------ #
 
