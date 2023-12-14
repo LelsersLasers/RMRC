@@ -249,8 +249,8 @@ input[type="range"] {
 
 			<h4>Motors</h4>
 			<label for="power">Power: </label>
-            <output id="power-ouput">100%</output>
-            <input type="range" id="power" name="power" min="1" max="100" step="1" value="100" oninput="powerSlider()" />
+            <output id="power-ouput">60%</output>
+            <input type="range" id="power" name="power" min="1" max="100" step="1" value="60" oninput="powerSlider()" />
 			
 			<div class="outerbar blankbar" id="left-outline">
 				<div class="outerbar" id="left-target">
@@ -583,17 +583,20 @@ input[type="range"] {
 				});
 		}, DELAY);
 
+		
 		function setPower(value) {	
 			const output = document.getElementById("power-ouput");
 			output.innerHTML = value + "%";
 			calculate_power();
 		}
-
 		function powerSlider() {
 			const ele = document.getElementById("power");
 			const value = parseInt(ele.value);
             power_state = value;
 			setPower(value);
+		}
+		function clamp(x, min, max) {
+			return Math.min(Math.max(x, min), max);
 		}
 
 
@@ -665,11 +668,7 @@ input[type="range"] {
 			if (key == "t") {
                 const mod = Object.keys(keys).includes("shift") ? -1 : 1;
 				power_state += POWER_STATE_STEP * mod;
-
-				power_state = (power_state + 100) % 100;
-				if (power_state == 0) {
-					power_state = 100;
-				}
+				power_state = clamp(power_state, 1, 100);
 				
 				setPower(power_state);
 
