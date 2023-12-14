@@ -514,7 +514,7 @@ input[type="range"] {
                         const wait_time = now_pref_ms - start_pref_ms;
                         const wait_time_delay = wait_time.toFixed(0);
 
-                        const max_delay = Math.max([inital_delay, average_delay, wait_time_delay, 250]);
+                        const max_delay = Math.max(inital_delay, average_delay, wait_time_delay, 250);
 						max_delays.push(max_delay);
 						max_delays = max_delays.slice(-MAX_LEN);
 						const max_ratio_delay = Math.max(...max_delays);
@@ -534,9 +534,9 @@ input[type="range"] {
                         delaybar_total.style.width = (average_delay / max_ratio_delay) * 100 + "%";
 
                         const delay_ping_ele = document.getElementById("delay-ping")
-                        delay_ping_ele.innerHTML = rounded + " MS (ping)";
+                        delay_ping_ele.innerHTML = wait_time_delay + " MS (ping)";
                         const delaybar_ping = document.getElementById("pingbar");
-                        delaybar_ping.style.width = (diff / max_ratio_delay) * 100 + "%";
+                        delaybar_ping.style.width = (wait_time_delay / max_ratio_delay) * 100 + "%";
                         // -------------------------------------------------- //
 					} catch (e) {
 						console.log(e);
