@@ -66,7 +66,8 @@ class DynamixelController:
 			for id in side_ids:
 				speed = self.speeds[side]
 				orientation = ORIENTATIONS[id]
-				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, speed * orientation)
+				power = int(speed * orientation)
+				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
 				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
 					print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
 				elif dxl_error != 0:
