@@ -643,7 +643,9 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
             peices = last_line.split()
             for i, peice in enumerate(peices):
                 if peice == "GR3D_FREQ":
-                    server_ds.s1["gpu"] = float(peices[i + 1][:-1])            
+                    section = peices[i + 1]
+                    server_ds.s1["gpu"] = float(section.split("%")[0])    
+                    break        
 
         server_ds.put_s1(server_dq)
         # -------------------------------------------------------------------- #
