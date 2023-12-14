@@ -47,6 +47,7 @@ MOTION_MIN_AREA = 500
 MOTION_THRESHOLD = 65
 MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
+MOTOR_TEST_FPS = 10
 
 
 # ---------------------------------------------------------------------------- #
@@ -87,11 +88,12 @@ STATE_SERVER_MASTER = {
     "h": 1,
     "hazmats_found": [],
     "qr_found": [],
-    "fpses": [-1, -1, -1, -1, -1],
+    "fpses": [-1, -1, -1, -1, -1, -1], # last one is the motor_fps
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
     "angle": 0,
+    # motors from STATE_MOTOR
 }
 STATE_SERVER = {
     "keys": [],
@@ -114,7 +116,8 @@ STATE_MOTOR = {
             "left": 0,
             "right": 0,
         }
-    }
+    },
+    "motor_fps": 5,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -127,9 +130,14 @@ def motor_main(server_motor_dq, zero_video_capture):
         dxl_controller = motors.DynamixelController()
         dxl_controller.set_torque_status(True)
 
+    fps_controller = util.FPSController()
+
     try:
         while True:
             server_motor_ds.update_s1(server_motor_dq)
+
+            fps_controller.update()
+            server_motor_ds.s2["motor_fps"] = fps_controller.fps()
 
             if not zero_video_capture:
                 dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
@@ -146,6 +154,8 @@ def motor_main(server_motor_dq, zero_video_capture):
             else:
                 server_motor_ds.s2["motors"]["target"]["left"] = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
+
+                time.sleep(1 / MOTOR_TEST_FPS)
 
             server_motor_ds.put_s2(server_motor_dq)
     except KeyboardInterrupt:
@@ -215,6 +225,7 @@ def server_main(server_dq, server_motor_dq):
 
         # combine main info with motor info
         server_ds.s1.update(server_motor_ds.s2)
+        server_ds.s1["fpses"][-1] = server_motor_ds.s2["motor_fps"]
 
         response = jsonify(server_ds.s1)
         response.headers.add("Access-Control-Allow-Origin", "*")
@@ -631,6 +642,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
                 camera_dses[base_key].s2["fps"],
                 camera_dses[base_key].s2["fps"],
                 fps_controller.fps(),
+                -1,
             ]
         else:
             fpses = [
@@ -639,6 +651,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
                 camera_dses["webcam2"].s2["fps"],
                 camera_dses["ir"].s2["fps"],
                 fps_controller.fps(),
+                -1,
             ]
         server_ds.s1["fpses"] = fpses
 
