@@ -249,8 +249,8 @@ input[type="range"] {
 
 			<h4>Motors</h4>
 			<label for="power">Power: </label>
-            <output id="power-ouput">60%</output>
-            <input type="range" id="power" name="power" min="1" max="100" step="1" value="60" oninput="powerSlider()" />
+            <output id="power-ouput">100%</output>
+            <input type="range" id="power" name="power" min="1" max="100" step="1" value="100" oninput="powerSlider()" />
 			
 			<div class="outerbar blankbar" id="left-outline">
 				<div class="outerbar" id="left-target">
@@ -342,7 +342,6 @@ input[type="range"] {
 		const keys = {}; // keys[key] = true | if key is down
 
 		const POWER_STATE_STEP = 20;
-		let wrap = false;
 		let power_state = 100;
 
 		const DIAGONAL_MULTIPLIER = 0.4;
@@ -595,7 +594,6 @@ input[type="range"] {
 			const value = parseInt(ele.value);
             power_state = value;
 			setPower(value);
-			wrap = false;
 		}
 
 
@@ -668,24 +666,9 @@ input[type="range"] {
                 const mod = Object.keys(keys).includes("shift") ? -1 : 1;
 				power_state += POWER_STATE_STEP * mod;
 
-				if (power_state <= 1) {
-					if (wrap) {
-						power_state = 100;
-						wrap = false;
-					} else {
-						power_state = 1;
-						wrap = true;
-					}
-				} else if (power_state >= 100) {
-					if (wrap) {
-						power_state = 1;
-						wrap = false;
-					} else {
-						power_state = 100;
-						wrap = true;
-					}
-				} else {
-					wrap = false;
+				power_state = (power_state + 100) % 100;
+				if (power_state == 0) {
+					power_state = 100;
 				}
 				
 				setPower(power_state);
