@@ -12,9 +12,9 @@ DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2] # TODO!!!
 	"right": [2, 4],
 }
 ORIENTATIONS = { # ORIENTATIONS[id] = direction multiplier # TODO!!!
-	1: 1,
-	2: -1,
-	3: -1,
+	1: -1,
+	2: 1,
+	3: 1,
 	4: 1,
  }
 
