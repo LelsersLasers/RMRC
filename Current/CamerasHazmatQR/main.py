@@ -551,8 +551,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, dxl_controller, video_capture_
                 elif x_input > 0:
                     dxl_controller.speeds["right"] *= DIAGONAL_MULTIPLIER
 
-            print(dxl_controller.speeds)
-
             dxl_controller.update_speed()
             dxl_controller.check_errors()
         # -------------------------------------------------------------------- #

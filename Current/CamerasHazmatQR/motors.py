@@ -7,11 +7,11 @@ ADDR_TORQUE_ENABLE = 64
 ADDR_GOAL_VELOCITY = 104
 ADDR_PRESENT_VELOCITY = 128
 ADDR_ERROR_CODE = 70
-DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2] # TODO!!!
+DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2]
 	"left": [1, 3],
 	"right": [2, 4],
 }
-ORIENTATIONS = { # ORIENTATIONS[id] = direction multiplier # TODO!!!
+ORIENTATIONS = { # ORIENTATIONS[id] = direction multiplier
 	1: 1,
 	2: -1,
 	3: 1,
