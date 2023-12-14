@@ -49,7 +49,7 @@ MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
 
 # TODO
-MAX_SPEED = 32767
+MAX_SPEED = 330
 DIAGONAL_MULTIPLIER = 0.4
 
 # ---------------------------------------------------------------------------- #
