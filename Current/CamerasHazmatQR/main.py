@@ -146,14 +146,10 @@ def motor_main(server_motor_dq, zero_video_capture):
                 dxl_controller.update_speed()
                 dxl_controller.update_status()
 
-                server_motor_ds.s2["motors"]["target"]["left"] = dxl_controller.speeds["left"]
-                server_motor_ds.s2["motors"]["target"]["right"] = dxl_controller.speeds["right"]
-
-                server_motor_ds.s2["motors"]["current"]["left"] = dxl_controller.statuses["left"]
-                server_motor_ds.s2["motors"]["current"]["right"] = dxl_controller.statuses["right"]
+                server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
+                server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
             else:
-                server_motor_ds.s2["motors"]["target"]["left"] = server_motor_ds.s1["left"]
-                server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
+                server_motor_ds.s2["motors"]["target"] = server_motor_ds.s1
 
                 server_motor_ds.s2["motors"]["current"]["left"] = server_motor_ds.s1["left"] / 2
                 server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] / 2
