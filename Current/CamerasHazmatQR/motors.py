@@ -1,6 +1,5 @@
 import dynamixel_sdk
 
-MAX_VELOCITY = 330
 
 DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
@@ -9,13 +8,21 @@ PROTOCOL_VERSION = 2.0
 ADDR_BAUDRATE, BAUDRATE, BAUDRATE_VALUE = 8, 4_500_000, 7
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#baud-rate8
 
-ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME = 9, 0
+ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE = 9, 0
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#return-delay-time9
 
-ADDR_VELOCITY_LIMIT = 44 # TODO
-ADDR_TORQUE_ENABLE = 64
+# MAX_VELOCITY = 330
+ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_VALUE, VELOCITY_LIMIT_UNITS = 44, 1023, 0.229 # rev/min
+# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#velocity-limit44
+
+ADDR_TORQUE_ENABLE = 64 # 1 = enable, 0 = disable
 ADDR_GOAL_VELOCITY = 104
-ADDR_PROFILE_ACCELERATION = 108 # TODO
+
+ADDR_PROFILE_ACCELERATION, PROFILE_ACCELERATION_UNITS = 108, 214.577 # rev/min^2
+TIME_TO_MAX_VELOCITY = 1 / 60 # min
+PROFILE_ACCELERATION_VALUE = int((VELOCITY_LIMIT_VALUE * VELOCITY_LIMIT_UNITS) / TIME_TO_MAX_VELOCITY / PROFILE_ACCELERATION_UNITS)
+# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#profile-acceleration108
+
 ADDR_PRESENT_VELOCITY = 128
 ADDR_ERROR_CODE = 70
 
@@ -59,10 +66,10 @@ class DynamixelController:
 
 				for addr, value in [
 					(ADDR_BAUDRATE, BAUDRATE_VALUE),
-					(ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME),
-					# (ADDR_VELOCITY_LIMIT, MAX_VELOCITY),
+					(ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
+					(ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_VALUE),
 					(ADDR_TORQUE_ENABLE, 1),
-					# (ADDR_PROFILE_ACCELERATION, 0),
+					(ADDR_PROFILE_ACCELERATION, PROFILE_ACCELERATION_VALUE),
 				]:
 					self.command(id, addr, value)
 
@@ -103,7 +110,7 @@ class DynamixelController:
 			orientation = ORIENTATIONS[side]
 			for id in side_ids:
 				speed = self.speeds[side]
-				power = int(speed * orientation * MAX_VELOCITY)
+				power = int(speed * VELOCITY_LIMIT_VALUE) * orientation
 				self.command(id, ADDR_GOAL_VELOCITY, power)
 
 	def update_status(self):
@@ -121,7 +128,7 @@ class DynamixelController:
 				error_codes[id] = error_code
 				any_errors.append(error_code > 0)
 				
-				self.statuses[side] += (dxl_present_velocity / MAX_VELOCITY * orientation) / 2
+				self.statuses[side] += (dxl_present_velocity / VELOCITY_LIMIT_VALUE * orientation) / 2
 
 		if any(any_errors):
 			for id, error_code in error_codes.items():
