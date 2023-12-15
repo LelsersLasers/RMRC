@@ -317,10 +317,10 @@ input[type="range"] {
 			<h4>Controls</h4>
 			<p>
 				Press <kbd>h</kbd> to toggle running hazmat detection.<br />
-				Press <kbd>c</kbd> to clear all found hazmat labels.<br />
 				Press <kbd>r</kbd> to toggle running QR detection.<br />
-				Press <kbd>x</kbd> to clear all found QR codes.<br />
 				Press <kbd>m</kbd> to toggle running motion detection.<br />
+				Press <kbd>c</kbd> to clear all found hazmat labels.<br />
+				Press <kbd>x</kbd> to clear all found QR codes.<br />
                 Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
 				Press <kbd>1-4</kbd> to switched focused feed.<br />
 				Press <kbd>0</kbd> to show camera grid.<br />
@@ -348,6 +348,7 @@ input[type="range"] {
 		let run_hazmat = false;
 		let run_qr = false;
 		let run_md = false;
+		let view_mode = 0;
 
 		const POWER_STATE_STEP = 20;
 		let power_state = 100;
@@ -675,7 +676,7 @@ input[type="range"] {
 			}
             send_keys();
 
-			if (key == 5) {
+			if (key == "5") {
 				show_sidebar = !show_sidebar;
 				const sidebar = document.getElementById("sidebar");
 				sidebar.style.display = show_sidebar ? "block" : "none";
@@ -702,6 +703,9 @@ input[type="range"] {
 				} else if (key == "m") {
 					run_md = !run_md;
 					fetch(FLASK_SERVER + "run/md/" + run_md);
+				} else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
+					view_mode = key;
+					fetch(FLASK_SERVER + "view/" + view_mode);
 				}
 			}
 		}

@@ -98,6 +98,7 @@ STATE_SERVER = {
         "qr": False,
         "md": False,
     },
+    "view_mode": 0,
     "power": 100,
 }
 # ---------------------------------------------------------------------------- #
@@ -199,6 +200,15 @@ def server_main(server_dq, server_motor_dq):
     @app.route("/run/<detection>/<state>/", methods=["GET"])
     def run(detection, state):
         server_ds.s2["run"][detection] = state == "true"
+        server_ds.put_s2(server_dq)
+
+        response = jsonify(server_ds.s1)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
+    @app.route("/view/<view_mode>/", methods=["GET"])
+    def view(view_mode):
+        server_ds.s2["view_mode"] = int(view_mode)
         server_ds.put_s2(server_dq)
 
         response = jsonify(server_ds.s1)
@@ -411,6 +421,8 @@ def ratio_bar(frame, ratio, active, loading = False):
 
 def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     print(f"\nPress 'h' to toggle running hazmat detection.")
+    print(f"\nPress 'r' to toggle running qr detection.")
+    print(f"\nPress 'm' to toggle running motion detection.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
     print(f"Press 't'/'T' to increase/decrease power by 20%.")
@@ -418,8 +430,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     print("Press 5 to toggle sidebar.\n")
 
     fps_controller = util.FPSController()
-
-    view_mode = util.ViewMode()
 
     all_qr_found = []
 
@@ -546,21 +556,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
         if key_down(server_ds.s2["keys"], HAZMAT_CLEAR_KEY):
             hazmat_ds.s1["clear_all_found"] = 1
-
-        if key_down(server_ds.s2["keys"], "0"):
-            view_mode.mode = util.ViewMode.GRID
-        elif key_down(server_ds.s2["keys"], "1"):
-            view_mode.mode = util.ViewMode.ZOOM
-            view_mode.zoom_on = 0
-        elif key_down(server_ds.s2["keys"], "2"):
-            view_mode.mode = util.ViewMode.ZOOM
-            view_mode.zoom_on = 1
-        elif key_down(server_ds.s2["keys"], "3"):
-            view_mode.mode = util.ViewMode.ZOOM
-            view_mode.zoom_on = 2
-        elif key_down(server_ds.s2["keys"], "4"):
-            view_mode.mode = util.ViewMode.ZOOM
-            view_mode.zoom_on = 3
         # -------------------------------------------------------------------- #
             
 
@@ -581,13 +576,14 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         fps_text(frame, camera_dses[base_key].s2["fps"])
         fps_text(hazmat_frame, hazmat_ds.s2["hazmat_fps"])
 
-        if view_mode.mode == util.ViewMode.GRID:
+        if server_ds.s2["view_mode"] == 0:
             top_combined = cv2.hconcat([frame, hazmat_frame])
             if video_capture_zero:
                 bottom_combined = cv2.hconcat([frames[base_key], ir_frame])
             else:
                 bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
         else:
+            zoom_on = server_ds.s2["view_mode"] - 1
             if video_capture_zero:
                 all_frames = [frame, hazmat_frame, frames[base_key], ir_frame]
             else:
@@ -595,13 +591,13 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
             top_frames = []
             for i, f in enumerate(all_frames):
-                if i != view_mode.zoom_on:
+                if i != zoom_on:
                     top_frames.append(f)
 
             top_combined = cv2.hconcat(top_frames)
-            resize_factor = all_frames[view_mode.zoom_on].shape[1] / top_combined.shape[1]
+            resize_factor = all_frames[zoom_on].shape[1] / top_combined.shape[1]
             top_combined = cv2.resize(top_combined, (0, 0), fx=resize_factor, fy=resize_factor)
-            bottom_combined = all_frames[view_mode.zoom_on]
+            bottom_combined = all_frames[zoom_on]
 
         combined = cv2.vconcat([top_combined, bottom_combined])
         combine_downscaled = cv2.resize(combined, (0, 0), fx=SERVER_FRAME_SCALE, fy=SERVER_FRAME_SCALE)
