@@ -92,11 +92,14 @@ STATE_SERVER_MASTER = {
     # motors from STATE_MOTOR
 }
 STATE_SERVER = {
-    "keys": [],
     "run": {
         "hazmat": False,
         "qr": False,
         "md": False,
+    },
+    "clear": {
+        "hazmat": False,
+        "qr": False,
     },
     "view_mode": 0,
     "power": 100,
@@ -202,32 +205,22 @@ def server_main(server_dq, server_motor_dq):
         server_ds.s2["run"][detection] = state == "true"
         server_ds.put_s2(server_dq)
 
-        response = jsonify(server_ds.s1)
+        response = jsonify(server_ds.s2)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+
+    @app.route("/clear/<detection>/<state>/", methods=["GET"])
+    def clear(detection, state):
+        server_ds.s2["clear"][detection] = state == "true"
+        server_ds.put_s2(server_dq)
+
+        response = jsonify(server_ds.s2)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
     @app.route("/view/<view_mode>/", methods=["GET"])
     def view(view_mode):
         server_ds.s2["view_mode"] = int(view_mode)
-        server_ds.put_s2(server_dq)
-
-        response = jsonify(server_ds.s1)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/keys/", methods=["GET"])
-    def no_keys_down():
-        server_ds.s2["keys"] = []
-        server_ds.put_s2(server_dq)
-
-        response = jsonify(server_ds.s2)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-
-    @app.route("/keys/<keys_str>", methods=["GET"])
-    def keys(keys_str):
-        keys = keys_str.split("-")
-        server_ds.s2["keys"] = keys
         server_ds.put_s2(server_dq)
 
         response = jsonify(server_ds.s2)
@@ -396,9 +389,6 @@ def camera_main(camera_dq, key):
 
 
 # ---------------------------------------------------------------------------- #
-def key_down(keys, key):
-    return key in keys
-    
 def fps_text(frame, fps):
     font = cv2.FONT_HERSHEY_SIMPLEX
     bottomLeftCornerOfText = (5, frame.shape[0] - 5)
@@ -421,10 +411,10 @@ def ratio_bar(frame, ratio, active, loading = False):
 
 def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     print(f"\nPress 'h' to toggle running hazmat detection.")
-    print(f"\nPress 'r' to toggle running qr detection.")
-    print(f"\nPress 'm' to toggle running motion detection.")
-    print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
-    print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
+    print(f"Press 'r' to toggle running qr detection.")
+    print(f"Press 'm' to toggle running motion detection.")
+    print(f"Hold  'c' to clear all found hazmat labels.")
+    print(f"Hold  'x' to clear all found QR codes.")
     print(f"Press 't'/'T' to increase/decrease power by 20%.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
@@ -545,17 +535,17 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
         all_qr_found = list(set(all_qr_found))
         all_qr_found.sort()
+        print(len(all_qr_found))
         # -------------------------------------------------------------------- #
 
 
         # -------------------------------------------------------------------- #
         server_ds.update_s2(server_dq)
 
-        if key_down(server_ds.s2["keys"], QR_CLEAR_KEY):
-            all_qr_found = []
-
-        if key_down(server_ds.s2["keys"], HAZMAT_CLEAR_KEY):
+        if server_ds.s2["clear"]["hazmat"]:
             hazmat_ds.s1["clear_all_found"] = 1
+        if server_ds.s2["clear"]["qr"]:
+            all_qr_found = []
         # -------------------------------------------------------------------- #
             
 
