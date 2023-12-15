@@ -354,8 +354,8 @@ input[type="range"] {
 
 		let show_sidebar = true;
 
-		let t0 = performance.now();
-		let t1 = performance.now();
+		let t0 = now_ms();
+		let t1 = now_ms();
 		let delta = DELAY;
 
 		let delays = [DELAY];
@@ -388,21 +388,24 @@ input[type="range"] {
 			}
 		}
 
+		function now_ms() {
+			return performance.timeOrigin + performance.now();
+		}
+
 		function calibrate() {
 			const path = "calibrate"
-			const start_pref_ms = performance.now();
+			const start_ms = now_ms();
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
 				.then(data => {
-					const now_ms = Date.now()
+					const now = now_ms();
 
-					const now_pref_ms = performance.now();
-					const pref_diff = now_pref_ms - start_pref_ms;
+					const ping = now - start_ms;
 
 					const ms = data * 1000;
-					const diff = now_ms - ms;
+					const diff = now - ms;
 
-					ms_offset = diff - pref_diff;
+					ms_offset = diff - ping;
 
 					const debug_ele = document.getElementById("debug");
 					debug_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
@@ -412,7 +415,7 @@ input[type="range"] {
 		let frames = 0;
 		setInterval(function() {
 			const path = "get";
-			const start_pref_ms = performance.now();
+			const start_ms = now_ms();
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
 				.then(data => {
@@ -420,10 +423,9 @@ input[type="range"] {
 						try_calibrate();
 						frames += 1;
 
-						const now_ms = Date.now()
-						const now_pref_ms = performance.now();
+						const now = now_ms();
 	
-						t1 = now_pref_ms;
+						t1 = now;
 						delta = (t1 - t0) / 1000;
 						t0 = t1;
                         // -------------------------------------------------- //
@@ -546,7 +548,7 @@ input[type="range"] {
 
                         // -------------------------------------------------- //
                         const ms = data["time"] * 1000;
-                        const diff = now_ms - ms - ms_offset;
+                        const diff = now - ms - ms_offset;
                         const inital_delay = diff.toFixed(0);
 
                         delays.push(diff);
@@ -554,10 +556,10 @@ input[type="range"] {
                         const average = delays.reduce((a, b) => a + b, 0) / delays.length;
                         const average_delay = average.toFixed(0);
 
-                        const wait_time = now_pref_ms - start_pref_ms;
-                        const wait_time_delay = wait_time.toFixed(0);
+                        const ping = now - start_ms;
+                        const ping_delay = ping.toFixed(0);
 
-                        const max_delay = Math.max(inital_delay, average_delay, wait_time_delay, 250);
+                        const max_delay = Math.max(inital_delay, average_delay, ping_delay, 250);
 						max_delays.push(max_delay);
 						max_delays = max_delays.slice(-MAX_LEN);
 						const max_ratio_delay = Math.max(...max_delays);
@@ -577,9 +579,9 @@ input[type="range"] {
                         delaybar_total.style.width = (average_delay / max_ratio_delay) * 100 + "%";
 
                         const delay_ping_ele = document.getElementById("delay-ping")
-                        delay_ping_ele.innerHTML = wait_time_delay + " MS (ping)";
+                        delay_ping_ele.innerHTML = ping_delay + " MS (ping)";
                         const delaybar_ping = document.getElementById("pingbar");
-                        delaybar_ping.style.width = (wait_time_delay / max_ratio_delay) * 100 + "%";
+                        delaybar_ping.style.width = (ping_delay / max_ratio_delay) * 100 + "%";
                         // -------------------------------------------------- //
 					} catch (e) {
 						console.log(e);
