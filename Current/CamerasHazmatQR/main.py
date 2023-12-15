@@ -155,6 +155,9 @@ def motor_main(server_motor_dq, zero_video_capture):
                 server_motor_ds.s2["motors"]["target"]["left"] = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
 
+                server_motor_ds.s2["motors"]["current"]["left"] = server_motor_ds.s1["left"] / 2
+                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] / 2
+
                 time.sleep(1 / MOTOR_TEST_FPS)
 
             server_motor_ds.put_s2(server_motor_dq)

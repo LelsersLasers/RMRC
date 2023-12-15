@@ -459,11 +459,12 @@ input[type="range"] {
 
 							const target = motors["target"][motors_id] * 100;
 							const current = motors["current"][motors_id] * 100;
+							const current_width = (100 / target) * current;
 
 							const target_ele = document.getElementById(motors_id + "-target");
 							target_ele.style.width = Math.abs(target) + "%";
 							const current_ele = document.getElementById(motors_id + "-current");
-							current_ele.style.width = Math.abs(current) + "%";
+							current_ele.style.width = Math.abs(current_width) + "%";
 
 							const motor_ele = document.getElementById("motor-" + motors_id);
 							motor_ele.innerHTML = `${current.toFixed(0)}% (${target.toFixed(0)}%) (${motors_id})`;
@@ -673,8 +674,12 @@ input[type="range"] {
 			}
 			if (key == "t") {
                 const mod = Object.keys(keys).includes("shift") ? -1 : 1;
-				power_state += POWER_STATE_STEP * mod;
-				power_state = clamp(power_state, 1, 100);
+				if (power_state == 1 && mod == 1) {
+					power_state = POWER_STATE_STEP;
+				} else {
+					power_state += POWER_STATE_STEP * mod;
+					power_state = clamp(power_state, 1, 100);	
+				}
 				
 				setPower(power_state);
 
