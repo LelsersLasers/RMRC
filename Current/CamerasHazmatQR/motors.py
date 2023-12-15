@@ -6,7 +6,6 @@ DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
 
 # BAUDRATE = 57600
-
 ADDR_BAUDRATE, BAUDRATE, BAUDRATE_VALUE = 8, 4_500_000, 7
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#baud-rate8
 
@@ -84,6 +83,9 @@ class DynamixelController:
 				self.packet_handler.reboot(self.port_handler, id)
 
 	def command(self, id, addr, value):
+		# Doesn't get the result or error but might be faster?
+		# self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
+
 		dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
 		if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
 			print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
