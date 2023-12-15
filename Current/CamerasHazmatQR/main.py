@@ -532,10 +532,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         if update_average_frame:
             update_average_frame = False
             cv2.accumulateWeighted(frame_copy.astype("float"), average_frame, MOTION_NEW_FRAME_WEIGHT)
-
-        all_qr_found = list(set(all_qr_found))
-        all_qr_found.sort()
-        print(len(all_qr_found))
         # -------------------------------------------------------------------- #
 
 
