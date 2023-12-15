@@ -4,7 +4,14 @@ MAX_VELOCITY = 330
 
 DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
-BAUDRATE = 57600
+
+# BAUDRATE = 57600
+
+ADDR_BAUDRATE, BAUDRATE, BAUDRATE_VALUE = 8, 4_500_000, 7
+# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#baud-rate8
+
+ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME = 9, 0
+# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#return-delay-time9
 
 ADDR_VELOCITY_LIMIT = 44 # TODO
 ADDR_TORQUE_ENABLE = 64
@@ -31,10 +38,6 @@ class DynamixelController:
 			print("Succeeded to open the port")
 		else:
 			print("Failed to open the port.")
-		if self.port_handler.setBaudRate(BAUDRATE):
-			print("Succeeded to change the baudrate")
-		else:
-			print("Failed to change the baudrate.")
 
 		self.speeds = { # speeds[side] = %
 			"left": 0,
@@ -46,36 +49,60 @@ class DynamixelController:
 			"right": 0,
 		}
 
+	def setup(self):
+		if self.port_handler.setBaudRate(BAUDRATE):
+			print("Succeeded to change the baudrate")
+		else:
+			print("Failed to change the baudrate.")
+
+		for side_ids in DYNAMIXEL_IDS.values():
+			for id in side_ids:
+
+				for addr, value in [
+					(ADDR_BAUDRATE, BAUDRATE_VALUE),
+					(ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME),
+					# (ADDR_VELOCITY_LIMIT, MAX_VELOCITY),
+					(ADDR_TORQUE_ENABLE, 1),
+					# (ADDR_PROFILE_ACCELERATION, 0),
+				]:
+					self.command(id, addr, value)
+
+	def close(self):
+		for side_ids in DYNAMIXEL_IDS.values():
+			for id in side_ids:
+
+				for addr, value in [
+					(ADDR_TORQUE_ENABLE, 0),
+				]:
+					self.command(id, addr, value)
+
+		self.port_handler.closePort()
+
 	def reset_motors(self):
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
 				self.packet_handler.reboot(self.port_handler, id)
 
-	def close_port(self):
-		self.port_handler.closePort()
+	def command(self, id, addr, value):
+		dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
+		if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
+			print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+		elif dxl_error != 0:
+			print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
 
 	def set_torque_status(self, status):
 		status_code = 1 if status else 0
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
-				dxl_comm_result, dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_TORQUE_ENABLE, status_code)
-				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-					print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-				elif dxl_error != 0:
-					print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
+				self.command(id, ADDR_TORQUE_ENABLE, status_code)
 
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
-	
 			for id in side_ids:
 				speed = self.speeds[side]
 				power = int(speed * orientation * MAX_VELOCITY)
-				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
-				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-					print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-				elif dxl_error != 0:
-					print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
+				self.command(id, ADDR_GOAL_VELOCITY, power)
 
 	def update_status(self):
 		error_codes = {} # error_codes[id] = error_code

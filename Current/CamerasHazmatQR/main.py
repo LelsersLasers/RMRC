@@ -128,7 +128,7 @@ def motor_main(server_motor_dq, zero_video_capture):
 
     if not zero_video_capture:
         dxl_controller = motors.DynamixelController()
-        dxl_controller.set_torque_status(True)
+        dxl_controller.setup()
 
     fps_controller = util.FPSController()
 
@@ -166,8 +166,7 @@ def motor_main(server_motor_dq, zero_video_capture):
     finally:
         print("Closing dynamixel controller...")
         if not zero_video_capture:
-            dxl_controller.set_torque_status(False)
-            dxl_controller.close_port()
+            dxl_controller.close()
 # ---------------------------------------------------------------------------- #
 
 
