@@ -634,10 +634,11 @@ input[type="range"] {
 			let speed_right = 0;
 
 			if (y_input == 0) {
-				speed_left = 	match_x(x_input) * base_speed;
-				speed_right =  -match_x(x_input) * base_speed;
+				const x_mod = match_x(x_input);
+				speed_left  = 	x_mod * base_speed;
+				speed_right =  -x_mod * base_speed;
 			} else {
-				speed_left = y_input * base_speed;
+				speed_left  = y_input * base_speed;
 				speed_right = y_input * base_speed;
 
 				if (x_input < 0)		speed_left  *= DIAGONAL_MULTIPLIER;
