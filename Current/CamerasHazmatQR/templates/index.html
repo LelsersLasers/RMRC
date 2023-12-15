@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Bishop's RMRC Camera Feeds</title>
+	<title>Knight Sky Control Panel</title>
 	<meta
 		name="description"
 		content="Camera feeds: 2 webcams, ir, and hazmat"
@@ -317,12 +317,10 @@ input[type="range"] {
 			<h4>Controls</h4>
 			<p>
 				Press <kbd>h</kbd> to toggle running hazmat detection.<br />
-				Press <kbd>g</kbd> to run hazmat detection while holding key<br />
 				Press <kbd>c</kbd> to clear all found hazmat labels.<br />
 				Press <kbd>r</kbd> to toggle running QR detection.<br />
 				Press <kbd>x</kbd> to clear all found QR codes.<br />
 				Press <kbd>m</kbd> to toggle running motion detection.<br />
-                Press <kbd>m</kbd> to toggle to toggle slow speed.<br />
                 Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
 				Press <kbd>1-4</kbd> to switched focused feed.<br />
 				Press <kbd>0</kbd> to show camera grid.<br />
@@ -346,6 +344,10 @@ input[type="range"] {
 		const CALIBRATE_FREQUENCE = 10 * FRONT_END_FPS;
 
 		const keys = {}; // keys[key] = true | if key is down
+
+		let run_hazmat = false;
+		let run_qr = false;
+		let run_md = false;
 
 		const POWER_STATE_STEP = 20;
 		let power_state = 100;
@@ -589,6 +591,9 @@ input[type="range"] {
 				})
 				.catch(error => {
 					calibrated = false;
+					run_hazmat = false;
+					run_qr = false;
+					run_md = false;
 				});
 		}, DELAY);
 
@@ -674,8 +679,7 @@ input[type="range"] {
 				show_sidebar = !show_sidebar;
 				const sidebar = document.getElementById("sidebar");
 				sidebar.style.display = show_sidebar ? "block" : "none";
-			}
-			if (key == "t") {
+			} else if (key == "t") {
                 const mod = Object.keys(keys).includes("shift") ? -1 : 1;
 				if (power_state == 1 && mod == 1) {
 					power_state = POWER_STATE_STEP;
@@ -688,6 +692,17 @@ input[type="range"] {
 
 				const range_ele = document.getElementById("power");
 				range_ele.value = power_state;
+			} else if (!e.repeat) {
+				if (key == "h") {
+					run_hazmat = !run_hazmat;
+					fetch(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+				} else if (key == "r") {
+					run_qr = !run_qr;
+					fetch(FLASK_SERVER + "run/qr/" + run_qr);
+				} else if (key == "m") {
+					run_md = !run_md;
+					fetch(FLASK_SERVER + "run/md/" + run_md);
+				}
 			}
 		}
 		function keyup(e) {

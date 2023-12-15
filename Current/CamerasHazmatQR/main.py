@@ -28,10 +28,6 @@ from flask import Flask, render_template, jsonify
 import logging
 
 
-HAZMAT_TOGGLE_KEY = "h"
-HAZMAT_HOLD_KEY = "g"
-QR_TOGGLE_KEY = "r"
-MOTION_TOGGLE_KEY = "m"
 HAZMAT_CLEAR_KEY = "c"
 QR_CLEAR_KEY = "x"
 
@@ -97,6 +93,11 @@ STATE_SERVER_MASTER = {
 }
 STATE_SERVER = {
     "keys": [],
+    "run": {
+        "hazmat": False,
+        "qr": False,
+        "md": False,
+    },
     "power": 100,
 }
 # ---------------------------------------------------------------------------- #
@@ -195,10 +196,18 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
+    @app.route("/run/<detection>/<state>/", methods=["GET"])
+    def run(detection, state):
+        server_ds.s2["run"][detection] = state == "true"
+        server_ds.put_s2(server_dq)
+
+        response = jsonify(server_ds.s1)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
     @app.route("/keys/", methods=["GET"])
     def no_keys_down():
         server_ds.s2["keys"] = []
-
         server_ds.put_s2(server_dq)
 
         response = jsonify(server_ds.s2)
@@ -209,7 +218,6 @@ def server_main(server_dq, server_motor_dq):
     def keys(keys_str):
         keys = keys_str.split("-")
         server_ds.s2["keys"] = keys
-
         server_ds.put_s2(server_dq)
 
         response = jsonify(server_ds.s2)
@@ -402,26 +410,14 @@ def ratio_bar(frame, ratio, active, loading = False):
 
 
 def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
-    print(f"\nPress '{HAZMAT_TOGGLE_KEY}' to toggle running hazmat detection.")
-    print(f"Press '{HAZMAT_HOLD_KEY}' to run hazmat detection while holding key.")
+    print(f"\nPress 'h' to toggle running hazmat detection.")
     print(f"Press '{HAZMAT_CLEAR_KEY}' to clear all found hazmat labels.")
-    print(f"Press '{QR_TOGGLE_KEY}' to toggle running QR detection.")
     print(f"Press '{QR_CLEAR_KEY}' to clear all found QR codes.")
-    print(f"Press '{MOTION_TOGGLE_KEY}' to toggle running motion detection.")
     print(f"Press 't'/'T' to increase/decrease power by 20%.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
     fps_controller = util.FPSController()
-
-    run_hazmat_toggler = util.Toggler(False)
-    run_hazmat_hold = False
-    run_qr_toggler = util.Toggler(False)
-    run_motion_toggler = util.Toggler(False)
-
-    hazmat_tk = util.ToggleKey()
-    qr_tk = util.ToggleKey()
-    motion_tk = util.ToggleKey()
 
     view_mode = util.ViewMode()
 
@@ -505,7 +501,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
 
         # -------------------------------------------------------------------- #
-        if run_qr_toggler:
+        if server_ds.s2["run"]["qr"]:
             start = time.time()
 
             qr_found_this_frame = qr_detect.qr_detect(frame)
@@ -524,7 +520,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             end = time.time()
 
             ratio_bar(frame, (end - start) / QR_TIME_BAR_SCALE, True)
-        elif run_motion_toggler:
+        elif server_ds.s2["run"]["md"]:
             start = time.time()
             motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, MOTION_MIN_AREA, MOTION_THRESHOLD)
             end = time.time()
@@ -544,15 +540,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
         # -------------------------------------------------------------------- #
         server_ds.update_s2(server_dq)
-
-        if hazmat_tk.down(key_down(server_ds.s2["keys"], HAZMAT_TOGGLE_KEY)):
-            run_hazmat_toggler.toggle()
-        run_hazmat_hold = key_down(server_ds.s2["keys"], HAZMAT_HOLD_KEY)
-        
-        if qr_tk.down(key_down(server_ds.s2["keys"], QR_TOGGLE_KEY)):
-            run_qr_toggler.toggle()
-        if motion_tk.down(key_down(server_ds.s2["keys"], MOTION_TOGGLE_KEY)):
-            run_motion_toggler.toggle()
 
         if key_down(server_ds.s2["keys"], QR_CLEAR_KEY):
             all_qr_found = []
@@ -578,7 +565,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             
 
         # -------------------------------------------------------------------- #
-        hazmat_ds.s1["run_hazmat"] = run_hazmat_toggler.get() or run_hazmat_hold
+        hazmat_ds.s1["run_hazmat"] = server_ds.s2["run"]["hazmat"]
 
         if hazmat_ds.s1["clear_all_found"] == 1:
             hazmat_ds.s1["clear_all_found"] = 2
