@@ -36,9 +36,11 @@ ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
 }
 
 class DynamixelController:
-	def __init__(self):
+	def __init__(self, tx_rx):
 		self.port_handler = dynamixel_sdk.PortHandler(DEVICE_NAME)
 		self.packet_handler = dynamixel_sdk.PacketHandler(PROTOCOL_VERSION)
+		
+		self.tx_rx = tx_rx
 		
 		if self.port_handler.openPort():
 			print("Succeeded to open the port")
@@ -90,14 +92,15 @@ class DynamixelController:
 				self.packet_handler.reboot(self.port_handler, id)
 
 	def command(self, id, addr, value):
-		# Doesn't get the result or error but might be faster?
-		# self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
+		if self.tx_rx:
+			dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
+			if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
+				print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+			elif dxl_error != 0:
+				print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
+		else:
+			self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
 
-		dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
-		if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-			print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-		elif dxl_error != 0:
-			print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
 
 	def set_torque_status(self, status):
 		status_code = 1 if status else 0

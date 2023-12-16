@@ -128,11 +128,11 @@ STATE_MOTOR = {
 
 
 # ---------------------------------------------------------------------------- #
-def motor_main(server_motor_dq, zero_video_capture):
+def motor_main(server_motor_dq, tx_rx, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
 
     if not zero_video_capture:
-        dxl_controller = motors.DynamixelController()
+        dxl_controller = motors.DynamixelController(tx_rx)
         dxl_controller.setup()
 
     fps_controller = util.FPSController()
@@ -642,6 +642,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 # ---------------------------------------------------------------------------- #
 ap = argparse.ArgumentParser()
 ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
+ap.add_argument("-t", "--tx-rx", required=False, help="use write4ByteTxRx() instead of write4ByteTxOnly()", action="store_true")
 args = vars(ap.parse_args())
 # ---------------------------------------------------------------------------- #
 
@@ -649,6 +650,7 @@ args = vars(ap.parse_args())
 # ---------------------------------------------------------------------------- #
 if __name__ == "__main__":
     zero_video_capture = args["video_capture_zero"]
+    tx_rx = args["tx_rx"]
     # ------------------------------------------------------------------------ #
     print("\nStarting camera threads...")
 
@@ -702,7 +704,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("\nStarting motor thread...")
 
-    motor_thread = Process(target=motor_main, args=(server_motor_dq, zero_video_capture))
+    motor_thread = Process(target=motor_main, args=(server_motor_dq, tx_rx, zero_video_capture))
     motor_thread.daemon = True
     motor_thread.start()
     print(f"Motor thread pid: {motor_thread.pid}")
