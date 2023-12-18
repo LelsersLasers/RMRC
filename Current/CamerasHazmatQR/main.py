@@ -110,6 +110,7 @@ STATE_SERVER = {
 STATE_MOTOR_SERVER = {
     "left": 0,
     "right": 0,
+    "command_count": 0,
 }
 STATE_MOTOR = {
     "motors": {
@@ -128,8 +129,9 @@ STATE_MOTOR = {
 
 
 # ---------------------------------------------------------------------------- #
-def motor_main(server_motor_dq, tx_rx, zero_video_capture):
+def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
+    last_command_count = 0
 
     if not zero_video_capture:
         dxl_controller = motors.DynamixelController(tx_rx)
@@ -148,7 +150,10 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
                 dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
                 dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
 
-                dxl_controller.update_speed()
+                if write_motor_speeds_every_frame or server_motor_ds.s1["command_count"] > last_command_count:
+                    dxl_controller.update_speed()
+                    last_command_count = server_motor_ds.s1["command_count"]
+                    
                 dxl_controller.update_status()
 
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
@@ -193,6 +198,7 @@ def server_main(server_dq, server_motor_dq):
         # Has percent power built into values
         server_motor_ds.s1["left"] = float(left)
         server_motor_ds.s1["right"] = float(right)
+        server_motor_ds.s1["command_count"] += 1
 
         server_motor_ds.put_s1(server_motor_dq)
 
@@ -643,6 +649,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 ap = argparse.ArgumentParser()
 ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
 ap.add_argument("-t", "--tx-rx", required=False, help="use write4ByteTxRx() instead of write4ByteTxOnly()", action="store_true")
+ap.add_argument("-w", "--write-motor-speeds-every-frame", required=False, help="write the last know motor speeds as often as possible", action="store_true")
 args = vars(ap.parse_args())
 # ---------------------------------------------------------------------------- #
 
@@ -651,6 +658,7 @@ args = vars(ap.parse_args())
 if __name__ == "__main__":
     zero_video_capture = args["video_capture_zero"]
     tx_rx = args["tx_rx"]
+    write_motor_speeds_every_frame = args["write_motor_speeds_every_frame"]
     # ------------------------------------------------------------------------ #
     print("\nStarting camera threads...")
 
@@ -704,7 +712,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("\nStarting motor thread...")
 
-    motor_thread = Process(target=motor_main, args=(server_motor_dq, tx_rx, zero_video_capture))
+    motor_thread = Process(target=motor_main, args=(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture))
     motor_thread.daemon = True
     motor_thread.start()
     print(f"Motor thread pid: {motor_thread.pid}")
