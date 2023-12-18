@@ -137,8 +137,8 @@ class DynamixelController:
 			self.statuses[side] = 0
 
 			for id in side_ids:
-				dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
-				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+				dxl_present_velocity = self.packet_handler.read4ByteTx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
+				error_code = self.packet_handler.read1ByteTx(self.port_handler, id, ADDR_ERROR_CODE)
 				
 				error_codes[id] = error_code
 				any_errors.append(error_code > 0)
