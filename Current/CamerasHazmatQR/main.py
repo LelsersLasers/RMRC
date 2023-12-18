@@ -190,7 +190,7 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/motors/<left>/<right>", methods=["GET"])
+    @app.route("/motors/<left>/<right>/", methods=["GET"])
     def motors(left, right):
         # Has percent power built into values
         server_motor_ds.s1["left"] = float(left)
@@ -203,7 +203,7 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/run/<detection>/<state>", methods=["GET"])
+    @app.route("/run/<detection>/<state>/", methods=["GET"])
     def run(detection, state):
         server_ds.s2["run"][detection] = state == "true"
         server_ds.put_s2(server_dq)
@@ -212,7 +212,7 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
-    @app.route("/clear/<detection>", methods=["GET"])
+    @app.route("/clear/<detection>/", methods=["GET"])
     def clear(detection):
         server_ds.s2["clear"][detection] += 1
         server_ds.put_s2(server_dq)
@@ -221,7 +221,7 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/view/<view_mode>", methods=["GET"])
+    @app.route("/view/<view_mode>/", methods=["GET"])
     def view(view_mode):
         server_ds.s2["view_mode"] = int(view_mode)
         server_ds.put_s2(server_dq)
