@@ -319,8 +319,8 @@ input[type="range"] {
 				Press <kbd>h</kbd> to toggle running hazmat detection.<br />
 				Press <kbd>r</kbd> to toggle running QR detection.<br />
 				Press <kbd>m</kbd> to toggle running motion detection.<br />
-				Hold  <kbd>c</kbd> to clear all found hazmat labels.<br />
-				Hold  <kbd>x</kbd> to clear all found QR codes.<br />
+				Press <kbd>c</kbd> to clear all found hazmat labels.<br />
+				Press <kbd>x</kbd> to clear all found QR codes.<br />
                 Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
 				Press <kbd>1-4</kbd> to switched focused feed.<br />
 				Press <kbd>0</kbd> to show camera grid.<br />
@@ -698,9 +698,9 @@ input[type="range"] {
 				view_mode = key;
 				fetch(FLASK_SERVER + "view/" + view_mode);
 			} else if (key == "c") {
-				fetch(FLASK_SERVER + "clear/hazmat/true");
+				fetch(FLASK_SERVER + "clear/hazmat");
 			} else if (key == "x") {
-				fetch(FLASK_SERVER + "clear/qr/true");
+				fetch(FLASK_SERVER + "clear/qr");
 			}
 		}
 		function keyup(e) {
@@ -709,10 +709,6 @@ input[type="range"] {
 
 			if (key == "w" || key == "a" || key == "s" || key == "d") {
 				calculate_power();
-			} else if (key == "c") {
-				fetch(FLASK_SERVER + "clear/hazmat/false");
-			} else if (key == "x") {
-				fetch(FLASK_SERVER + "clear/qr/false");
 			}
 		}
 

@@ -36,9 +36,11 @@ ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
 }
 
 class DynamixelController:
-	def __init__(self):
+	def __init__(self, tx_rx):
 		self.port_handler = dynamixel_sdk.PortHandler(DEVICE_NAME)
 		self.packet_handler = dynamixel_sdk.PacketHandler(PROTOCOL_VERSION)
+		
+		self.tx_rx = tx_rx
 		
 		if self.port_handler.openPort():
 			print("Succeeded to open the port")
@@ -49,7 +51,10 @@ class DynamixelController:
 			"left": 0,
 			"right": 0,
 		}
-		
+		self.accelerations = { # accelerations[side] = value
+			"left": PROFILE_ACCELERATION_VALUE,
+			"right": PROFILE_ACCELERATION_VALUE
+		}
 		self.statuses = { # statuses[side] = %
 			"left": 0,
 			"right": 0,
@@ -63,7 +68,6 @@ class DynamixelController:
 
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
-
 				for addr, value in [
 					(ADDR_BAUDRATE, BAUDRATE_VALUE),
 					(ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
@@ -76,7 +80,6 @@ class DynamixelController:
 	def close(self):
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
-
 				for addr, value in [
 					(ADDR_TORQUE_ENABLE, 0),
 				]:
@@ -90,14 +93,15 @@ class DynamixelController:
 				self.packet_handler.reboot(self.port_handler, id)
 
 	def command(self, id, addr, value):
-		# Doesn't get the result or error but might be faster?
-		# self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
+		if self.tx_rx:
+			dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
+			if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
+				print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+			elif dxl_error != 0:
+				print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
+		else:
+			self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
 
-		dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
-		if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-			print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-		elif dxl_error != 0:
-			print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
 
 	def set_torque_status(self, status):
 		status_code = 1 if status else 0
@@ -108,9 +112,20 @@ class DynamixelController:
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
+			speed = self.speeds[side]
+			power = int(speed * VELOCITY_LIMIT_VALUE) * orientation
+
+			# instant acceleration when speed is 0
+			last_acceleration = self.accelerations[side]
+			if speed == 0:
+				self.accelerations[side] = 0
+			else:
+				self.accelerations[side] = PROFILE_ACCELERATION_VALUE
+			update_acceleration = last_acceleration != self.accelerations[side]
+				
 			for id in side_ids:
-				speed = self.speeds[side]
-				power = int(speed * VELOCITY_LIMIT_VALUE) * orientation
+				if update_acceleration:
+					self.command(id, ADDR_PROFILE_ACCELERATION, self.accelerations[side])
 				self.command(id, ADDR_GOAL_VELOCITY, power)
 
 	def update_status(self):
@@ -122,8 +137,8 @@ class DynamixelController:
 			self.statuses[side] = 0
 
 			for id in side_ids:
-				dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
-				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+				dxl_present_velocity = self.packet_handler.read4ByteTx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
+				error_code = self.packet_handler.read1ByteTx(self.port_handler, id, ADDR_ERROR_CODE)
 				
 				error_codes[id] = error_code
 				any_errors.append(error_code > 0)

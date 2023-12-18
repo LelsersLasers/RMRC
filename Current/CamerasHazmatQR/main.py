@@ -28,9 +28,6 @@ from flask import Flask, render_template, jsonify
 import logging
 
 
-HAZMAT_CLEAR_KEY = "c"
-QR_CLEAR_KEY = "x"
-
 GPU_LOG_FILENAME = "tegrastats.log"
 HAZMAT_LEVENSHTEIN_THRESH = 0.4
 HAZMAT_DRY_FPS = 15
@@ -52,7 +49,7 @@ STATE_HAZMAT_MASTER = {
     "frame": None,
     "run_hazmat": False,
     "quit": False,
-    "clear_all_found": 0,
+    "clear": 0,
 }
 # What hazmat thread sends
 STATE_HAZMAT = {
@@ -98,8 +95,8 @@ STATE_SERVER = {
         "md": False,
     },
     "clear": {
-        "hazmat": False,
-        "qr": False,
+        "hazmat": 0,
+        "qr": 0,
     },
     "view_mode": 0,
     "power": 100,
@@ -110,6 +107,7 @@ STATE_SERVER = {
 STATE_MOTOR_SERVER = {
     "left": 0,
     "right": 0,
+    "command_count": 0,
 }
 STATE_MOTOR = {
     "motors": {
@@ -128,11 +126,12 @@ STATE_MOTOR = {
 
 
 # ---------------------------------------------------------------------------- #
-def motor_main(server_motor_dq, zero_video_capture):
+def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
+    last_command_count = 0
 
     if not zero_video_capture:
-        dxl_controller = motors.DynamixelController()
+        dxl_controller = motors.DynamixelController(tx_rx)
         dxl_controller.setup()
 
     fps_controller = util.FPSController()
@@ -148,7 +147,10 @@ def motor_main(server_motor_dq, zero_video_capture):
                 dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
                 dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
 
-                dxl_controller.update_speed()
+                if write_motor_speeds_every_frame or server_motor_ds.s1["command_count"] > last_command_count:
+                    last_command_count = server_motor_ds.s1["command_count"]
+                    dxl_controller.update_speed()
+                    
                 dxl_controller.update_status()
 
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
@@ -193,6 +195,7 @@ def server_main(server_dq, server_motor_dq):
         # Has percent power built into values
         server_motor_ds.s1["left"] = float(left)
         server_motor_ds.s1["right"] = float(right)
+        server_motor_ds.s1["command_count"] += 1
 
         server_motor_ds.put_s1(server_motor_dq)
 
@@ -209,9 +212,9 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
-    @app.route("/clear/<detection>/<state>/", methods=["GET"])
-    def clear(detection, state):
-        server_ds.s2["clear"][detection] = state == "true"
+    @app.route("/clear/<detection>/", methods=["GET"])
+    def clear(detection):
+        server_ds.s2["clear"][detection] += 1
         server_ds.put_s2(server_dq)
 
         response = jsonify(server_ds.s2)
@@ -254,6 +257,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
     levenshtein_results = {}
 
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
+    last_clear = 0
 
     print("Creating easyocr reader...")
     reader = easyocr.Reader(["en"], gpu=True)
@@ -264,7 +268,8 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
             hazmat_ds.update_s1(hazmat_dq)
 
             # ---------------------------------------------------------------- #
-            if hazmat_ds.s1["clear_all_found"] > 0:
+            if hazmat_ds.s1["clear"] > last_clear:
+                last_clear = hazmat_ds.s1["clear"]
                 all_found = []
                 print("Cleared all found hazmat labels.")
             # ---------------------------------------------------------------- #
@@ -413,8 +418,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     print(f"\nPress 'h' to toggle running hazmat detection.")
     print(f"Press 'r' to toggle running qr detection.")
     print(f"Press 'm' to toggle running motion detection.")
-    print(f"Hold  'c' to clear all found hazmat labels.")
-    print(f"Hold  'x' to clear all found QR codes.")
+    print(f"Press 'c' to clear all found hazmat labels.")
+    print(f"Press 'x' to clear all found QR codes.")
     print(f"Press 't'/'T' to increase/decrease power by 20%.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
@@ -422,6 +427,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     fps_controller = util.FPSController()
 
     all_qr_found = []
+    last_clear_qr = 0
 
     average_frame = None
     update_average_frame = False
@@ -538,20 +544,15 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         # -------------------------------------------------------------------- #
         server_ds.update_s2(server_dq)
 
-        if server_ds.s2["clear"]["hazmat"]:
-            hazmat_ds.s1["clear_all_found"] = 1
-        if server_ds.s2["clear"]["qr"]:
+        if server_ds.s2["clear"]["qr"] > last_clear_qr:
+            last_clear_qr = server_ds.s2["clear"]["qr"]
             all_qr_found = []
         # -------------------------------------------------------------------- #
             
 
         # -------------------------------------------------------------------- #
         hazmat_ds.s1["run_hazmat"] = server_ds.s2["run"]["hazmat"]
-
-        if hazmat_ds.s1["clear_all_found"] == 1:
-            hazmat_ds.s1["clear_all_found"] = 2
-        elif hazmat_ds.s1["clear_all_found"] == 2:
-            hazmat_ds.s1["clear_all_found"] = 0
+        hazmat_ds.s1["clear"] = server_ds.s2["clear"]["hazmat"]
 
         hazmat_ds.s1["frame"] = frame_copy
         hazmat_ds.put_s1(hazmat_dq)
@@ -642,6 +643,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 # ---------------------------------------------------------------------------- #
 ap = argparse.ArgumentParser()
 ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
+ap.add_argument("-t", "--tx-rx", required=False, help="use write4ByteTxRx() instead of write4ByteTxOnly()", action="store_true")
+ap.add_argument("-w", "--write-motor-speeds-every-frame", required=False, help="write the last know motor speeds as often as possible", action="store_true")
 args = vars(ap.parse_args())
 # ---------------------------------------------------------------------------- #
 
@@ -649,6 +652,8 @@ args = vars(ap.parse_args())
 # ---------------------------------------------------------------------------- #
 if __name__ == "__main__":
     zero_video_capture = args["video_capture_zero"]
+    tx_rx = args["tx_rx"]
+    write_motor_speeds_every_frame = args["write_motor_speeds_every_frame"]
     # ------------------------------------------------------------------------ #
     print("\nStarting camera threads...")
 
@@ -702,7 +707,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("\nStarting motor thread...")
 
-    motor_thread = Process(target=motor_main, args=(server_motor_dq, zero_video_capture))
+    motor_thread = Process(target=motor_main, args=(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture))
     motor_thread.daemon = True
     motor_thread.start()
     print(f"Motor thread pid: {motor_thread.pid}")
