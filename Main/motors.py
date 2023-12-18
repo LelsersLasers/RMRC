@@ -2,39 +2,30 @@ import dynamixel_sdk
 
 
 # ---------------------------------------------------------------------------- #
+# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/
+# https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/api_reference/python/python_porthandler/#python
+
 DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
 
 # BAUDRATE = 57600
 ADDR_BAUDRATE, BAUDRATE, BAUDRATE_VALUE = 8, 4_500_000, 7
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#baud-rate8
-
 ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE = 9, 0
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#return-delay-time9
-
 ADDR_OPERATING_MODE, OPERATING_MODE_VALUE = 11, 1 # 1 = velocity control mode
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#operating-mode11
 
 # MAX_VELOCITY = 330
 ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_VALUE, VELOCITY_LIMIT_UNITS = 44, 1023, 0.229 # rev/min
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#velocity-limit44
 
 ADDR_TORQUE_ENABLE = 64 # 1 = enable, 0 = disable
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#torque-enable64
-
+ADDR_ERROR_CODE = 70
 ADDR_GOAL_VELOCITY = 104
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#goal-velocity104
 
 ADDR_PROFILE_ACCELERATION, PROFILE_ACCELERATION_UNITS = 108, 214.577 # rev/min^2
-TIME_TO_MAX_VELOCITY = 1 / 60 # min
+TIME_TO_MAX_VELOCITY = 5 / 60 # min
 # (rev/min) / (min) = rev/min^2
 PROFILE_ACCELERATION_VALUE = int((VELOCITY_LIMIT_VALUE * VELOCITY_LIMIT_UNITS) / TIME_TO_MAX_VELOCITY / PROFILE_ACCELERATION_UNITS)
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#profile-acceleration108
 
 ADDR_PRESENT_VELOCITY = 128
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#present-velocity128
-ADDR_ERROR_CODE = 70
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#error-status70
 # ---------------------------------------------------------------------------- #
 
 
