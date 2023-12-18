@@ -51,7 +51,10 @@ class DynamixelController:
 			"left": 0,
 			"right": 0,
 		}
-		
+		self.accelerations = { # accelerations[side] = value
+			"left": PROFILE_ACCELERATION_VALUE,
+			"right": PROFILE_ACCELERATION_VALUE
+		}
 		self.statuses = { # statuses[side] = %
 			"left": 0,
 			"right": 0,
@@ -65,7 +68,6 @@ class DynamixelController:
 
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
-
 				for addr, value in [
 					(ADDR_BAUDRATE, BAUDRATE_VALUE),
 					(ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
@@ -78,7 +80,6 @@ class DynamixelController:
 	def close(self):
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
-
 				for addr, value in [
 					(ADDR_TORQUE_ENABLE, 0),
 				]:
@@ -111,9 +112,20 @@ class DynamixelController:
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
+			speed = self.speeds[side]
+			power = int(speed * VELOCITY_LIMIT_VALUE) * orientation
+
+			# instant acceleration when speed is 0
+			last_acceleration = self.accelerations[side]
+			if speed == 0:
+				self.accelerations[side] = 0
+			else:
+				self.accelerations[side] = PROFILE_ACCELERATION_VALUE
+			update_acceleration = last_acceleration != self.accelerations[side]
+				
 			for id in side_ids:
-				speed = self.speeds[side]
-				power = int(speed * VELOCITY_LIMIT_VALUE) * orientation
+				if update_acceleration:
+					self.command(id, ADDR_PROFILE_ACCELERATION, self.accelerations[side])
 				self.command(id, ADDR_GOAL_VELOCITY, power)
 
 	def update_status(self):
