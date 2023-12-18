@@ -1,5 +1,10 @@
 def findDistance(word1, word2):
+    assert len(word1) > 0
+    assert len(word2) > 0
+
     word1 = word1.lower()
+    word2 = word2.lower()
+
     distances = []
     for x in range(len(word1) + 1):
         distances.append([])
@@ -18,7 +23,8 @@ def findDistance(word1, word2):
                 c = distances[w1 - 1][w2 - 1]
                 value = (min(a, b, c)) + 1
                 distances[w1].append(value)
-    return distances[w1][w2]
+    return distances[-1][-1]
+    # return distances[w1][w2]
 
 
 def checkList(myWord, list):
