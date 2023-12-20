@@ -641,19 +641,18 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
 
 # ---------------------------------------------------------------------------- #
-ap = argparse.ArgumentParser()
-ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
-ap.add_argument("-t", "--tx-rx", required=False, help="use write4ByteTxRx() instead of write4ByteTxOnly()", action="store_true")
-ap.add_argument("-w", "--write-motor-speeds-every-frame", required=False, help="write the last know motor speeds as often as possible", action="store_true")
-args = vars(ap.parse_args())
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
+    ap.add_argument("-t", "--tx-rx", required=False, help="use write4ByteTxRx() instead of write4ByteTxOnly()", action="store_true")
+    ap.add_argument("-w", "--write-motor-speeds-every-frame", required=False, help="write the last know motor speeds as often as possible", action="store_true")
+    args = vars(ap.parse_args())
+
     zero_video_capture = args["video_capture_zero"]
     tx_rx = args["tx_rx"]
     write_motor_speeds_every_frame = args["write_motor_speeds_every_frame"]
+    # ------------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------------ #
     print("\nStarting camera threads...")
 
