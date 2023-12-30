@@ -381,6 +381,11 @@ input[type="range"] {
 		let ms_offset = 0;
 		let calibrated = false;
 
+        let connected = false;
+
+		let frames = 0;
+
+
 		function try_calibrate() {
 			// recalibrate every X seconds
 			if (calibrated) {
@@ -391,15 +396,27 @@ input[type="range"] {
 			if (!calibrated) {
 				try {
 					calibrate();
-
-					powerSlider();
-
 					calibrated = true;
 				} catch (e) {
 					console.log(e);
 				}
 			}
 		}
+
+        function try_connect() {
+            if (connected) return;
+
+            try {
+                powerSlider();
+                fetch(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+                fetch(FLASK_SERVER + "run/qr/" + run_qr);
+                fetch(FLASK_SERVER + "run/md/" + run_md);
+
+                connected = true;
+            } catch (e) {
+                console.log(e);
+            }
+        }
 
 		function now_ms() {
 			return performance.timeOrigin + performance.now();
@@ -425,7 +442,6 @@ input[type="range"] {
 				});
 		}
 
-		let frames = 0;
 		setInterval(function() {
 			const path = "get";
 			const start_ms = now_ms();
@@ -433,7 +449,9 @@ input[type="range"] {
 				.then(response => response.json())
 				.then(data => {
 					try {
+                        try_connect();
 						try_calibrate();
+
 						frames += 1;
 
 						const now = now_ms();
@@ -604,6 +622,8 @@ input[type="range"] {
 				})
 				.catch(error => {
 					calibrated = false;
+
+                    connected = false;
 					run_hazmat = false;
 					run_qr = false;
 					run_md = false;
