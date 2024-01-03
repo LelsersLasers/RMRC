@@ -340,6 +340,11 @@ input[type="range"] {
 			<h4>Debug Info</h4>
             <p id="debug"></p>
 
+            <h4>Config</h4>
+            <label for="diagonal">Diagonal Multiplier: </label>
+            <output id="diagonal-output">0.4</output>
+            <input type="range" id="diagonal" name="diagonal" min="0" max="1.0" step="0.01" value="0.4" oninput="diagonalSlider()" />
+
             <h4>Keys Down</h4>
             <p id="keys"></p>
 		</div>
@@ -363,7 +368,7 @@ input[type="range"] {
 		const POWER_STATE_STEP = 20;
 		let power_state = 100;
 
-		const DIAGONAL_MULTIPLIER = 0.4;
+		let diagonal_multiplier = 0.4;
 
 		let show_sidebar = true;
 
@@ -622,7 +627,7 @@ input[type="range"] {
 				})
 				.catch(e => {
                     console.log(`fetch 'get' failed: ${e}`);
-                    
+
 					calibrated = false;
 
                     connected = false;
@@ -647,6 +652,14 @@ input[type="range"] {
 		function clamp(x, min, max) {
 			return Math.min(Math.max(x, min), max);
 		}
+
+        function diagonalSlider() {
+            const ele = document.getElementById("diagonal");
+            const value = parseFloat(ele.value);
+            const output = document.getElementById("diagonal-output");
+            output.innerHTML = value;
+            diagonal_multiplier = value;
+        }
 
 
 		function display_keys() {
@@ -683,8 +696,8 @@ input[type="range"] {
 				speed_left  = y_input * base_speed;
 				speed_right = y_input * base_speed;
 
-				if (x_input < 0)		speed_left  *= DIAGONAL_MULTIPLIER;
-				else if (x_input > 0)	speed_right *= DIAGONAL_MULTIPLIER;
+				if (x_input < 0)		speed_left  *= diagonal_multiplier;
+				else if (x_input > 0)	speed_right *= diagonal_multiplier;
 			}
 
 			const base_path = "motors";
