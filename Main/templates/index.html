@@ -201,6 +201,7 @@ input {
 	/* width: 100%; */
 	border: none;
 	outline: none !important;
+	cursor: pointer;
 }
 input:focus {
 	outline: 2px solid #EBCB8B !important;
@@ -221,7 +222,10 @@ input[type="checkbox"] {
 	position: relative;
 	color: #ECEFF4;
 	outline: none !important;
-	cursor: pointer;
+}
+input[type="radio"] {
+	margin: 0;
+	outline: none !important;
 }
 input[type="range"] {
 	width: 100%;
@@ -230,6 +234,10 @@ input[type="range"] {
 	border: none !important;
 	padding: 0;
 	margin: 0;
+}
+
+.pointer {
+	cursor: pointer;
 }
 
 #main {
@@ -345,6 +353,26 @@ input[type="range"] {
             <output id="diagonal-output">0.4</output>
             <input type="range" id="diagonal" name="diagonal" min="0" max="1.0" step="0.01" value="0.4" oninput="diagonalSlider()" />
 
+            <br />
+            <br />
+
+			<label>Acceleration Profile:</label>
+            <br />
+            <input type="radio" id="accelerationInstant" name="acceleration" value="0" oninput="accelerationRadio(this)" />
+            <label for="accelerationInstant" class="pointer">Instant</label>
+            <br />
+            <input type="radio" id="accelerationFixed" name="acceleration" value="1" oninput="accelerationRadio(this)" checked />
+            <label for="accelerationFixed" class="pointer">Fixed</label>
+
+            <br />
+
+
+			<label for="accelerationTime">Fixed Acceleration Time: </label>
+            <output id="accelerationTime-output">0.4</output>
+            <input type="range" id="accelerationTime" name="accelerationTime" min="0" max="1.0" step="0.01" value="0.4" oninput="accelerationTimeSlider()" />
+
+            <br />
+
             <h4>Keys Down</h4>
             <p id="keys"></p>
 		</div>
@@ -369,6 +397,9 @@ input[type="range"] {
 		let power_state = 100;
 
 		let diagonal_multiplier = 0.4;
+
+		let acceleration_fixed_time = 0.4;
+		let acceleration_instant = false;
 
 		let show_sidebar = true;
 
@@ -661,6 +692,30 @@ input[type="range"] {
             diagonal_multiplier = value;
         }
 
+		function accelerationRadio(input_ele) {
+			if (!input_ele.checked) return;
+
+			if (input_ele.value == 0) {
+				fetch(FLASK_SERVER + "acceleration/0");
+				acceleration_instant = true;
+			} else if (input_ele.value == 1) {
+				fetch(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+				acceleration_instant = false;
+			}
+		}
+
+		function accelerationTimeSlider() {
+			const ele = document.getElementById("accelerationTime");
+            const value = parseFloat(ele.value);
+            const output = document.getElementById("accelerationTime-output");
+            output.innerHTML = value;
+			acceleration_fixed_time = value;
+
+			if (!acceleration_instant) {
+				fetch(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+			}
+		}
+
 
 		function display_keys() {
             const object_keys = Object.keys(keys);
@@ -747,6 +802,8 @@ input[type="range"] {
 			} else if (key == "x") {
 				fetch(FLASK_SERVER + "clear/qr");
 			}
+			
+			display_keys();
 		}
 		function keyup(e) {
 			const key = e.key.toLowerCase();
@@ -755,6 +812,8 @@ input[type="range"] {
 			if (key == "w" || key == "a" || key == "s" || key == "d") {
 				calculate_power();
 			}
+
+			display_keys();
 		}
 
 		window.addEventListener("keydown", keydown);
