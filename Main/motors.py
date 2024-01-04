@@ -171,7 +171,7 @@ class DynamixelController:
 				error_codes[id] = error_code
 				any_errors.append(error_code > 0)
 				
-				self.statuses[side] += (dxl_present_velocity / VELOCITY_LIMIT_VALUE * orientation) / 2
+				self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
 
 		if any(any_errors):
 			for id, error_code in error_codes.items():
