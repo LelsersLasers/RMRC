@@ -86,7 +86,7 @@ STATE_SERVER_MASTER = {
     "cpu": 0,
     "gpu": -1,
     "angle": 0,
-    # motors from STATE_MOTOR
+    # motors, accleration_value from STATE_MOTOR
 }
 STATE_SERVER = {
     "run": {
@@ -124,6 +124,7 @@ STATE_MOTOR = {
             "right": 0,
         }
     },
+    "acceleration_value": -1,
     "motor_fps": 5,
 }
 # ---------------------------------------------------------------------------- #
@@ -155,6 +156,8 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
                     dxl_controller.acceleration_time = server_motor_ds.s1["acceleration"]["time"]
 
                     dxl_controller.update_acceleration()
+
+                    server_motor_ds.s2["acceleration_value"] = dxl_controller.acceleration_value
                 if write_motor_speeds_every_frame or server_motor_ds.s1["count"] > last_count:
                     last_count = server_motor_ds.s1["count"]
 

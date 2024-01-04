@@ -345,8 +345,6 @@ input[type="range"] {
 				Press <kbd>5</kbd> to toggle sidebar.<br />
 			</p>
 
-			<h4>Debug Info</h4>
-            <p id="debug"></p>
 
             <h4>Config</h4>
             <label for="diagonal">Diagonal Multiplier: </label>
@@ -366,12 +364,15 @@ input[type="range"] {
 
             <br />
 
-
 			<label for="accelerationTime">Fixed Acceleration Time: </label>
             <output id="accelerationTime-output">0.4</output>
             <input type="range" id="accelerationTime" name="accelerationTime" min="0" max="1.0" step="0.01" value="0.4" oninput="accelerationTimeSlider()" />
 
             <br />
+
+			<h4>Debug Info</h4>
+            <p id="calibration"></p>
+            <p id="accelerationValue"></p>
 
             <h4>Keys Down</h4>
             <p id="keys"></p>
@@ -482,8 +483,8 @@ input[type="range"] {
 
 					ms_offset = diff - ping;
 
-					const debug_ele = document.getElementById("debug");
-					debug_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
+					const calibration_ele = document.getElementById("calibration");
+					calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
 				});
 		}
 
@@ -563,6 +564,9 @@ input[type="range"] {
 								current_ele.classList.add("forward-dark");
 							}
 						}
+
+						const acceleration_ele = document.getElementById("accelerationValue");
+						acceleration_ele.innerHTML = data["acceleration_value"].toFixed(2);
                         // -------------------------------------------------- //
 						
                         // -------------------------------------------------- //
