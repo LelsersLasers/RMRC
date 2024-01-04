@@ -220,7 +220,7 @@ def server_main(server_dq, server_motor_dq):
         server_motor_ds.s1["acceleration"]["count"] += 1
         server_motor_ds.put_s1(server_motor_dq)
 
-        response = jsonify(server_motor_ds.s1)
+        response = jsonify(time)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
@@ -230,7 +230,7 @@ def server_main(server_dq, server_motor_dq):
         server_motor_ds.s1["velocity"]["count"] += 1
         server_motor_ds.put_s1(server_motor_dq)
 
-        response = jsonify(server_motor_ds.s1)
+        response = jsonify(value)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
@@ -242,7 +242,10 @@ def server_main(server_dq, server_motor_dq):
         server_motor_ds.s1["count"] += 1
         server_motor_ds.put_s1(server_motor_dq)
 
-        response = jsonify(server_motor_ds.s1)
+        response = jsonify({
+            "left": left,
+            "right": right,
+        })
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
@@ -251,7 +254,10 @@ def server_main(server_dq, server_motor_dq):
         server_ds.s2["run"][detection] = state == "true"
         server_ds.put_s2(server_dq)
 
-        response = jsonify(server_ds.s2)
+        response = jsonify({
+            "detection": detection,
+            "state": state,
+        })
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
@@ -260,7 +266,7 @@ def server_main(server_dq, server_motor_dq):
         server_ds.s2["clear"][detection] += 1
         server_ds.put_s2(server_dq)
 
-        response = jsonify(server_ds.s2)
+        response = jsonify(detection)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
@@ -269,7 +275,7 @@ def server_main(server_dq, server_motor_dq):
         server_ds.s2["view_mode"] = int(view_mode)
         server_ds.put_s2(server_dq)
 
-        response = jsonify(server_ds.s2)
+        response = jsonify(view_mode)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 

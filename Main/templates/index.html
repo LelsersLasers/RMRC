@@ -430,6 +430,16 @@ input[type="range"] {
 
 		let frames = 0;
 
+		function fetchAndInfo(url) {
+			fetch(url)
+				.then(response => response.json())
+				.then(data => {
+					const print_url = url.replace(FLASK_SERVER, "");
+					const print_data = JSON.stringify(data);
+					console.info(`'${print_url}': ${print_data}`);
+				});
+		}
+ 
 
 		function try_calibrate() {
 			// recalibrate every X seconds
@@ -453,19 +463,19 @@ input[type="range"] {
 
             try {
                 powerSlider();
-                fetch(FLASK_SERVER + "run/hazmat/" + run_hazmat);
-                fetch(FLASK_SERVER + "run/qr/" + run_qr);
-                fetch(FLASK_SERVER + "run/md/" + run_md);
+                fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+                fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
+                fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
 
-				fetch(FLASK_SERVER + "view/" + view_mode);
+				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
 
 				if (acceleration_instant) {
-					fetch(FLASK_SERVER + "acceleration/0");
+					fetchAndInfo(FLASK_SERVER + "acceleration/0");
 				} else {
-					fetch(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+					fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
 				}
 
-				fetch(FLASK_SERVER + "velocity/" + velocity_limit);
+				fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
 				
 
                 connected = true;
@@ -725,10 +735,10 @@ input[type="range"] {
 			if (!input_ele.checked) return;
 
 			if (input_ele.value == 0) {
-				fetch(FLASK_SERVER + "acceleration/0");
+				fetchAndInfo(FLASK_SERVER + "acceleration/0");
 				acceleration_instant = true;
 			} else if (input_ele.value == 1) {
-				fetch(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+				fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
 				acceleration_instant = false;
 			}
 		}
@@ -741,7 +751,7 @@ input[type="range"] {
 			acceleration_fixed_time = value;
 
 			if (!acceleration_instant) {
-				fetch(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+				fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
 			}
 		}
 
@@ -752,7 +762,7 @@ input[type="range"] {
 			output.innerHTML = value;
 			velocity_limit = value;
 
-			fetch(FLASK_SERVER + "velocity/" + velocity_limit);
+			fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
 		}
 
 		
@@ -798,7 +808,7 @@ input[type="range"] {
 
 			const base_path = "motors";
 			const path = base_path + "/" + speed_left + "/" + speed_right;
-			fetch(FLASK_SERVER + path);
+			fetchAndInfo(FLASK_SERVER + path);
 		}
 
 		function keydown(e) {
@@ -828,20 +838,20 @@ input[type="range"] {
 				range_ele.value = power_state;
 			} else if (key == "h") {
 				run_hazmat = !run_hazmat;
-				fetch(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+				fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
 			} else if (key == "r") {
 				run_qr = !run_qr;
-				fetch(FLASK_SERVER + "run/qr/" + run_qr);
+				fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
 			} else if (key == "m") {
 				run_md = !run_md;
-				fetch(FLASK_SERVER + "run/md/" + run_md);
+				fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
 			} else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
 				view_mode = key;
-				fetch(FLASK_SERVER + "view/" + view_mode);
+				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
 			} else if (key == "c") {
-				fetch(FLASK_SERVER + "clear/hazmat");
+				fetchAndInfo(FLASK_SERVER + "clear/hazmat");
 			} else if (key == "x") {
-				fetch(FLASK_SERVER + "clear/qr");
+				fetchAndInfo(FLASK_SERVER + "clear/qr");
 			}
 
 			display_keys();
