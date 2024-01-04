@@ -208,8 +208,6 @@ def server_main(server_dq, server_motor_dq):
         server_motor_ds.s1["acceleration"]["count"] += 1
         server_motor_ds.put_s1(server_motor_dq)
 
-        print(server_motor_ds.s1["acceleration"]["count"])
-
         response = jsonify(server_motor_ds.s1)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response

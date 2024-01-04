@@ -448,6 +448,15 @@ input[type="range"] {
                 fetch(FLASK_SERVER + "run/qr/" + run_qr);
                 fetch(FLASK_SERVER + "run/md/" + run_md);
 
+				fetch(FLASK_SERVER + "view/" + view_mode);
+
+				if (acceleration_instant) {
+					fetch(FLASK_SERVER + "acceleration/0");
+				} else {
+					fetch(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+				}
+				
+
                 connected = true;
             } catch (e) {
                 console.log(`try connect failed: ${e}`);
@@ -665,6 +674,7 @@ input[type="range"] {
 					run_hazmat = false;
 					run_qr = false;
 					run_md = false;
+					// not reset when disconnected: view_mode, acceleration_instant, acceleration_fixed_time
 				});
 		}, DELAY);
 
@@ -802,7 +812,7 @@ input[type="range"] {
 			} else if (key == "x") {
 				fetch(FLASK_SERVER + "clear/qr");
 			}
-			
+
 			display_keys();
 		}
 		function keyup(e) {
