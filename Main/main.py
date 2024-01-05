@@ -163,7 +163,7 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
                     dxl_controller.velocity_limit = server_motor_ds.s1["velocity"]["value"]
                 if server_motor_ds.s1["acceleration"]["count"] > last_acceleration_count or velocity_limit_changed:
                     last_acceleration_count = server_motor_ds.s1["acceleration"]["count"]
-                    dxl_controller.acceleration_time = server_motor_ds.s1["acceleration"]["time"]
+                    dxl_controller.acceleration_time = server_motor_ds.s1["acceleration"]["time"] / 60
                     dxl_controller.update_acceleration()
                     server_motor_ds.s2["acceleration_value"] = dxl_controller.profile_acceleration
                 if write_motor_speeds_every_frame or server_motor_ds.s1["count"] > last_count or velocity_limit_changed:

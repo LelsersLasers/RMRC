@@ -67,7 +67,7 @@ class DynamixelController:
 			"right": 0,
 		}
 
-		self.acceleration_time = 0.4 # seconds: time to reach max velocity
+		self.acceleration_time = 0.4 / 60 # minutes: time to reach max velocity
 		
 		# used to have instant acceleration even for fixed acceleration (speed -> 0 -> instant acceleration)
 		self.accelerations = { # accelerations[side] = value
