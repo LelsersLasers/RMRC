@@ -501,7 +501,7 @@ input[type="range"] {
 					const ms = data * 1000;
 					const diff = now - ms;
 
-					ms_offset = diff - ping;
+					ms_offset = diff - ping / 2;
 
 					const calibration_ele = document.getElementById("calibration");
 					calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
