@@ -86,7 +86,7 @@ STATE_SERVER_MASTER = {
     "cpu": 0,
     "gpu": -1,
     "angle": 0,
-    # motors from STATE_MOTOR
+    # motors, accleration_value from STATE_MOTOR
 }
 STATE_SERVER = {
     "run": {
@@ -99,7 +99,7 @@ STATE_SERVER = {
         "qr": 0,
     },
     "view_mode": 0,
-    "power": 100,
+    "power": 60,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -107,7 +107,15 @@ STATE_SERVER = {
 STATE_MOTOR_SERVER = {
     "left": 0,
     "right": 0,
-    "command_count": 0,
+    "count": 0,
+    "acceleration": {
+        "time": 0.4,
+        "count": 0,
+    },
+    "velocity": {
+		"value": -1,
+		"count": 0,
+    },
 }
 STATE_MOTOR = {
     "motors": {
@@ -120,6 +128,7 @@ STATE_MOTOR = {
             "right": 0,
         }
     },
+    "acceleration_value": -1,
     "motor_fps": 5,
 }
 # ---------------------------------------------------------------------------- #
@@ -128,7 +137,9 @@ STATE_MOTOR = {
 # ---------------------------------------------------------------------------- #
 def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
-    last_command_count = 0
+    last_count = 0
+    last_acceleration_count = 0
+    last_velocity_count = 0
 
     if not zero_video_capture:
         dxl_controller = motors.DynamixelController(tx_rx)
@@ -144,11 +155,23 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()
 
             if not zero_video_capture:
-                dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
-                dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
+                # speed and acceleration calulations use velocity_limit
+                velocity_limit_changed = server_motor_ds.s1["velocity"]["count"] > last_velocity_count
 
-                if write_motor_speeds_every_frame or server_motor_ds.s1["command_count"] > last_command_count:
-                    last_command_count = server_motor_ds.s1["command_count"]
+                if velocity_limit_changed:
+                    last_velocity_count = server_motor_ds.s1["velocity"]["count"]
+                    dxl_controller.velocity_limit = server_motor_ds.s1["velocity"]["value"]
+                if server_motor_ds.s1["acceleration"]["count"] > last_acceleration_count or velocity_limit_changed:
+                    last_acceleration_count = server_motor_ds.s1["acceleration"]["count"]
+                    dxl_controller.acceleration_time = server_motor_ds.s1["acceleration"]["time"] / 60
+                    dxl_controller.update_acceleration()
+                    server_motor_ds.s2["acceleration_value"] = dxl_controller.profile_acceleration
+                if write_motor_speeds_every_frame or server_motor_ds.s1["count"] > last_count or velocity_limit_changed:
+                    last_count = server_motor_ds.s1["count"]
+
+                    dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
+                    dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
+
                     dxl_controller.update_speed()
                     
                 dxl_controller.update_status()
@@ -158,6 +181,7 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
             else:
                 server_motor_ds.s2["motors"]["target"] = server_motor_ds.s1
 
+                # just to test
                 server_motor_ds.s2["motors"]["current"]["left"] = server_motor_ds.s1["left"] / 2
                 server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] / 2
 
@@ -190,16 +214,38 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
+    @app.route("/acceleration/<time>", methods=["GET"])
+    def acceleration(time):
+        server_motor_ds.s1["acceleration"]["time"] = float(time)
+        server_motor_ds.s1["acceleration"]["count"] += 1
+        server_motor_ds.put_s1(server_motor_dq)
+
+        response = jsonify(time)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
+    @app.route("/velocity/<value>", methods=["GET"])
+    def velocity(value):
+        server_motor_ds.s1["velocity"]["value"] = int(value)
+        server_motor_ds.s1["velocity"]["count"] += 1
+        server_motor_ds.put_s1(server_motor_dq)
+
+        response = jsonify(value)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
     @app.route("/motors/<left>/<right>/", methods=["GET"])
     def motors(left, right):
         # Has percent power built into values
         server_motor_ds.s1["left"] = float(left)
         server_motor_ds.s1["right"] = float(right)
-        server_motor_ds.s1["command_count"] += 1
-
+        server_motor_ds.s1["count"] += 1
         server_motor_ds.put_s1(server_motor_dq)
 
-        response = jsonify(server_motor_ds.s1)
+        response = jsonify({
+            "left": left,
+            "right": right,
+        })
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
@@ -208,7 +254,10 @@ def server_main(server_dq, server_motor_dq):
         server_ds.s2["run"][detection] = state == "true"
         server_ds.put_s2(server_dq)
 
-        response = jsonify(server_ds.s2)
+        response = jsonify({
+            "detection": detection,
+            "state": state,
+        })
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
@@ -217,7 +266,7 @@ def server_main(server_dq, server_motor_dq):
         server_ds.s2["clear"][detection] += 1
         server_ds.put_s2(server_dq)
 
-        response = jsonify(server_ds.s2)
+        response = jsonify(detection)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
@@ -226,7 +275,7 @@ def server_main(server_dq, server_motor_dq):
         server_ds.s2["view_mode"] = int(view_mode)
         server_ds.put_s2(server_dq)
 
-        response = jsonify(server_ds.s2)
+        response = jsonify(view_mode)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 

@@ -201,6 +201,7 @@ input {
 	/* width: 100%; */
 	border: none;
 	outline: none !important;
+	cursor: pointer;
 }
 input:focus {
 	outline: 2px solid #EBCB8B !important;
@@ -221,7 +222,10 @@ input[type="checkbox"] {
 	position: relative;
 	color: #ECEFF4;
 	outline: none !important;
-	cursor: pointer;
+}
+input[type="radio"] {
+	margin: 0;
+	outline: none !important;
 }
 input[type="range"] {
 	width: 100%;
@@ -230,6 +234,10 @@ input[type="range"] {
 	border: none !important;
 	padding: 0;
 	margin: 0;
+}
+
+.pointer {
+	cursor: pointer;
 }
 
 #main {
@@ -337,8 +345,40 @@ input[type="range"] {
 				Press <kbd>5</kbd> to toggle sidebar.<br />
 			</p>
 
+
+            <h4>Config</h4>
+            <label for="diagonal">Diagonal Multiplier: </label>
+            <output id="diagonal-output">0.4</output>
+            <input type="range" id="diagonal" name="diagonal" min="0" max="1.0" step="0.01" value="0.4" oninput="diagonalSlider()" />
+
+            <br />
+            <br />
+
+			<label>Acceleration Profile:</label>
+            <br />
+            <input type="radio" id="accelerationInstant" name="acceleration" value="0" oninput="accelerationRadio(this)" />
+            <label for="accelerationInstant" class="pointer">Instant</label>
+            <br />
+            <input type="radio" id="accelerationFixed" name="acceleration" value="1" oninput="accelerationRadio(this)" checked />
+            <label for="accelerationFixed" class="pointer">Fixed</label>
+
+            <br />
+
+			<label for="accelerationTime">Fixed Acceleration Time: </label>
+            <output id="accelerationTime-output">0.4</output>
+            <input type="range" id="accelerationTime" name="accelerationTime" min="0" max="1.0" step="0.01" value="0.4" oninput="accelerationTimeSlider()" />
+
+			<br />
+
+			<label for="velocityLimit">Velocity Limit: </label>
+            <output id="velocityLimit-output">1023</output>
+            <input type="range" id="velocityLimit" name="velocityLimit" min="1" max="1023" step="1" value="1023" oninput="velocityLimitSlider()" />
+
+            <br />
+
 			<h4>Debug Info</h4>
-            <p id="debug"></p>
+            <p id="calibration"></p>
+            <p id="accelerationValue"></p>
 
             <h4>Keys Down</h4>
             <p id="keys"></p>
@@ -363,7 +403,12 @@ input[type="range"] {
 		const POWER_STATE_STEP = 20;
 		let power_state = 100;
 
-		const DIAGONAL_MULTIPLIER = 0.4;
+		let diagonal_multiplier = 0.4;
+
+		let acceleration_fixed_time = 0.4;
+		let acceleration_instant = false;
+
+		let velocity_limit = 1023;
 
 		let show_sidebar = true;
 
@@ -381,6 +426,21 @@ input[type="range"] {
 		let ms_offset = 0;
 		let calibrated = false;
 
+        let connected = false;
+
+		let frames = 0;
+
+		function fetchAndInfo(url) {
+			fetch(url)
+				.then(response => response.json())
+				.then(data => {
+					const print_url = url.replace(FLASK_SERVER, "");
+					const print_data = JSON.stringify(data);
+					console.info(`'${print_url}': ${print_data}`);
+				});
+		}
+ 
+
 		function try_calibrate() {
 			// recalibrate every X seconds
 			if (calibrated) {
@@ -391,15 +451,38 @@ input[type="range"] {
 			if (!calibrated) {
 				try {
 					calibrate();
-
-					powerSlider();
-
 					calibrated = true;
 				} catch (e) {
-					console.log(e);
+					console.log(`try calibrate failed: ${e}`);
 				}
 			}
 		}
+
+        function try_connect() {
+            if (connected) return;
+
+            try {
+                powerSlider();
+                fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+                fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
+                fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
+
+				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
+
+				if (acceleration_instant) {
+					fetchAndInfo(FLASK_SERVER + "acceleration/0");
+				} else {
+					fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+				}
+
+				fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
+				
+
+                connected = true;
+            } catch (e) {
+                console.log(`try connect failed: ${e}`);
+            }
+        }
 
 		function now_ms() {
 			return performance.timeOrigin + performance.now();
@@ -418,14 +501,13 @@ input[type="range"] {
 					const ms = data * 1000;
 					const diff = now - ms;
 
-					ms_offset = diff - ping;
+					ms_offset = diff - ping / 2;
 
-					const debug_ele = document.getElementById("debug");
-					debug_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
+					const calibration_ele = document.getElementById("calibration");
+					calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
 				});
 		}
 
-		let frames = 0;
 		setInterval(function() {
 			const path = "get";
 			const start_ms = now_ms();
@@ -433,7 +515,9 @@ input[type="range"] {
 				.then(response => response.json())
 				.then(data => {
 					try {
+                        try_connect();
 						try_calibrate();
+
 						frames += 1;
 
 						const now = now_ms();
@@ -500,6 +584,9 @@ input[type="range"] {
 								current_ele.classList.add("forward-dark");
 							}
 						}
+
+						const acceleration_ele = document.getElementById("accelerationValue");
+						acceleration_ele.innerHTML = data["acceleration_value"].toFixed(2);
                         // -------------------------------------------------- //
 						
                         // -------------------------------------------------- //
@@ -602,11 +689,21 @@ input[type="range"] {
 						console.log(e);
 					}
 				})
-				.catch(error => {
+				.catch(e => {
+                    console.log(`fetch 'get' failed: ${e}`);
+
 					calibrated = false;
+
+                    connected = false;
 					run_hazmat = false;
 					run_qr = false;
 					run_md = false;
+					/* not reset when disconnected but resent
+						- view_mode
+						- acceleration_instant
+						- acceleration_fixed_time
+						- velocity_limit
+					*/
 				});
 		}, DELAY);
 
@@ -625,6 +722,50 @@ input[type="range"] {
 		function clamp(x, min, max) {
 			return Math.min(Math.max(x, min), max);
 		}
+
+        function diagonalSlider() {
+            const ele = document.getElementById("diagonal");
+            const value = parseFloat(ele.value);
+            const output = document.getElementById("diagonal-output");
+            output.innerHTML = value;
+            diagonal_multiplier = value;
+        }
+
+		function accelerationRadio(input_ele) {
+			if (!input_ele.checked) return;
+
+			if (input_ele.value == 0) {
+				fetchAndInfo(FLASK_SERVER + "acceleration/0");
+				acceleration_instant = true;
+			} else if (input_ele.value == 1) {
+				fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+				acceleration_instant = false;
+			}
+		}
+
+		function accelerationTimeSlider() {
+			const ele = document.getElementById("accelerationTime");
+            const value = parseFloat(ele.value);
+            const output = document.getElementById("accelerationTime-output");
+            output.innerHTML = value;
+			acceleration_fixed_time = value;
+
+			if (!acceleration_instant) {
+				fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
+			}
+		}
+
+		function velocityLimitSlider() {
+			const ele = document.getElementById("velocityLimit");
+			const value = parseInt(ele.value);
+			const output = document.getElementById("velocityLimit-output");
+			output.innerHTML = value;
+			velocity_limit = value;
+
+			fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
+		}
+
+		
 
 
 		function display_keys() {
@@ -661,13 +802,13 @@ input[type="range"] {
 				speed_left  = y_input * base_speed;
 				speed_right = y_input * base_speed;
 
-				if (x_input < 0)		speed_left  *= DIAGONAL_MULTIPLIER;
-				else if (x_input > 0)	speed_right *= DIAGONAL_MULTIPLIER;
+				if (x_input < 0)		speed_left  *= diagonal_multiplier;
+				else if (x_input > 0)	speed_right *= diagonal_multiplier;
 			}
 
 			const base_path = "motors";
 			const path = base_path + "/" + speed_left + "/" + speed_right;
-			fetch(FLASK_SERVER + path);
+			fetchAndInfo(FLASK_SERVER + path);
 		}
 
 		function keydown(e) {
@@ -697,21 +838,23 @@ input[type="range"] {
 				range_ele.value = power_state;
 			} else if (key == "h") {
 				run_hazmat = !run_hazmat;
-				fetch(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+				fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
 			} else if (key == "r") {
 				run_qr = !run_qr;
-				fetch(FLASK_SERVER + "run/qr/" + run_qr);
+				fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
 			} else if (key == "m") {
 				run_md = !run_md;
-				fetch(FLASK_SERVER + "run/md/" + run_md);
+				fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
 			} else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
 				view_mode = key;
-				fetch(FLASK_SERVER + "view/" + view_mode);
+				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
 			} else if (key == "c") {
-				fetch(FLASK_SERVER + "clear/hazmat");
+				fetchAndInfo(FLASK_SERVER + "clear/hazmat");
 			} else if (key == "x") {
-				fetch(FLASK_SERVER + "clear/qr");
+				fetchAndInfo(FLASK_SERVER + "clear/qr");
 			}
+
+			display_keys();
 		}
 		function keyup(e) {
 			const key = e.key.toLowerCase();
@@ -720,6 +863,8 @@ input[type="range"] {
 			if (key == "w" || key == "a" || key == "s" || key == "d") {
 				calculate_power();
 			}
+
+			display_keys();
 		}
 
 		window.addEventListener("keydown", keydown);
