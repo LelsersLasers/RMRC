@@ -148,7 +148,6 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
 
         while True:
             server_motor_ds.update_s1(server_motor_dq)
-            dxl_controller.writes = server_motor_ds.s1["motor_writes"]
 
             fps_controller.update()
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()
@@ -156,6 +155,8 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
             now = time.time()
 
             if not zero_video_capture:
+                dxl_controller.writes = server_motor_ds.s1["motor_writes"]
+
                 # speed calulations use velocity_limit
                 velocity_limit_changed = server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count
                 idle_shutoff = now - server_motor_ds.s1["last_get"] > MOTOR_SHUTOFF_TIME
