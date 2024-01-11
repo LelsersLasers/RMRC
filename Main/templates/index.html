@@ -361,6 +361,9 @@ input[type="range"] {
             <output id="motorWrites-output">1</output>
             <input type="range" id="motorWrites" name="motorWrites" min="1" max="4" step="1" value="0" oninput="motorWritesSlider()" />
 
+            <label for="writeEveryFrame">Write Motors Every Frame: </label>
+            <input type="checkbox" id="writeEveryFrame" oninput="writeEveryFrameCheckbox()" />
+
             <br />
 
 			<h4>Debug Info</h4>
@@ -393,6 +396,7 @@ input[type="range"] {
 
 		let velocity_limit = 1023;
         let motor_writes = 1;
+        let write_every_frame = false;
 
 		let show_sidebar = true;
 
@@ -455,6 +459,7 @@ input[type="range"] {
 
 				fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
                 fetchAndInfo(FLASK_SERVER + "motor_writes/" + motor_writes);
+                fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
 				
 
                 connected = true;
@@ -689,6 +694,8 @@ input[type="range"] {
             /* not reset when disconnected but resent
                 - view_mode
                 - velocity_limit
+                - motor_writes
+                - write_every_frame
             */
         }
 
@@ -731,7 +738,14 @@ input[type="range"] {
             output.innerHTML = value;
             motor_writes = value;
 
-            fetchAndInfo(FLASK_SERVER + "writes/" + value);
+            fetchAndInfo(FLASK_SERVER + "writes/" + motor_writes);
+        }
+        function writeEveryFrameCheckbox() {
+            const ele = document.getElementById("writeEveryFrame");
+            const value = ele.checked;
+            write_every_frame = value;
+
+            fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
         }
 
 		function display_keys() {

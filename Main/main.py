@@ -115,6 +115,7 @@ STATE_MOTOR_SERVER = {
 		"count": 0,
     },
     "writes": 1,
+    "write_every_frame": False,
 }
 STATE_MOTOR = {
     "motors": {
@@ -133,7 +134,7 @@ STATE_MOTOR = {
 
 
 # ---------------------------------------------------------------------------- #
-def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture):
+def motor_main(server_motor_dq, tx_rx, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
     last_count = 0
     last_velocity_count = 0
@@ -158,7 +159,7 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
                 # speed calulations use velocity_limit
                 velocity_limit_changed = server_motor_ds.s1["velocity"]["count"] > last_velocity_count
                 idle_shutoff = now - server_motor_ds.s1["last_get"] > MOTOR_SHUTOFF_TIME
-                should_write_velocities = (write_motor_speeds_every_frame
+                should_write_velocities = (server_motor_ds.s1["write_every_frame"]
                                     or server_motor_ds.s1["count"] > last_count
                                     or velocity_limit_changed
                                     or idle_shutoff)
@@ -234,6 +235,15 @@ def server_main(server_dq, server_motor_dq):
     @app.route("/writes/<value>", methods=["GET"])
     def writes(value):
         server_motor_ds.s1["writes"] = int(value)
+        server_motor_ds.put_s1(server_motor_dq)
+
+        response = jsonify(value)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
+    @app.route("/write_every_frame/<value>", methods=["GET"])
+    def write_every_frame(value):
+        server_motor_ds.s1["write_every_frame"] = value == "true"
         server_motor_ds.put_s1(server_motor_dq)
 
         response = jsonify(value)
@@ -703,7 +713,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
     ap.add_argument("-t", "--tx-rx", required=False, help="use write4ByteTxRx() instead of write4ByteTxOnly()", action="store_true")
-    ap.add_argument("-w", "--write-motor-speeds-every-frame", required=False, help="write the last know motor speeds as often as possible", action="store_true")
     args = vars(ap.parse_args())
 
     zero_video_capture = args["video_capture_zero"]
