@@ -185,7 +185,10 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
 
-                # TODO!
+                """
+                TODO: this is just a soft limiter so it doesn't put ~5k into the queue
+                - Need to actually figure out why everything is so bad
+                """
                 time.sleep(0.02)
             else:
                 server_motor_ds.s2["motors"]["target"] = server_motor_ds.s1
