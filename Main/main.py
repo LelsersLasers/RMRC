@@ -141,13 +141,13 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
     last_acceleration_count = 0
     last_velocity_count = 0
 
-    if not zero_video_capture:
-        dxl_controller = motors.DynamixelController(tx_rx)
-        dxl_controller.setup()
-
     fps_controller = util.FPSController()
 
     try:
+        if not zero_video_capture:
+            dxl_controller = motors.DynamixelController(tx_rx)
+            dxl_controller.setup()
+
         while True:
             server_motor_ds.update_s1(server_motor_dq)
 
