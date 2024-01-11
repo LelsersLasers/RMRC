@@ -532,14 +532,18 @@ input[type="range"] {
 
 							const target = motors["target"][motors_id] * 100;
 							const current = motors["current"][motors_id] * 100;
-							const current_width = (100 / target) * current;
+
+                            const target_abs = Math.abs(target);
+                            const current_abs = Math.abs(current);
+
+                            const adjust_target_width = target_abs < current_abs || target_abs == 0;
+							const current_width = adjust_target_width ? Math.abs((100 / target) * current) : 100;
+                            const target_width =  adjust_target_width ? target_abs : current_abs;
 
 							const target_ele = document.getElementById(motors_id + "-target");
-							target_ele.style.width = Math.abs(target) + "%";
+							target_ele.style.width = target_width + "%";
 							const current_ele = document.getElementById(motors_id + "-current");
-							current_ele.style.width = Math.abs(current_width) + "%";
-
-							console.log({ current, current_width });
+							current_ele.style.width = current_width + "%";
 
 							const motor_ele = document.getElementById("motor-" + motors_id);
 							motor_ele.innerHTML = `${current.toFixed(0)}% (${target.toFixed(0)}%) (${motors_id})`;
