@@ -168,6 +168,7 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
 
+                # TODO!
                 time.sleep(0.02)
             else:
                 server_motor_ds.s2["motors"]["target"] = server_motor_ds.s1
