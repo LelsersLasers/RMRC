@@ -379,7 +379,7 @@ input[type="range"] {
 		const DELAY = 1000 / FRONT_END_FPS;
 		const CALIBRATE_FREQUENCE = 10 * FRONT_END_FPS;
 
-		const keys = {}; // keys[key] = true | if key is down
+		let keys = {}; // keys[key] = true | if key is down
 
 		let run_hazmat = false;
 		let run_qr = false;
