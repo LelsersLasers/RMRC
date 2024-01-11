@@ -20,12 +20,6 @@ ADDR_TORQUE_ENABLE = 64 # 1 = enable, 0 = disable
 ADDR_ERROR_CODE = 70
 ADDR_GOAL_VELOCITY = 104
 
-ADDR_PROFILE_ACCELERATION, PROFILE_ACCELERATION_UNITS = 108, 214.577 # rev/min^2
-TIME_TO_MAX_VELOCITY = 0.4 / 60 # min
-# (rev/min) / (min) = rev/min^2
-PROFILE_ACCELERATION_MAX = 32737
-PROFILE_ACCELERATION_START_VALUE = int((VELOCITY_LIMIT_START_VALUE * VELOCITY_LIMIT_UNITS) / TIME_TO_MAX_VELOCITY / PROFILE_ACCELERATION_UNITS)
-
 ADDR_PRESENT_VELOCITY = 128
 # ---------------------------------------------------------------------------- #
 
@@ -55,7 +49,6 @@ class DynamixelController:
 		else:
 			print("Failed to open the port.")
 
-		self.profile_acceleration = PROFILE_ACCELERATION_START_VALUE
 		self.velocity_limit = VELOCITY_LIMIT_START_VALUE
 
 		self.speeds = { # speeds[side] = %
@@ -65,14 +58,6 @@ class DynamixelController:
 		self.statuses = { # statuses[side] = %
 			"left": 0,
 			"right": 0,
-		}
-
-		self.acceleration_time = 0.4 / 60 # minutes: time to reach max velocity
-		
-		# used to have instant acceleration even for fixed acceleration (speed -> 0 -> instant acceleration)
-		self.accelerations = { # accelerations[side] = value
-			"left": self.profile_acceleration,
-			"right": self.profile_acceleration
 		}
 
 	def setup(self):
@@ -89,7 +74,6 @@ class DynamixelController:
 					(ADDR_OPERATING_MODE, OPERATING_MODE_VALUE),
 					(ADDR_VELOCITY_LIMIT, self.velocity_limit),
 					(ADDR_TORQUE_ENABLE, 1),
-					(ADDR_PROFILE_ACCELERATION, self.profile_acceleration),
 				]:
 					self.command(id, addr, value)
 
@@ -123,16 +107,6 @@ class DynamixelController:
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
 				self.command(id, ADDR_TORQUE_ENABLE, status_code)
-
-	def update_acceleration(self):
-		for side_ids in DYNAMIXEL_IDS.values():
-			for id in side_ids:
-				if self.acceleration_time > 0:
-					value = int((self.velocity_limit * VELOCITY_LIMIT_UNITS) / self.acceleration_time / PROFILE_ACCELERATION_UNITS)
-					self.profile_acceleration = min(value, PROFILE_ACCELERATION_MAX)
-					self.command(id, ADDR_PROFILE_ACCELERATION, self.profile_acceleration)
-				else:
-					self.command(id, ADDR_PROFILE_ACCELERATION, 0)
 				
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
@@ -140,20 +114,7 @@ class DynamixelController:
 			speed = self.speeds[side]
 			power = int(speed * self.velocity_limit) * orientation
 
-			if self.acceleration_time > 0:
-				# instant acceleration when speed is 0 even for fixed acceleration
-				last_acceleration = self.accelerations[side]
-				if speed == 0:
-					self.accelerations[side] = 0
-				else:
-					self.accelerations[side] = self.profile_acceleration
-				update_acceleration = last_acceleration != self.accelerations[side]
-			else:
-				update_acceleration = False
-				
 			for id in side_ids:
-				if update_acceleration:
-					self.command(id, ADDR_PROFILE_ACCELERATION, self.accelerations[side])
 				self.command(id, ADDR_GOAL_VELOCITY, power)
 
 	def update_status(self):

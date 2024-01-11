@@ -108,10 +108,6 @@ STATE_MOTOR_SERVER = {
     "left": 0,
     "right": 0,
     "count": 0,
-    "acceleration": {
-        "time": 0.4,
-        "count": 0,
-    },
     "velocity": {
 		"value": -1,
 		"count": 0,
@@ -128,7 +124,6 @@ STATE_MOTOR = {
             "right": 0,
         }
     },
-    "acceleration_value": -1,
     "motor_fps": 5,
 }
 # ---------------------------------------------------------------------------- #
@@ -138,7 +133,6 @@ STATE_MOTOR = {
 def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
     last_count = 0
-    last_acceleration_count = 0
     last_velocity_count = 0
 
     fps_controller = util.FPSController()
@@ -155,17 +149,12 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()
 
             if not zero_video_capture:
-                # speed and acceleration calulations use velocity_limit
+                # speed calulations use velocity_limit
                 velocity_limit_changed = server_motor_ds.s1["velocity"]["count"] > last_velocity_count
 
                 if velocity_limit_changed:
                     last_velocity_count = server_motor_ds.s1["velocity"]["count"]
                     dxl_controller.velocity_limit = server_motor_ds.s1["velocity"]["value"]
-                if server_motor_ds.s1["acceleration"]["count"] > last_acceleration_count or velocity_limit_changed:
-                    last_acceleration_count = server_motor_ds.s1["acceleration"]["count"]
-                    dxl_controller.acceleration_time = server_motor_ds.s1["acceleration"]["time"] / 60
-                    dxl_controller.update_acceleration()
-                    server_motor_ds.s2["acceleration_value"] = dxl_controller.profile_acceleration
                 if write_motor_speeds_every_frame or server_motor_ds.s1["count"] > last_count or velocity_limit_changed:
                     last_count = server_motor_ds.s1["count"]
 
@@ -211,16 +200,6 @@ def server_main(server_dq, server_motor_dq):
     def calibrate():
         now = time.time()
         response = jsonify(now)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/acceleration/<time>", methods=["GET"])
-    def acceleration(time):
-        server_motor_ds.s1["acceleration"]["time"] = float(time)
-        server_motor_ds.s1["acceleration"]["count"] += 1
-        server_motor_ds.put_s1(server_motor_dq)
-
-        response = jsonify(time)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     

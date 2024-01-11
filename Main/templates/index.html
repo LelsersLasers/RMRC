@@ -354,22 +354,6 @@ input[type="range"] {
             <br />
             <br />
 
-			<label>Acceleration Profile:</label>
-            <br />
-            <input type="radio" id="accelerationInstant" name="acceleration" value="0" oninput="accelerationRadio(this)" />
-            <label for="accelerationInstant" class="pointer">Instant</label>
-            <br />
-            <input type="radio" id="accelerationFixed" name="acceleration" value="1" oninput="accelerationRadio(this)" checked />
-            <label for="accelerationFixed" class="pointer">Fixed</label>
-
-            <br />
-
-			<label for="accelerationTime">Fixed Acceleration Time: </label>
-            <output id="accelerationTime-output">0.4</output>
-            <input type="range" id="accelerationTime" name="accelerationTime" min="0" max="1.0" step="0.01" value="0.4" oninput="accelerationTimeSlider()" />
-
-			<br />
-
 			<label for="velocityLimit">Velocity Limit: </label>
             <output id="velocityLimit-output">1023</output>
             <input type="range" id="velocityLimit" name="velocityLimit" min="1" max="1023" step="1" value="1023" oninput="velocityLimitSlider()" />
@@ -378,7 +362,6 @@ input[type="range"] {
 
 			<h4>Debug Info</h4>
             <p id="calibration"></p>
-            <p id="accelerationValue"></p>
 
             <h4>Keys Down</h4>
             <p id="keys"></p>
@@ -404,9 +387,6 @@ input[type="range"] {
 		let power_state = 100;
 
 		let diagonal_multiplier = 0.4;
-
-		let acceleration_fixed_time = 0.4;
-		let acceleration_instant = false;
 
 		let velocity_limit = 1023;
 
@@ -468,12 +448,6 @@ input[type="range"] {
                 fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
 
 				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
-
-				if (acceleration_instant) {
-					fetchAndInfo(FLASK_SERVER + "acceleration/0");
-				} else {
-					fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
-				}
 
 				fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
 				
@@ -584,9 +558,6 @@ input[type="range"] {
 								current_ele.classList.add("forward-dark");
 							}
 						}
-
-						const acceleration_ele = document.getElementById("accelerationValue");
-						acceleration_ele.innerHTML = data["acceleration_value"].toFixed(2);
                         // -------------------------------------------------- //
 						
                         // -------------------------------------------------- //
@@ -700,8 +671,6 @@ input[type="range"] {
 					run_md = false;
 					/* not reset when disconnected but resent
 						- view_mode
-						- acceleration_instant
-						- acceleration_fixed_time
 						- velocity_limit
 					*/
 				});
@@ -731,30 +700,6 @@ input[type="range"] {
             diagonal_multiplier = value;
         }
 
-		function accelerationRadio(input_ele) {
-			if (!input_ele.checked) return;
-
-			if (input_ele.value == 0) {
-				fetchAndInfo(FLASK_SERVER + "acceleration/0");
-				acceleration_instant = true;
-			} else if (input_ele.value == 1) {
-				fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
-				acceleration_instant = false;
-			}
-		}
-
-		function accelerationTimeSlider() {
-			const ele = document.getElementById("accelerationTime");
-            const value = parseFloat(ele.value);
-            const output = document.getElementById("accelerationTime-output");
-            output.innerHTML = value;
-			acceleration_fixed_time = value;
-
-			if (!acceleration_instant) {
-				fetchAndInfo(FLASK_SERVER + "acceleration/" + acceleration_fixed_time);
-			}
-		}
-
 		function velocityLimitSlider() {
 			const ele = document.getElementById("velocityLimit");
 			const value = parseInt(ele.value);
@@ -764,8 +709,6 @@ input[type="range"] {
 
 			fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
 		}
-
-		
 
 
 		function display_keys() {
