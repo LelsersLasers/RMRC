@@ -717,7 +717,6 @@ if __name__ == "__main__":
 
     zero_video_capture = args["video_capture_zero"]
     tx_rx = args["tx_rx"]
-    write_motor_speeds_every_frame = args["write_motor_speeds_every_frame"]
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -773,7 +772,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("\nStarting motor thread...")
 
-    motor_thread = Process(target=motor_main, args=(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_video_capture))
+    motor_thread = Process(target=motor_main, args=(server_motor_dq, tx_rx, zero_video_capture))
     motor_thread.daemon = True
     motor_thread.start()
     print(f"Motor thread pid: {motor_thread.pid}")
