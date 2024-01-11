@@ -457,7 +457,7 @@ input[type="range"] {
 
 				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
 
-				fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
+				fetchAndInfo(FLASK_SERVER + "velocity_limit/" + velocity_limit);
                 fetchAndInfo(FLASK_SERVER + "motor_writes/" + motor_writes);
                 fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
 				
@@ -729,7 +729,7 @@ input[type="range"] {
 			output.innerHTML = value;
 			velocity_limit = value;
 
-			fetchAndInfo(FLASK_SERVER + "velocity/" + velocity_limit);
+			fetchAndInfo(FLASK_SERVER + "velocity_limit/" + velocity_limit);
 		}
         function motorWritesSlider() {
             const ele = document.getElementById("motorWrites");
@@ -738,7 +738,7 @@ input[type="range"] {
             output.innerHTML = value;
             motor_writes = value;
 
-            fetchAndInfo(FLASK_SERVER + "writes/" + motor_writes);
+            fetchAndInfo(FLASK_SERVER + "motor_writes/" + motor_writes);
         }
         function writeEveryFrameCheckbox() {
             const ele = document.getElementById("writeEveryFrame");

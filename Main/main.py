@@ -110,11 +110,11 @@ STATE_MOTOR_SERVER = {
     "right": 0,
     "count": 0,
     "last_get": time.time(),
-    "velocity": {
+    "velocity_limit": {
 		"value": -1,
 		"count": 0,
     },
-    "writes": 1,
+    "motor_writes": 1,
     "write_every_frame": False,
 }
 STATE_MOTOR = {
@@ -148,7 +148,7 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
 
         while True:
             server_motor_ds.update_s1(server_motor_dq)
-            dxl_controller.writes = server_motor_ds.s1["writes"]
+            dxl_controller.writes = server_motor_ds.s1["motor_writes"]
 
             fps_controller.update()
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()
@@ -157,7 +157,7 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
 
             if not zero_video_capture:
                 # speed calulations use velocity_limit
-                velocity_limit_changed = server_motor_ds.s1["velocity"]["count"] > last_velocity_count
+                velocity_limit_changed = server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count
                 idle_shutoff = now - server_motor_ds.s1["last_get"] > MOTOR_SHUTOFF_TIME
                 should_write_velocities = (server_motor_ds.s1["write_every_frame"]
                                     or server_motor_ds.s1["count"] > last_count
@@ -165,8 +165,8 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
                                     or idle_shutoff)
 
                 if velocity_limit_changed:
-                    last_velocity_count = server_motor_ds.s1["velocity"]["count"]
-                    dxl_controller.velocity_limit = server_motor_ds.s1["velocity"]["value"]
+                    last_velocity_count = server_motor_ds.s1["velocity_limit"]["count"]
+                    dxl_controller.velocity_limit = server_motor_ds.s1["velocity_limit"]["value"]
                 if should_write_velocities:
                     last_count = server_motor_ds.s1["count"]
 
@@ -222,19 +222,19 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/velocity/<value>", methods=["GET"])
-    def velocity(value):
-        server_motor_ds.s1["velocity"]["value"] = int(value)
-        server_motor_ds.s1["velocity"]["count"] += 1
+    @app.route("/velocity_limit/<value>", methods=["GET"])
+    def velocity_limit(value):
+        server_motor_ds.s1["velocity_limit"]["value"] = int(value)
+        server_motor_ds.s1["velocity_limit"]["count"] += 1
         server_motor_ds.put_s1(server_motor_dq)
 
         response = jsonify(value)
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/writes/<value>", methods=["GET"])
-    def writes(value):
-        server_motor_ds.s1["writes"] = int(value)
+    @app.route("/motor_writes/<value>", methods=["GET"])
+    def motor_writes(value):
+        server_motor_ds.s1["motor_writes"] = int(value)
         server_motor_ds.put_s1(server_motor_dq)
 
         response = jsonify(value)
