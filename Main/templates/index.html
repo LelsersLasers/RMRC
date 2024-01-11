@@ -668,19 +668,24 @@ input[type="range"] {
 				})
 				.catch(e => {
                     console.log(`fetch 'get' failed: ${e}`);
-
-					calibrated = false;
-
-                    connected = false;
-					run_hazmat = false;
-					run_qr = false;
-					run_md = false;
-					/* not reset when disconnected but resent
-						- view_mode
-						- velocity_limit
-					*/
+                    disconnect();
 				});
 		}, DELAY);
+
+        function disconnect() {
+            calibrated = false;
+
+            connected = false;
+            run_hazmat = false;
+            run_qr = false;
+            run_md = false;
+
+            keys = {};
+            /* not reset when disconnected but resent
+                - view_mode
+                - velocity_limit
+            */
+        }
 
 		
 		function setPower(value) {	
@@ -816,9 +821,17 @@ input[type="range"] {
 			display_keys();
 		}
 
+        function visibilitychange(e) {
+            disconnect();
+
+            if (document.visibilityState == "visible") {
+                try_connect();
+            }
+        }
+
 		window.addEventListener("keydown", keydown);
 		window.addEventListener("keyup", keyup);
-
+        window.addEventListener("visibilitychange", visibilitychange);
 	</script>
 
 
