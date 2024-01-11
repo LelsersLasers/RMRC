@@ -41,6 +41,7 @@ MOTION_THRESHOLD = 65
 MOTION_NEW_FRAME_WEIGHT = 0.4
 SERVER_FRAME_SCALE = 1
 MOTOR_TEST_FPS = 10
+MOTOR_SHUTOFF_TIME = 1.0 # in seconds
 
 
 # ---------------------------------------------------------------------------- #
@@ -108,6 +109,7 @@ STATE_MOTOR_SERVER = {
     "left": 0,
     "right": 0,
     "count": 0,
+    "last_get": time.time(),
     "velocity": {
 		"value": -1,
 		"count": 0,
@@ -148,18 +150,29 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
             fps_controller.update()
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()
 
+            now = time.time()
+
             if not zero_video_capture:
                 # speed calulations use velocity_limit
                 velocity_limit_changed = server_motor_ds.s1["velocity"]["count"] > last_velocity_count
+                idle_shutoff = now - server_motor_ds.s1["last_get"] > MOTOR_SHUTOFF_TIME
+                should_write_velocities = (write_motor_speeds_every_frame
+                                    or server_motor_ds.s1["count"] > last_count
+                                    or velocity_limit_changed
+                                    or idle_shutoff)
 
                 if velocity_limit_changed:
                     last_velocity_count = server_motor_ds.s1["velocity"]["count"]
                     dxl_controller.velocity_limit = server_motor_ds.s1["velocity"]["value"]
-                if write_motor_speeds_every_frame or server_motor_ds.s1["count"] > last_count or velocity_limit_changed:
+                if should_write_velocities:
                     last_count = server_motor_ds.s1["count"]
 
-                    dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
-                    dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
+                    if idle_shutoff:
+                        server_motor_ds.s1["left"] = 0
+                        server_motor_ds.s1["right"] = 0
+                    else:
+                        dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
+                        dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
 
                     dxl_controller.update_speed()
                     
@@ -265,6 +278,9 @@ def server_main(server_dq, server_motor_dq):
     def get():
         server_ds.update_s1(server_dq)
         server_motor_ds.update_s2(server_motor_dq)
+
+        server_motor_ds.s1["last_get"] += 1
+        server_motor_ds.put_s1(server_motor_dq)
 
         # combine main info with motor info
         server_ds.s1.update(server_motor_ds.s2)
