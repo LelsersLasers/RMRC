@@ -59,6 +59,7 @@ class DynamixelController:
 			"left": 0,
 			"right": 0,
 		}
+		self.writes = 1
 
 	def setup(self):
 		if self.port_handler.setBaudRate(BAUDRATE):
@@ -93,14 +94,15 @@ class DynamixelController:
 				self.packet_handler.reboot(self.port_handler, id)
 
 	def command(self, id, addr, value):
-		if self.tx_rx:
-			dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
-			if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-				print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-			elif dxl_error != 0:
-				print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
-		else:
-			self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
+		for _ in range(self.writes):
+			if self.tx_rx:
+				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
+				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
+					print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+				elif dxl_error != 0:
+					print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
+			else:
+				self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
 
 	def set_torque_status(self, status):
 		status_code = 1 if status else 0

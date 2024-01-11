@@ -114,6 +114,7 @@ STATE_MOTOR_SERVER = {
 		"value": -1,
 		"count": 0,
     },
+    "writes": 1,
 }
 STATE_MOTOR = {
     "motors": {
@@ -146,6 +147,7 @@ def motor_main(server_motor_dq, tx_rx, write_motor_speeds_every_frame, zero_vide
 
         while True:
             server_motor_ds.update_s1(server_motor_dq)
+            dxl_controller.writes = server_motor_ds.s1["writes"]
 
             fps_controller.update()
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()
@@ -223,6 +225,15 @@ def server_main(server_dq, server_motor_dq):
     def velocity(value):
         server_motor_ds.s1["velocity"]["value"] = int(value)
         server_motor_ds.s1["velocity"]["count"] += 1
+        server_motor_ds.put_s1(server_motor_dq)
+
+        response = jsonify(value)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    
+    @app.route("/writes/<value>", methods=["GET"])
+    def writes(value):
+        server_motor_ds.s1["writes"] = int(value)
         server_motor_ds.put_s1(server_motor_dq)
 
         response = jsonify(value)
