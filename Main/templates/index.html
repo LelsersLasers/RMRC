@@ -539,6 +539,8 @@ input[type="range"] {
 							const current_ele = document.getElementById(motors_id + "-current");
 							current_ele.style.width = Math.abs(current_width) + "%";
 
+							console.log({ current, current_width });
+
 							const motor_ele = document.getElementById("motor-" + motors_id);
 							motor_ele.innerHTML = `${current.toFixed(0)}% (${target.toFixed(0)}%) (${motors_id})`;
 
