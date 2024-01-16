@@ -3,7 +3,7 @@
 tegrastats --interval 20 --logfile tegrastats.log --start # run in background
 sleep 1
 
-python3 main.py
+python3 main.py -t
 sleep 1
 
 tegrastats --stop # close background process
