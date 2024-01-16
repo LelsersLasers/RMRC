@@ -152,7 +152,7 @@ class CNT:
         cv2.drawContours(mask1, [cnt], -1, 255, -1)
         
         if expand:
-            cv2.drawContours(mask1, [cnt], -1, 255, 50)
+            cv2.drawContours(mask1, [cnt], -1, 255, 65)
         
         self.pixel_count = cv2.countNonZero(mask1)
 
