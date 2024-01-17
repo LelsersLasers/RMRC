@@ -83,7 +83,8 @@ class DynamixelController:
 				]:
 					if addr is None:
 						time.sleep(TORQUE_ON_DELAY)
-					self.command(id, addr, value)
+					else:
+						self.command(id, addr, value)
 
 	def close(self):
 		for side_ids in DYNAMIXEL_IDS.values():
