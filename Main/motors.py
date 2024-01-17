@@ -1,6 +1,4 @@
 import dynamixel_sdk
-import time
-
 
 # ---------------------------------------------------------------------------- #
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/
@@ -14,8 +12,9 @@ BAUDRATE = 57600
 # ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE = 9, 0
 # ADDR_OPERATING_MODE, OPERATING_MODE_VALUE = 11, 1 # 1 = velocity control mode
 
-# MAX_VELOCITY = 330
-ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_START_VALUE, VELOCITY_LIMIT_UNITS = 44, 1023, 0.229 # rev/min
+# Already set
+# ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_START_VALUE, VELOCITY_LIMIT_UNITS = 44, 300, 0.229 # rev/min
+VELOCITY_LIMIT_START_VALUE = 1023
 
 ADDR_TORQUE_ENABLE = 64 # 1 = enable, 0 = disable
 ADDR_ERROR_CODE = 70
@@ -76,15 +75,11 @@ class DynamixelController:
 					# (ADDR_BAUDRATE, BAUDRATE_VALUE),
 					# (ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
 					# (ADDR_OPERATING_MODE, OPERATING_MODE_VALUE),
-					(ADDR_TORQUE_ENABLE, 0),
-					(ADDR_VELOCITY_LIMIT, self.velocity_limit),
-					(None, None),
+					# (ADDR_TORQUE_ENABLE, 0),
+					# (ADDR_VELOCITY_LIMIT, self.velocity_limit),
 					(ADDR_TORQUE_ENABLE, 1),
 				]:
-					if addr is None:
-						time.sleep(TORQUE_ON_DELAY)
-					else:
-						self.command(id, addr, value)
+					self.command(id, addr, value)
 
 	def close(self):
 		for side_ids in DYNAMIXEL_IDS.values():
