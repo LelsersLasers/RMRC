@@ -1,5 +1,7 @@
 #!/bin/bash
 
+chmod 777 /dev/ttyUSB0
+
 tegrastats --interval 20 --logfile tegrastats.log --start # run in background
 sleep 1
 
