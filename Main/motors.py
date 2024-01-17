@@ -1,4 +1,5 @@
 import dynamixel_sdk
+import time
 
 
 # ---------------------------------------------------------------------------- #
@@ -21,6 +22,8 @@ ADDR_ERROR_CODE = 70
 ADDR_GOAL_VELOCITY = 104
 
 ADDR_PRESENT_VELOCITY = 128
+
+TORQUE_ON_DELAY = 0.5
 # ---------------------------------------------------------------------------- #
 
 
@@ -73,9 +76,13 @@ class DynamixelController:
 					# (ADDR_BAUDRATE, BAUDRATE_VALUE),
 					# (ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
 					# (ADDR_OPERATING_MODE, OPERATING_MODE_VALUE),
+					(ADDR_TORQUE_ENABLE, 0),
 					(ADDR_VELOCITY_LIMIT, self.velocity_limit),
+					(None, None),
 					(ADDR_TORQUE_ENABLE, 1),
 				]:
+					if addr is None:
+						time.sleep(TORQUE_ON_DELAY)
 					self.command(id, addr, value)
 
 	def close(self):
