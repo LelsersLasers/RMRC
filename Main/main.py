@@ -206,8 +206,8 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                 server_motor_ds.s2["motors"]["target"] = server_motor_ds.s1
 
                 # just to test
-                server_motor_ds.s2["motors"]["current"]["left"] = server_motor_ds.s1["left"] / 2
-                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] / 2
+                server_motor_ds.s2["motors"]["current"]["left"] = server_motor_ds.s1["left"]
+                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"]
 
                 time.sleep(1 / MOTOR_TEST_FPS)
 
@@ -802,7 +802,7 @@ if __name__ == "__main__":
 
     try:
         gpu_log_file = None if zero_video_capture else open(GPU_LOG_FILENAME, 'rb')
-        master_main(hazmat_dq, server_dq, camera_dqs, motor_dq, zero_video_capture, gpu_log_file)
+        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture, gpu_log_file)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
