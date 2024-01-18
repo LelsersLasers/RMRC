@@ -136,12 +136,17 @@ STATE_MOTOR = {
     },
     "motor_fps": 5,
 }
+
+STATE_MOTOR_MASTER = {
+    "quit": False,
+}
 # ---------------------------------------------------------------------------- #
 
 
 # ---------------------------------------------------------------------------- #
-def motor_main(server_motor_dq, tx_rx, zero_video_capture):
+def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
+    motor_ds = util.DoubleState(STATE_MOTOR_MASTER, {})
     last_count = 0
     last_velocity_count = 0
 
@@ -152,8 +157,9 @@ def motor_main(server_motor_dq, tx_rx, zero_video_capture):
             dxl_controller = motors.DynamixelController(tx_rx)
             dxl_controller.setup()
 
-        while True:
+        while not motor_ds.s1["quit"]:
             server_motor_ds.update_s1(server_motor_dq)
+            motor_ds.update_s1(motor_dq)
 
             fps_controller.update()
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()
@@ -782,7 +788,10 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("\nStarting motor thread...")
 
-    motor_thread = Process(target=motor_main, args=(server_motor_dq, tx_rx, zero_video_capture))
+    motor_dq = util.DoubleQueue()
+    motor_ds = util.DoubleState(STATE_MOTOR_MASTER, {})
+
+    motor_thread = Process(target=motor_main, args=(server_motor_dq, motor_dq, tx_rx, zero_video_capture))
     motor_thread.daemon = True
     motor_thread.start()
     print(f"Motor thread pid: {motor_thread.pid}")
@@ -793,7 +802,7 @@ if __name__ == "__main__":
 
     try:
         gpu_log_file = None if zero_video_capture else open(GPU_LOG_FILENAME, 'rb')
-        master_main(hazmat_dq, server_dq, camera_dqs, zero_video_capture, gpu_log_file)
+        master_main(hazmat_dq, server_dq, camera_dqs, motor_dq, zero_video_capture, gpu_log_file)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
@@ -836,6 +845,9 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------------------ #
     print("Closing motor thread...")
+    STATE_MOTOR_MASTER["quit"] = True
+    motor_dq.put_q1(STATE_MOTOR_MASTER)
+
     util.close_thread(motor_thread)
     # ------------------------------------------------------------------------ #
 
