@@ -37,7 +37,7 @@ import logging
 GPU_LOG_FILENAME = "tegrastats.log"
 HAZMAT_LEVENSHTEIN_THRESH = 0.4
 HAZMAT_DRY_FPS = 15
-CAMERA_WAKEUP_TIME = 1.0
+CAMERA_WAKEUP_TIME = 1.5
 HAZMAT_ANGLE = 90
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
@@ -537,10 +537,14 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         # -------------------------------------------------------------------- #
         frames = {}
         frame_read_time = time.time()
+        any_frame_is_none = False
         for key, camera_dq in camera_dqs.items():
             camera_ds = camera_dses[key]
             camera_ds.update_s2(camera_dq)
             frames[key] = camera_ds.s2["frame"]
+
+            if frames[key] is None:
+                any_frame_is_none = True
 
             if key == base_key and frames[key] is not None and camera_ds.s2["time"] > last_base_frame_time:
                 frame_read_time = camera_ds.s2["time"]
@@ -554,7 +558,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
         frame = frames[base_key]            
 
-        if frame is None:
+        if any_frame_is_none:
+            print("At least one frame is None.")
             time.sleep(0.5)
             continue
 
