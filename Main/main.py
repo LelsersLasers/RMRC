@@ -11,6 +11,7 @@ CAP_ARGS = {
     "webcam2": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_348E60A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! appsink",
     "ir": "v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! appsink",
 }
+CAMERA_SIZE = (320, 240)
 
 
 import time
@@ -35,9 +36,10 @@ import logging
 
 
 GPU_LOG_FILENAME = "tegrastats.log"
+CAMERA_WAKEUP_TIME = 1.5
+CAMERA_NONE_GREY = 127
 HAZMAT_LEVENSHTEIN_THRESH = 0.4
 HAZMAT_DRY_FPS = 15
-CAMERA_WAKEUP_TIME = 1.5
 HAZMAT_ANGLE = 90
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
@@ -460,9 +462,6 @@ def camera_main(camera_dq, key):
 
             camera_ds.s2["time"] = time.time()
 
-            if not ret or frame is None:
-                print("Exiting ...")
-
             camera_ds.s2["frame"] = frame
 
             fps_controller.update()
@@ -529,15 +528,13 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
     killer = util.GracefulKiller()
 
-    last_base_frame_time = time.time()
+    frame_read_time = time.time()
 
     while not killer.kill_now and not hazmat_ds.s1["quit"]:
         fps_controller.update()
 
         # -------------------------------------------------------------------- #
         frames = {}
-        frame_read_time = time.time()
-        any_frame_is_none = False
         for key, camera_dq in camera_dqs.items():
             camera_ds = camera_dses[key]
             camera_ds.update_s2(camera_dq)
@@ -545,11 +542,11 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
             if frames[key] is None:
                 print(f"Frame {key} is None.")
-                any_frame_is_none = True
+                # TODO: verify it is [1], [0] and not [0], [1]
+                frames[key] = np.zeros((CAMERA_SIZE[1], CAMERA_SIZE[0], 3), dtype=np.uint8) + CAMERA_NONE_GREY
 
-            if key == base_key and frames[key] is not None and camera_ds.s2["time"] > last_base_frame_time:
+            if key == base_key and frames[key] is not None and camera_ds.s2["time"] > frame_read_time:
                 frame_read_time = camera_ds.s2["time"]
-                last_base_frame_time = frame_read_time
 
                 frame_copy = frames[key].copy()
 
@@ -559,18 +556,11 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
         frame = frames[base_key]            
 
-        if any_frame_is_none:
-            time.sleep(0.5)
-            continue
-
         base_frame_shape = frame.shape
         if video_capture_zero:
             ir_frame = frames[base_key]
         else:
-            if frames["ir"] is None:
-                ir_frame = np.zeros_like(frame)
-            else:
-                ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
+            ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
             fps_text(ir_frame, camera_dses["ir"].s2["fps"])
 
             fps_text(frames["webcam2"], camera_dses["webcam2"].s2["fps"])
