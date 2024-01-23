@@ -544,6 +544,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             frames[key] = camera_ds.s2["frame"]
 
             if frames[key] is None:
+                print(f"Frame {key} is None.")
                 any_frame_is_none = True
 
             if key == base_key and frames[key] is not None and camera_ds.s2["time"] > last_base_frame_time:
@@ -559,7 +560,6 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         frame = frames[base_key]            
 
         if any_frame_is_none:
-            print("At least one frame is None.")
             time.sleep(0.5)
             continue
 
