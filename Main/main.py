@@ -24,7 +24,8 @@ import util
 import hazmat
 import qr_detect
 import motion_detect
-import motors
+# import motors
+import motors2
 
 import cv2
 import numpy as np
@@ -95,7 +96,6 @@ STATE_SERVER_MASTER = {
     "cpu": 0,
     "gpu": -1,
     "angle": 0,
-    # motors, accleration_value from STATE_MOTOR
 }
 STATE_SERVER = {
     "run": {
@@ -136,7 +136,7 @@ STATE_MOTOR = {
             "right": 0,
         }
     },
-    "motor_fps": 5,
+    "motor_fps": 20,
 }
 
 STATE_MOTOR_MASTER = {
@@ -156,8 +156,9 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
 
     try:
         if not zero_video_capture:
-            dxl_controller = motors.DynamixelController(tx_rx)
-            dxl_controller.setup()
+            dxl_controller = motors2.DynamixelController(tx_rx)
+            dxl_controller.set_torque_status(True)
+            # dxl_controller.setup()
 
         while not motor_ds.s1["quit"]:
             server_motor_ds.update_s1(server_motor_dq)
@@ -169,7 +170,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
             now = time.time()
 
             if not zero_video_capture:
-                dxl_controller.writes = server_motor_ds.s1["motor_writes"]
+                # dxl_controller.writes = server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
                 velocity_limit_changed = server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count
@@ -195,9 +196,15 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                     dxl_controller.update_speed()
                     
                 dxl_controller.update_status()
+                dxl_controller.check_errors()
 
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
-                server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
+
+                # server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
+                server_motor_ds.s2["motors"]["current"] = {
+                    "left": (dxl_controller.statuses[1] + dxl_controller.statuses[3]) / 2,
+                    "right": (dxl_controller.statuses[2] + dxl_controller.statuses[4]) / 2,
+                }
 
                 """
                 TODO: this is just a soft limiter so it doesn't put ~5k into the queue
@@ -219,7 +226,9 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
     finally:
         print("Closing dynamixel controller...")
         if not zero_video_capture:
-            dxl_controller.close()
+            # dxl_controller.close()
+            dxl_controller.set_torque_status(False)
+            dxl_controller.close_port()
 # ---------------------------------------------------------------------------- #
 
 
