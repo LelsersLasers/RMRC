@@ -12,12 +12,10 @@ DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2]
 	"left": [1, 3],
 	"right": [2, 4],
 }
-ORIENTATIONS = { # ORIENTATIONS[id] = direction multiplier
-	1: 1,
-	2: -1,
-	3: 1,
-	4: -1,
- }
+ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
+	"left": 1,
+	"right": -1,
+}
 
 class DynamixelController:
 	def __init__(self):
@@ -33,15 +31,13 @@ class DynamixelController:
 		else:
 			print("Failed to change the baudrate.")
 
-		self.speeds = {
+		self.speeds = { # speeds[side] = %
 			"left": 0,
 			"right": 0,
 		}
-		self.statuses = {
-			1: 0,
-			2: 0,
-			3: 0,
-			4: 0,
+		self.statuses = { # statuses[side] = %
+			"left": 0,
+			"right": 0,
 		}
 
 		self.velocity_limit = MAX_POWER_START
@@ -66,10 +62,11 @@ class DynamixelController:
 
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
+			speed = self.speeds[side]
+			orientation = ORIENTATIONS[side]
+			power = int(speed * orientation * self.velocity_limit)
+
 			for id in side_ids:
-				speed = self.speeds[side]
-				orientation = ORIENTATIONS[id]
-				power = int(speed * orientation * self.velocity_limit)
 				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
 				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
 					print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
@@ -88,14 +85,17 @@ class DynamixelController:
 				print(f"error_code {id} {error_code}")
 				self.reset_motors()
 
-	# TODO: needed? RN: never used
 	def update_status(self):
-		for id in self.statuses:
-			dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
-			error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+		for side, side_ids in DYNAMIXEL_IDS.items():
+			orientation = ORIENTATIONS[side]
+			self.statuses[side] = 0
 
-			if error_code > 0:
-				print(f"error_code {id} {error_code}")
-				self.reset_motors()
+			for id in side_ids:
+				dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
+				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
 
-			self.statuses[id] = dxl_present_velocity
+				if error_code > 0:
+					print(f"error_code {id} {error_code}")
+					self.reset_motors()
+
+				self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2

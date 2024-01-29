@@ -199,12 +199,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                 dxl_controller.check_errors()
 
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
-
-                # server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
-                server_motor_ds.s2["motors"]["current"] = {
-                    "left": (dxl_controller.statuses[1] + dxl_controller.statuses[3]) / 2,
-                    "right": (dxl_controller.statuses[2] + dxl_controller.statuses[4]) / 2,
-                }
+                server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
 
                 """
                 TODO: this is just a soft limiter so it doesn't put ~5k into the queue
