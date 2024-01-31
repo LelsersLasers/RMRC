@@ -1,7 +1,8 @@
 import dynamixel_sdk
+import time
 
 # ---------------------------------------------------------------------------- #
-# https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/
+# https://emanual.robotis.com/docs/en/dxl/x/xm430-w210/
 # https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/api_reference/python/python_porthandler/#python
 
 DEVICE_NAME = "/dev/ttyUSB0"
@@ -11,17 +12,19 @@ PROTOCOL_VERSION = 2.0
 # Already set
 # ADDR_BAUDRATE, BAUDRATE, BAUDRATE_VALUE = 8, 3_000_000, 7
 # ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE = 9, 250 # 0.5 ms
-# ADDR_OPERATING_MODE, OPERATING_MODE_VALUE = 11, 1 # 1 = velocity control mode
-# ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_START_VALUE, VELOCITY_LIMIT_UNITS = 44, 1023, 0.229 # rev/min
+ADDR_OPERATING_MODE, OPERATING_MODE_VALUE = 11, 1 # 1 = velocity control mode
+# ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_START_VALUE, VELOCITY_LIMIT_UNITS = 44, 330, 0.229 # rev/min
 
 BAUDRATE = 57600
-VELOCITY_LIMIT_START_VALUE = 1023
+VELOCITY_LIMIT_START_VALUE = 330
 
 ADDR_TORQUE_ENABLE = 64 # 1 = enable, 0 = disable
 ADDR_ERROR_CODE = 70
 ADDR_GOAL_VELOCITY = 104
 
 ADDR_PRESENT_VELOCITY = 128
+
+SETUP_WAIT_TIME = 0.1 # seconds
 # ---------------------------------------------------------------------------- #
 
 
@@ -46,9 +49,9 @@ class DynamixelController:
 		self.tx_rx = tx_rx
 		
 		if self.port_handler.openPort():
-			print("Succeeded to open the port")
+			print("Port exists")
 		else:
-			print("Failed to open the port.")
+			print("Port does not exist.")
 
 		self.velocity_limit = VELOCITY_LIMIT_START_VALUE
 
@@ -73,12 +76,13 @@ class DynamixelController:
 				for addr, value in [
 					# (ADDR_BAUDRATE, BAUDRATE_VALUE),
 					# (ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
-					# (ADDR_OPERATING_MODE, OPERATING_MODE_VALUE),
-					# (ADDR_TORQUE_ENABLE, 0),
+					(ADDR_TORQUE_ENABLE, 0),
+					(ADDR_OPERATING_MODE, OPERATING_MODE_VALUE),
 					# (ADDR_VELOCITY_LIMIT, self.velocity_limit),
 					(ADDR_TORQUE_ENABLE, 1),
 				]:
 					self.command(id, addr, value)
+					time.sleep(SETUP_WAIT_TIME)
 
 	def close(self):
 		for side_ids in DYNAMIXEL_IDS.values():
@@ -104,13 +108,14 @@ class DynamixelController:
 				elif dxl_error != 0:
 					print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
 			else:
+				# TODO: check - does the discarded response interfere with next transmission?
 				self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
 
-	def set_torque_status(self, status):
-		status_code = 1 if status else 0
-		for side_ids in DYNAMIXEL_IDS.values():
-			for id in side_ids:
-				self.command(id, ADDR_TORQUE_ENABLE, status_code)
+	# def set_torque_status(self, status):
+	# 	status_code = 1 if status else 0
+	# 	for side_ids in DYNAMIXEL_IDS.values():
+	# 		for id in side_ids:
+	# 			self.command(id, ADDR_TORQUE_ENABLE, status_code)
 				
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():

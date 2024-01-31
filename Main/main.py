@@ -56,10 +56,10 @@ MOTOR_SHUTOFF_TIME = 1.0 # in seconds
 # ---------------------------------------------------------------------------- #
 # What master thread sends
 STATE_HAZMAT_MASTER = {
-    "frame": None,
+    "frame": None, # latest main camera frame
     "run_hazmat": False,
     "quit": False,
-    "clear": 0,
+    "clear": 0, # increment to clear all found hazmat labels
 }
 # What hazmat thread sends
 STATE_HAZMAT = {
