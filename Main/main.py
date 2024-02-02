@@ -156,7 +156,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
 
     try:
         if not zero_video_capture:
-            dxl_controller = motors2.DynamixelController(tx_rx)
+            dxl_controller = motors2.DynamixelController()
             dxl_controller.set_torque_status(True)
             # dxl_controller.setup()
 
