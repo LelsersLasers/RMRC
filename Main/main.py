@@ -170,7 +170,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
             now = time.time()
 
             if not zero_video_capture:
-                # dxl_controller.writes = server_motor_ds.s1["motor_writes"]
+                dxl_controller.writes = server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
                 velocity_limit_changed = server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count

@@ -41,6 +41,7 @@ class DynamixelController:
 		}
 
 		self.velocity_limit = MAX_POWER_START
+		self.writes = 1
 
 	def reset_motors(self):
 		for side_ids in DYNAMIXEL_IDS.values():
@@ -61,10 +62,18 @@ class DynamixelController:
 					print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
 
 	def update_speed(self):
-		for side, side_ids in DYNAMIXEL_IDS.items():
-			speed = self.speeds[side]
-			orientation = ORIENTATIONS[side]
-			power = int(speed * orientation * self.velocity_limit)
+		for _ in range(self.writes):
+			for side, side_ids in DYNAMIXEL_IDS.items():
+				speed = self.speeds[side]
+				orientation = ORIENTATIONS[side]
+				power = int(speed * orientation * self.velocity_limit)
+
+				for id in side_ids:
+					
+					dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
+					if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
+						print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+					elif dxl_error != 0:
 
 			for id in side_ids:
 				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
