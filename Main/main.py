@@ -323,7 +323,7 @@ def server_main(server_dq, server_motor_dq):
         server_ds.update_s1(server_dq)
         server_motor_ds.update_s2(server_motor_dq)
 
-        server_motor_ds.s1["last_get"] += 1
+        server_motor_ds.s1["last_get"] = time.time()
         server_motor_ds.put_s1(server_motor_dq)
 
         # combine main info with motor info
