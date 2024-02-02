@@ -198,6 +198,8 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                     
                 # dxl_controller.update_status()
                 # dxl_controller.check_errors()
+                    
+                dxl_controller.update_status_and_check_errors()
 
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses

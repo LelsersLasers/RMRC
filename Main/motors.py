@@ -111,12 +111,6 @@ class DynamixelController:
 				# TODO: check - does the discarded response interfere with next transmission?
 				self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
 
-	# def set_torque_status(self, status):
-	# 	status_code = 1 if status else 0
-	# 	for side_ids in DYNAMIXEL_IDS.values():
-	# 		for id in side_ids:
-	# 			self.command(id, ADDR_TORQUE_ENABLE, status_code)
-				
 	def update_speed(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
@@ -126,7 +120,7 @@ class DynamixelController:
 			for id in side_ids:
 				self.command(id, ADDR_GOAL_VELOCITY, power)
 
-	def update_status(self):
+	def update_status_and_check_errors(self):
 		error_codes = {} # error_codes[id] = error_code
 		any_errors = []
 

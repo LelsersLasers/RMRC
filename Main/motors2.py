@@ -74,37 +74,57 @@ class DynamixelController:
 					if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
 						print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
 					elif dxl_error != 0:
+						print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
 
-			for id in side_ids:
-				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
-				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-					print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-				elif dxl_error != 0:
-					print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
+	# def check_errors(self):
+	# 	error_codes = {}
+	# 	for side_ids in DYNAMIXEL_IDS.values():
+	# 		for id in side_ids:
+	# 			error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+	# 			error_codes[id] = error_code
 
-	def check_errors(self):
-		error_codes = {}
-		for side_ids in DYNAMIXEL_IDS.values():
-			for id in side_ids:
-				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
-				error_codes[id] = error_code
+	# 	for id, error_code in error_codes.items():
+	# 		if error_code > 0:
+	# 			print(f"error_code {id} {error_code}")
+	# 			self.reset_motors()
 
-		for id, error_code in error_codes.items():
-			if error_code > 0:
-				print(f"error_code {id} {error_code}")
-				self.reset_motors()
+	# def update_status(self):
+	# 	for side, side_ids in DYNAMIXEL_IDS.items():
+	# 		orientation = ORIENTATIONS[side]
+	# 		self.statuses[side] = 0
 
-	def update_status(self):
+	# 		for id in side_ids:
+	# 			dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
+	# 			error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+
+	# 			if error_code > 0:
+	# 				print(f"error_code {id} {error_code}")
+	# 				self.reset_motors()
+
+	# 			self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
+
+	def update_status_and_check_errors(self):
+		error_codes = {} # error_codes[id] = error_code
+		any_errors = []
+
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
 			self.statuses[side] = 0
 
 			for id in side_ids:
+				# dxl_present_velocity = self.packet_handler.read4ByteTx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
+				# error_code = self.packet_handler.read1ByteTx(self.port_handler, id, ADDR_ERROR_CODE)
+
 				dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
 				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+				
+				error_codes[id] = error_code
+				any_errors.append(error_code > 0)
+				
+				self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
 
+		if any(any_errors):
+			for id, error_code in error_codes.items():
 				if error_code > 0:
 					print(f"error_code {id} {error_code}")
 					self.reset_motors()
-
-				self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
