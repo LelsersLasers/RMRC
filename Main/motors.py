@@ -52,6 +52,11 @@ class DynamixelController:
 			print("Port exists")
 		else:
 			print("Port does not exist.")
+		if self.port_handler.setBaudRate(BAUDRATE):
+			print("Succeeded to change the baudrate")
+		else:
+			print("Failed to change the baudrate.")
+
 
 		self.velocity_limit = VELOCITY_LIMIT_START_VALUE
 
@@ -66,11 +71,6 @@ class DynamixelController:
 		self.writes = 1
 
 	def setup(self):
-		if self.port_handler.setBaudRate(BAUDRATE):
-			print("Succeeded to change the baudrate")
-		else:
-			print("Failed to change the baudrate.")
-
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
 				for addr, value in [
