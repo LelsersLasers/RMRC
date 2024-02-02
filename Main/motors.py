@@ -91,6 +91,7 @@ class DynamixelController:
 					(ADDR_TORQUE_ENABLE, 0),
 				]:
 					self.command(id, addr, value)
+					time.sleep(SETUP_WAIT_TIME)
 
 		self.port_handler.closePort()
 
