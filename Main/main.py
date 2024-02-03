@@ -170,6 +170,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
             now = time.time()
 
             if not zero_video_capture:
+                # dxl_controller.min_writes = server_motor_ds.s1["motor_writes"]
                 dxl_controller.writes = server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
@@ -194,17 +195,17 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                         dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
 
                     print(f"Writing speeds: {dxl_controller.speeds}")
+                    # dxl_controller.update_speeds()
                     dxl_controller.update_speed()
                     
-                # dxl_controller.update_status()
-                # dxl_controller.check_errors()
-                    
+                # dxl_controller.try_update_speeds()
                 dxl_controller.update_status_and_check_errors()
 
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
             else:
-                server_motor_ds.s2["motors"]["target"] = server_motor_ds.s1
+                server_motor_ds.s2["motors"]["target"]["left"] = server_motor_ds.s1["left"]
+                server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
 
                 # just to test
                 server_motor_ds.s2["motors"]["current"]["left"] = server_motor_ds.s1["left"]
@@ -213,8 +214,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                 time.sleep(1 / MOTOR_TEST_FPS)
 
             server_motor_ds.put_s2(server_motor_dq)
-    except KeyboardInterrupt:
-        pass
+    except KeyboardInterrupt: pass
     finally:
         print("Closing dynamixel controller...")
         if not zero_video_capture:
@@ -428,8 +428,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
             if not hazmat_ds.s1["run_hazmat"]:
                 time.sleep(1 / HAZMAT_DRY_FPS)
             # ---------------------------------------------------------------- #
-    except KeyboardInterrupt:
-        pass
+    except KeyboardInterrupt: pass
 # ---------------------------------------------------------------------------- #
 
 
@@ -469,8 +468,7 @@ def camera_main(camera_dq, key):
             camera_ds.s2["fps"] = fps_controller.fps()
 
             camera_ds.put_s2(camera_dq)
-    except KeyboardInterrupt:
-        pass
+    except KeyboardInterrupt: pass
     finally:
         print(f"Releasing camera {key}...")
         cap.release()
@@ -800,8 +798,7 @@ if __name__ == "__main__":
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
-    # except:
-    #     pass
+    # except: pass
     finally:
         if not zero_video_capture:
             gpu_log_file.close()

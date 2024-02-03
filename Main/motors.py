@@ -25,6 +25,8 @@ ADDR_GOAL_VELOCITY = 104
 ADDR_PRESENT_VELOCITY = 128
 
 SETUP_WAIT_TIME = 0.1 # seconds
+SETUP_SHUTDOWN_COMMAND_REPEAT = 3
+MAX_WRITES = 3
 # ---------------------------------------------------------------------------- #
 
 
@@ -33,6 +35,7 @@ DYNAMIXEL_IDS = { # DYNAMIXEL_IDS[side] = [id1, id2]
 	"left": [1, 3],
 	"right": [2, 4],
 }
+ALL_IDS = [1, 2, 3, 4]
 ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
 	"left": 1,
 	"right": -1,
@@ -68,58 +71,83 @@ class DynamixelController:
 			"left": 0,
 			"right": 0,
 		}
-		self.writes = 1
+		self.to_writes = { # to_writes[id] = #
+			1: 0,
+			2: 0,
+			3: 0,
+			4: 0,
+		}
+		self.has_wrote = { # has_wrote[id] = #
+			1: 0,
+			2: 0,
+			3: 0,
+			4: 0,
+		}
+		self.min_writes = 1
 
 	def setup(self):
-		for side_ids in DYNAMIXEL_IDS.values():
-			for id in side_ids:
-				for addr, value in [
-					# (ADDR_BAUDRATE, BAUDRATE_VALUE),
-					# (ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
-					(ADDR_TORQUE_ENABLE, 0),
-					(ADDR_OPERATING_MODE, OPERATING_MODE_VALUE),
-					# (ADDR_VELOCITY_LIMIT, self.velocity_limit),
-					(ADDR_TORQUE_ENABLE, 1),
-				]:
-					self.command(id, addr, value)
-					time.sleep(SETUP_WAIT_TIME)
+		for id in ALL_IDS:
+			for addr, value in [
+				# (ADDR_BAUDRATE, BAUDRATE_VALUE),
+				# (ADDR_RETURN_DELAY_TIME, RETURN_DELAY_TIME_VALUE),
+				(ADDR_TORQUE_ENABLE, 0),
+				(ADDR_OPERATING_MODE, OPERATING_MODE_VALUE),
+				# (ADDR_VELOCITY_LIMIT, self.velocity_limit),
+				(ADDR_TORQUE_ENABLE, 1),
+			]:
+				self.command(id, addr, value, SETUP_SHUTDOWN_COMMAND_REPEAT)
+				time.sleep(SETUP_WAIT_TIME)
 
 	def close(self):
-		for side_ids in DYNAMIXEL_IDS.values():
-			for id in side_ids:
-				for addr, value in [
-					(ADDR_TORQUE_ENABLE, 0),
-				]:
-					self.command(id, addr, value)
-					time.sleep(SETUP_WAIT_TIME)
+		for id in ALL_IDS:
+			for addr, value in [
+				(ADDR_TORQUE_ENABLE, 0),
+			]:
+				self.command(id, addr, value, SETUP_SHUTDOWN_COMMAND_REPEAT)
+				time.sleep(SETUP_WAIT_TIME)
 
 		self.port_handler.closePort()
 
 	def reset_motors(self):
-		for side_ids in DYNAMIXEL_IDS.values():
-			for id in side_ids:
-				self.packet_handler.reboot(self.port_handler, id)
+		for id in ALL_IDS:
+			self.packet_handler.reboot(self.port_handler, id)
 
-	def command(self, id, addr, value):
-		for _ in range(self.writes):
+	def command(self, id, addr, value, repeat = 1):
+		for _ in range(repeat):
 			if self.tx_rx:
 				dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, addr, value)
 				if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
 					print(f"dxl_comm_result error {id} {addr} {value} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+					if repeat == 1: return False
 				elif dxl_error != 0:
 					print(f"dxl_error error {id} {addr} {value} {self.packet_handler.getRxPacketError(dxl_error)}")
+					if repeat == 1: return False
+				else:
+					if repeat == 1: return True
 			else:
 				# TODO: check - does the discarded response interfere with next transmission?
-				self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)	
+				self.packet_handler.write4ByteTxOnly(self.port_handler, id, addr, value)
+				if repeat == 1: return True
 
-	def update_speed(self):
+	def update_speeds(self, speeds):
+		self.speeds = speeds
+		for id in self.to_writes:
+			self.to_writes[id] = self.min_writes
+			self.has_wrote[id] = 0
+
+	def try_update_speeds(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
 			speed = self.speeds[side]
 			power = int(speed * self.velocity_limit) * orientation
 
 			for id in side_ids:
-				self.command(id, ADDR_GOAL_VELOCITY, power)
+				if self.to_writes[id] > 0 and self.has_wrote[id] < MAX_WRITES:
+					success = self.command(id, ADDR_GOAL_VELOCITY, power)
+					print(f"success? {id} {success} {power}")
+					self.has_wrote[id] += 1
+					if success:
+						self.to_writes[id] -= 1
 
 	def update_status_and_check_errors(self):
 		error_codes = {} # error_codes[id] = error_code
@@ -143,6 +171,15 @@ class DynamixelController:
 				if error_code > 0:
 					print(f"error_code {id} {error_code}")
 					self.reset_motors()
+
+	# def update_speed(self):
+	# 	for side, side_ids in DYNAMIXEL_IDS.items():
+	# 		orientation = ORIENTATIONS[side]
+	# 		speed = self.speeds[side]
+	# 		power = int(speed * self.velocity_limit) * orientation
+
+	# 		for id in side_ids:
+	# 			self.command(id, ADDR_GOAL_VELOCITY, power)
 # ---------------------------------------------------------------------------- #
 
 
