@@ -108,7 +108,7 @@ class DynamixelController:
 
 		self.port_handler.closePort()
 
-	def reset_motors(self):
+	def reboot_all_motors(self):
 		for id in ALL_IDS:
 			self.packet_handler.reboot(self.port_handler, id)
 
@@ -170,7 +170,7 @@ class DynamixelController:
 			for id, error_code in error_codes.items():
 				if error_code > 0:
 					print(f"error_code {id} {error_code}")
-					self.reset_motors()
+			self.reboot_all_motors()
 
 	# def update_speed(self):
 	# 	for side, side_ids in DYNAMIXEL_IDS.items():
