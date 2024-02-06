@@ -27,6 +27,7 @@ ADDR_PRESENT_VELOCITY = 128
 SETUP_WAIT_TIME = 0.1 # seconds
 SETUP_SHUTDOWN_COMMAND_REPEAT = 3
 MAX_WRITES = 3
+CLOSE_WAIT_TIME = 2
 # ---------------------------------------------------------------------------- #
 
 
@@ -106,6 +107,7 @@ class DynamixelController:
 				self.command(id, addr, value, SETUP_SHUTDOWN_COMMAND_REPEAT)
 				time.sleep(SETUP_WAIT_TIME)
 
+		time.sleep(CLOSE_WAIT_TIME)
 		self.port_handler.closePort()
 
 	def reboot_all_motors(self):

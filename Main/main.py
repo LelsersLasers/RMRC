@@ -220,7 +220,9 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
         if not zero_video_capture:
             # dxl_controller.close()
             dxl_controller.set_torque_status(False)
+            time.sleep(2.0)
             dxl_controller.close_port()
+            print("Closed dynamixel controller...")
 # ---------------------------------------------------------------------------- #
 
 
