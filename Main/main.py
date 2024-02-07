@@ -24,8 +24,9 @@ import util
 import hazmat
 import qr_detect
 import motion_detect
-import motors
+# import motors
 # import motors2
+import motors3
 
 import cv2
 import numpy as np
@@ -156,9 +157,10 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
 
     try:
         if not zero_video_capture:
-            dxl_controller = motors.DynamixelController(tx_rx)
-            # dxl_controller.set_torque_status(True)
-            dxl_controller.setup()
+            # dxl_controller = motors.DynamixelController(tx_rx)
+            # dxl_controller.setup()
+            dxl_controller = motors3.DynamixelController()
+            dxl_controller.set_torque_status(True)
 
         while not motor_ds.s1["quit"]:
             server_motor_ds.update_s1(server_motor_dq)
@@ -198,7 +200,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                     dxl_controller.update_speeds(dxl_controller.speeds)
                     # dxl_controller.update_speed()
                     
-                dxl_controller.try_update_speeds()
+                dxl_controller.try_write_speeds()
                 dxl_controller.update_status_and_check_errors()
 
                 server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds

@@ -137,7 +137,7 @@ class DynamixelController:
 			self.to_writes[id] = self.min_writes
 			self.has_wrote[id] = 0
 
-	def try_update_speeds(self):
+	def try_write_speeds(self):
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
 			speed = self.speeds[side]
