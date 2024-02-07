@@ -96,7 +96,7 @@ class DynamixelController:
 				# (ADDR_VELOCITY_LIMIT, self.velocity_limit),
 				(ADDR_TORQUE_ENABLE, 1),
 			]:
-				self.command(id, addr, value, SETUP_SHUTDOWN_COMMAND_REPEAT)
+				self.command(id, addr, int(value), SETUP_SHUTDOWN_COMMAND_REPEAT)
 				time.sleep(SETUP_WAIT_TIME)
 
 	def close(self):
