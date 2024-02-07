@@ -141,7 +141,7 @@ class DynamixelController:
 		for side, side_ids in DYNAMIXEL_IDS.items():
 			orientation = ORIENTATIONS[side]
 			speed = self.speeds[side]
-			power = int(speed * self.velocity_limit) * orientation
+			power = int(speed * self.velocity_limit * orientation)
 
 			for id in side_ids:
 				if self.to_writes[id] > 0 and self.has_wrote[id] < MAX_WRITES:
