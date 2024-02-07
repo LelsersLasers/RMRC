@@ -195,7 +195,7 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
                         dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
 
                     print(f"Writing speeds: {dxl_controller.speeds}")
-                    dxl_controller.update_speeds()
+                    dxl_controller.update_speeds(dxl_controller.speeds)
                     # dxl_controller.update_speed()
                     
                 dxl_controller.try_update_speeds()
