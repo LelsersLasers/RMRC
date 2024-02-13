@@ -1,4 +1,5 @@
 import dynamixel_sdk
+import time
 
 DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
@@ -6,6 +7,7 @@ PROTOCOL_VERSION = 2.0
 BAUDRATE = 57600
 MAX_POWER_START = 330
 MAX_WRITES = 3
+CLOSE_WAIT_TIME = 2
 
 ADDR_TORQUE_ENABLE = 64
 ADDR_GOAL_VELOCITY = 104
@@ -65,8 +67,13 @@ class DynamixelController:
 			for id in side_ids:
 				self.packet_handler.reboot(self.port_handler, id)
 
-	def close_port(self):
+	def close(self):
+		self.set_torque_status(False)
+		time.sleep(CLOSE_WAIT_TIME)
 		self.port_handler.closePort()
+
+	# def close_port(self):
+	# 	self.port_handler.closePort()
 
 	def set_torque_status(self, status):
 		status_code = 1 if status else 0
