@@ -1,6 +1,9 @@
 import dynamixel_sdk
 import time
 
+# https://emanual.robotis.com/docs/en/dxl/x/xm430-w210/
+# https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/api_reference/python/python_porthandler/#python
+
 DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
 
