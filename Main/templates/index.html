@@ -79,29 +79,20 @@ p {
 	min-width: 20px;
 }
 
-.outerbar {
+
+.threebar-base {
 	border-top-right-radius: 10px;
 	border-bottom-right-radius: 10px;
 
 	border-top-left-radius: 5px;
 	border-bottom-left-radius: 5px;
 	
-	transition: width 0.1s linear;
+	transition: width 0.1s linear, background-color 0.1s linear;
 	
     margin: 0;
 	padding: 0;
 }
 .innerbar {
-	border-top-right-radius: 10px;
-	border-bottom-right-radius: 10px;
-
-	border-top-left-radius: 5px;
-	border-bottom-left-radius: 5px;
-
-	transition: width 0.1s linear;
-
-	margin: 0;
-	padding: 0;
 	padding-top: 0.1em;
     padding-bottom: 0.1em;
 }
@@ -281,17 +272,17 @@ input[type="range"] {
             <output id="power-ouput">60%</output>
             <input type="range" id="power" name="power" min="1" max="100" step="1" value="60" oninput="powerSlider()" />
 			
-			<div class="outerbar blankbar" id="left-outline">
-				<div class="outerbar" id="left-outer">
-					<div class="innerbar" id="left-inner">
+			<div class="threebar-base blankbar" id="left-outline">
+				<div class="threebar-base" id="left-outer">
+					<div class="threebar-base innerbar" id="left-inner">
 						<span class="mono" id="motor-left">   0.00% ~    0.00% (left)</span>
 					</div>
 				</div>
 			</div>
 
-			<div class="outerbar blankbar" id="right-outline">
-				<div class="outerbar" id="right-outer">
-					<div class="innerbar" id="right-inner">
+			<div class="threebar-base blankbar" id="right-outline">
+				<div class="threebar-base" id="right-outer">
+					<div class="threebar-base innerbar" id="right-inner">
 						<span class="mono" id="motor-right">   0.00% ~    0.00% (right)</span>
 					</div>
 				</div>
