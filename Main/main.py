@@ -197,15 +197,15 @@ def motor_main(server_motor_dq, motor_dq, zero_video_capture):
                 dxl_controller.try_write_speeds()
                 dxl_controller.update_status_and_check_errors()
 
-                server_motor_ds.s2["motors"]["target"] = dxl_controller.speeds
+                server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
             else:
-                server_motor_ds.s2["motors"]["target"]["left"] = server_motor_ds.s1["left"]
+                server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
 
                 # just to test
-                server_motor_ds.s2["motors"]["current"]["left"] = server_motor_ds.s1["left"]
-                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"]
+                server_motor_ds.s2["motors"]["current"]["left"]  = server_motor_ds.s1["left"] / 2.0
+                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] / 2.0
 
                 time.sleep(1 / MOTOR_TEST_FPS)
 

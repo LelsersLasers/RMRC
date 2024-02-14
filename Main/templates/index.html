@@ -555,8 +555,8 @@ input[type="range"] {
                             const target_abs  = Math.abs(target);
 
                             const adjust_target_width = target_abs < current_abs || target_abs == 0;
-							const current_width = adjust_target_width ? Math.abs((100 / target) * current) : 100;
-                            const target_width  = adjust_target_width ? target_abs : current_abs;
+							const current_width = adjust_target_width ? 100 : Math.abs((100 / target) * current);
+                            const target_width  = adjust_target_width ? current_abs : target_abs;
 
 							const target_ele = document.getElementById(motors_id + "-target");
 							target_ele.style.width = target_width + "%";
