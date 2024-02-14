@@ -86,7 +86,7 @@ p {
 	border-top-left-radius: 5px;
 	border-bottom-left-radius: 5px;
 	
-	transition: width 0.1s linear, background-color 0.1s linear;
+	transition: width 0.1s linear;
 	
     margin: 0;
 	padding: 0;
@@ -282,16 +282,16 @@ input[type="range"] {
             <input type="range" id="power" name="power" min="1" max="100" step="1" value="60" oninput="powerSlider()" />
 			
 			<div class="outerbar blankbar" id="left-outline">
-				<div class="outerbar" id="left-target">
-					<div class="innerbar" id="left-current">
+				<div class="outerbar" id="left-outer">
+					<div class="innerbar" id="left-inner">
 						<span class="mono" id="motor-left">   0.00% ~    0.00% (left)</span>
 					</div>
 				</div>
 			</div>
 
 			<div class="outerbar blankbar" id="right-outline">
-				<div class="outerbar" id="right-target">
-					<div class="innerbar" id="right-current">
+				<div class="outerbar" id="right-outer">
+					<div class="innerbar" id="right-inner">
 						<span class="mono" id="motor-right">   0.00% ~    0.00% (right)</span>
 					</div>
 				</div>
@@ -556,14 +556,14 @@ input[type="range"] {
                             const current_abs = Math.abs(current);
                             const target_abs  = Math.abs(target);
 
-                            const adjust_target_width = target_abs < current_abs || target_abs == 0;
-							const current_width = adjust_target_width ? 100 : Math.abs((100 / target) * current);
-                            const target_width  = adjust_target_width ? current_abs : target_abs;
+							const outer_width = Math.max(current_abs, target_abs);
+							const inner_width_raw = Math.min(current_abs, target_abs);
+							const inner_width = inner_width_raw / outer_width * 100;
 
-							const target_ele = document.getElementById(motors_id + "-target");
-							target_ele.style.width = target_width + "%";
-							const current_ele = document.getElementById(motors_id + "-current");
-							current_ele.style.width = current_width + "%";
+							const outer_ele = document.getElementById(motors_id + "-outer");
+							outer_ele.style.width = outer_width + "%";
+							const inner_ele = document.getElementById(motors_id + "-inner");
+							inner_ele.style.width = inner_width + "%";
 
 							const motor_ele = document.getElementById("motor-" + motors_id);
 
@@ -572,19 +572,25 @@ input[type="range"] {
                             const target_text  = target.toFixed(2).padStart(7, " ");
                             motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${motors_id})`;
 
+							let target_ele = outer_ele;
+							let current_ele = inner_ele;
+							if (current_abs > target_abs) {
+								target_ele = inner_ele;
+								current_ele = outer_ele;
+							}
+
+							target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+							current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+
 							if (target < 0) {
-								target_ele.classList.remove("forward-light");
 								target_ele.classList.add("backward-light");
 							} else {
-								target_ele.classList.remove("backward-light");
 								target_ele.classList.add("forward-light");
 							}
 
 							if (current < 0) {
-								current_ele.classList.remove("forward-dark");
 								current_ele.classList.add("backward-dark");
 							} else {
-								current_ele.classList.remove("backward-dark");
 								current_ele.classList.add("forward-dark");
 							}
 						}
