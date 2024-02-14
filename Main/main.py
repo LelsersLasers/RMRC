@@ -204,8 +204,11 @@ def motor_main(server_motor_dq, motor_dq, zero_video_capture):
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
 
                 # just to test
-                server_motor_ds.s2["motors"]["current"]["left"]  = server_motor_ds.s1["left"] / 2.0
-                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] / 2.0
+                import random
+                ratio_left  = random.random() + 0.5
+                ratio_right = random.random() + 0.5
+                server_motor_ds.s2["motors"]["current"]["left"]  = server_motor_ds.s1["left"] * ratio_left
+                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] * ratio_right
 
                 time.sleep(1 / MOTOR_TEST_FPS)
 
