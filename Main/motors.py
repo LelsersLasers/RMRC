@@ -137,6 +137,8 @@ class DynamixelController:
 				# adjust for 2's complement
 				if dxl_present_velocity > 0x7fffffff:
 					dxl_present_velocity = dxl_present_velocity - 4294967296
+				# if dxl_present_current > 0x7fff:
+				# 	dxl_present_current = dxl_present_current - 65536
 
 				error_codes[id] = error_code
 				any_errors.append(error_code > 0)
