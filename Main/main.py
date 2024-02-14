@@ -157,8 +157,6 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
 
     try:
         if not zero_video_capture:
-            # dxl_controller = motors.DynamixelController(tx_rx)
-            # dxl_controller.setup()
             dxl_controller = motors3.DynamixelController()
             dxl_controller.set_torque_status(True)
 
@@ -173,7 +171,6 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
 
             if not zero_video_capture:
                 dxl_controller.min_writes = server_motor_ds.s1["motor_writes"]
-                # dxl_controller.writes = server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
                 velocity_limit_changed = server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count
@@ -198,7 +195,6 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
 
                     print(f"Writing speeds: {dxl_controller.speeds}")
                     dxl_controller.update_speeds(dxl_controller.speeds)
-                    # dxl_controller.update_speed()
                     
                 dxl_controller.try_write_speeds()
                 dxl_controller.update_status_and_check_errors()
@@ -221,9 +217,6 @@ def motor_main(server_motor_dq, motor_dq, tx_rx, zero_video_capture):
         print("Closing dynamixel controller...")
         if not zero_video_capture:
             dxl_controller.close()
-            # dxl_controller.set_torque_status(False)
-            # time.sleep(2.0)
-            # dxl_controller.close_port()
             print("Closed dynamixel controller...")
 # ---------------------------------------------------------------------------- #
 
