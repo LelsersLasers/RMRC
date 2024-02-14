@@ -65,7 +65,7 @@ class DynamixelController:
 		}
 		self.min_writes = 1
 
-	def reset_motors(self):
+	def reboot_all_motors(self):
 		for side_ids in DYNAMIXEL_IDS.values():
 			for id in side_ids:
 				self.packet_handler.reboot(self.port_handler, id)
@@ -151,4 +151,4 @@ class DynamixelController:
 			for id, error_code in error_codes.items():
 				if error_code > 0:
 					print(f"error_code {id} {error_code}")
-					self.reset_motors()
+			self.reboot_all_motors()
