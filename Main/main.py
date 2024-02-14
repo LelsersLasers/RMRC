@@ -24,9 +24,7 @@ import util
 import hazmat
 import qr_detect
 import motion_detect
-# import motors
-# import motors2
-import motors3
+import motors
 
 import cv2
 import numpy as np
@@ -157,7 +155,7 @@ def motor_main(server_motor_dq, motor_dq, zero_video_capture):
 
     try:
         if not zero_video_capture:
-            dxl_controller = motors3.DynamixelController()
+            dxl_controller = motors.DynamixelController()
             dxl_controller.set_torque_status(True)
 
         while not motor_ds.s1["quit"]:
