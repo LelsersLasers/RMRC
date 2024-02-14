@@ -191,6 +191,7 @@ def motor_main(server_motor_dq, motor_dq, zero_video_capture):
                         dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
                         dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
 
+					# MARK-A
                     print(f"Writing speeds: {dxl_controller.speeds}")
                     dxl_controller.update_speeds(dxl_controller.speeds)
                     
@@ -215,8 +216,8 @@ def motor_main(server_motor_dq, motor_dq, zero_video_capture):
             server_motor_ds.put_s2(server_motor_dq)
     except KeyboardInterrupt: pass
     finally:
-        print("Closing dynamixel controller...")
         if not zero_video_capture:
+            print("Closing dynamixel controller...")
             dxl_controller.close()
             print("Closed dynamixel controller...")
 # ---------------------------------------------------------------------------- #

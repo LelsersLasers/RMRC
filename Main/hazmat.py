@@ -69,8 +69,6 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
 
     # ------------------------------------------------------------------------ #
     combine_nearby(detection_results) # support for 2 words per label
-
-    # TODO: is this needed
     combine_nearby(detection_results) # support for 3 words per label
     # ------------------------------------------------------------------------ #
     
