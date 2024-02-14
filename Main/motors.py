@@ -104,9 +104,6 @@ class DynamixelController:
 				if self.to_writes[id] > 0 and self.has_wrote[id] < MAX_WRITES:
 					success = True
 
-					# MARK-A
-					print(f"try_write_speeds {id} {power} {speed} {orientation} {self.velocity_limit}")
-					
 					dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
 					if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
 						print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
@@ -143,8 +140,6 @@ class DynamixelController:
 
 				error_codes[id] = error_code
 				any_errors.append(error_code > 0)
-
-				print(f"status {id} {dxl_present_velocity} {error_code}")
 				
 				self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
 
