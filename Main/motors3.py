@@ -131,6 +131,7 @@ class DynamixelController:
 				dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
 				error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
 				
+				# adjust for 2's complement
 				if dxl_present_velocity > 0x7fffffff:
 					dxl_present_velocity = dxl_present_velocity - 4294967296
 
