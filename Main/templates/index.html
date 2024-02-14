@@ -342,6 +342,8 @@ input[type="range"] {
 
 			<h4>Controls</h4>
 			<p>
+				Hold <kbd>wasd</kbd> to move the robot.<br />
+				Hold <kbd>z</kbd> to set all motor speeds to 0.<br />
 				Press <kbd>h</kbd> to toggle running hazmat detection.<br />
 				Press <kbd>r</kbd> to toggle running QR detection.<br />
 				Press <kbd>m</kbd> to toggle running motion detection.<br />
@@ -807,7 +809,7 @@ input[type="range"] {
 			const key = e.key.toLowerCase();
 			keys[key] = true;
 
-			if (e.repeat) return
+			if (e.repeat && key != "z") return;
 
 			if (key == "w" || key == "a" || key == "s" || key == "d") {
 				calculate_power();
@@ -844,6 +846,10 @@ input[type="range"] {
 				fetchAndInfo(FLASK_SERVER + "clear/hazmat");
 			} else if (key == "x") {
 				fetchAndInfo(FLASK_SERVER + "clear/qr");
+			} else if (key == "z") {
+				const base_path = "motors";
+				const path = base_path + "/0/0";
+				fetchAndInfo(FLASK_SERVER + path);
 			}
 
 			display_keys();

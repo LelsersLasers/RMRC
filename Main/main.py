@@ -495,12 +495,14 @@ def ratio_bar(frame, ratio, active, loading = False):
 
 
 def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
-    print(f"\nPress 'h' to toggle running hazmat detection.")
-    print(f"Press 'r' to toggle running qr detection.")
-    print(f"Press 'm' to toggle running motion detection.")
-    print(f"Press 'c' to clear all found hazmat labels.")
-    print(f"Press 'x' to clear all found QR codes.")
-    print(f"Press 't'/'T' to increase/decrease power by 20%.")
+    print("\nHold 'wasd' to move the robot.")
+    print("Hold 'z' to set all motor speeds to 0.")
+    print("Press 'h' to toggle running hazmat detection.")
+    print("Press 'r' to toggle running qr detection.")
+    print("Press 'm' to toggle running motion detection.")
+    print("Press 'c' to clear all found hazmat labels.")
+    print("Press 'x' to clear all found QR codes.")
+    print("Press 't'/'T' to increase/decrease power by 20%.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
