@@ -240,6 +240,11 @@ input[type="range"] {
 	cursor: pointer;
 }
 
+.mono {
+    font-family: monospace;
+    white-space: pre;
+}
+
 #main {
 	width: 100%;
 	height: 100%;
@@ -276,7 +281,7 @@ input[type="range"] {
 			<div class="outerbar blankbar" id="left-outline">
 				<div class="outerbar" id="left-target">
 					<div class="innerbar" id="left-current">
-						<span id="motor-left">0% (0%) (left)</span>
+						<span class="mono" id="motor-left">   0.00% ~    0.00% (left)</span>
 					</div>
 				</div>
 			</div>
@@ -284,7 +289,7 @@ input[type="range"] {
 			<div class="outerbar blankbar" id="right-outline">
 				<div class="outerbar" id="right-target">
 					<div class="innerbar" id="right-current">
-						<span id="motor-right">0% (0%) (right)</span>
+						<span class="mono" id="motor-right">   0.00% ~    0.00% (right)</span>
 					</div>
 				</div>
 			</div>
@@ -540,15 +545,15 @@ input[type="range"] {
 						for (let i = 0; i < motors_ids.length; i++) {
 							const motors_id = motors_ids[i];
 
-							const target = motors["target"][motors_id] * 100;
+							const target  = motors["target"][motors_id]  * 100;
 							const current = motors["current"][motors_id] * 100;
 
-                            const target_abs = Math.abs(target);
                             const current_abs = Math.abs(current);
+                            const target_abs  = Math.abs(target);
 
                             const adjust_target_width = target_abs < current_abs || target_abs == 0;
 							const current_width = adjust_target_width ? Math.abs((100 / target) * current) : 100;
-                            const target_width =  adjust_target_width ? target_abs : current_abs;
+                            const target_width  = adjust_target_width ? target_abs : current_abs;
 
 							const target_ele = document.getElementById(motors_id + "-target");
 							target_ele.style.width = target_width + "%";
@@ -556,7 +561,11 @@ input[type="range"] {
 							current_ele.style.width = current_width + "%";
 
 							const motor_ele = document.getElementById("motor-" + motors_id);
-							motor_ele.innerHTML = `${current.toFixed(0)}% (${target.toFixed(0)}%) (${motors_id})`;
+
+                            // 7: 0-100 (3) + "." + 2 decimal places + sign
+                            const current_text = current.toFixed(2).padStart(7, " ");
+                            const target_text  = target.toFixed(2).padStart(7, " ");
+                            motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${motors_id})`;
 
 							if (target < 0) {
 								target_ele.classList.remove("forward-light");
