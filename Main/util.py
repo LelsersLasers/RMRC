@@ -9,16 +9,6 @@ import scipy
 
 from multiprocessing import Queue
 
-# ---------------------------------------------------------------------------- #
-class ViewMode:
-    GRID = 0
-    ZOOM = 1
-
-    def __init__(self, start_mode = GRID):
-        self.mode = start_mode
-        self.zoom_on = -1
-# ---------------------------------------------------------------------------- #
-
 
 # ---------------------------------------------------------------------------- #
 class Toggler:
