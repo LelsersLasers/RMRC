@@ -11,40 +11,6 @@ from multiprocessing import Queue
 
 
 # ---------------------------------------------------------------------------- #
-class Toggler:
-    def __init__(self, start_state=False):
-        self.state = start_state
-
-    def toggle(self):
-        self.state = not self.state
-
-    def get(self):
-        return self.state
-    
-    def __bool__(self):
-        return self.state
-    
-    def __str__(self):
-        return str(self.state)
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
-class ToggleKey:
-    def __init__(self, default = False):
-        self.was_down = default
-
-    def down(self, condition):
-        if not self.was_down and condition:
-            self.was_down = True
-            return True
-        elif not condition:
-            self.was_down = False
-        return False
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
 class FPSController:
     def __init__(self, start_delta = 1/30):
         self.t0 = time.time()
