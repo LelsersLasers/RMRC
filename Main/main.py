@@ -327,6 +327,10 @@ def server_main(server_dq, server_motor_dq):
         return response
 
     app.run(debug=False, port=5000, host="0.0.0.0")
+
+    # TODO: should it be threaded or not?
+    # app.run(debug=False, port=5000, host="0.0.0.0", threaded=False)
+    # app.run(debug=False, port=5000, host="0.0.0.0", processes=1)
 # ---------------------------------------------------------------------------- #
 
 
