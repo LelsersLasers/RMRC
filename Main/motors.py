@@ -10,7 +10,7 @@ PROTOCOL_VERSION = 2.0
 BAUDRATE = 57600
 MAX_POWER_START = 330
 MAX_WRITES = 3
-CLOSE_WAIT_TIME = 0.5
+CLOSE_WAIT_TIME = 0.25
 
 ADDR_TORQUE_ENABLE = 64
 ADDR_GOAL_VELOCITY = 104
@@ -71,8 +71,19 @@ class DynamixelController:
 				self.packet_handler.reboot(self.port_handler, id)
 
 	def close(self):
-		self.set_torque_status(False)
+		self.update_speeds({
+			"left": 0,
+			"right": 0,
+		})
+		for _ in range(MAX_WRITES):
+			self.try_write_speeds()
+
 		time.sleep(CLOSE_WAIT_TIME)
+
+		self.set_torque_status(False)
+
+		time.sleep(CLOSE_WAIT_TIME)
+		
 		self.port_handler.closePort()
 
 	# def close_port(self):
