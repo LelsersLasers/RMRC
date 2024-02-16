@@ -34,21 +34,24 @@ import logging
 
 
 GPU_LOG_FILENAME = "tegrastats.log"
-CAMERA_WAKEUP_TIME = 1.5
-CAMERA_NONE_GREY = 50
-HAZMAT_LEVENSHTEIN_THRESH = 0.4
+SERVER_FRAME_SCALE = 1
+MOTOR_SHUTOFF_TIME = 1.0 # in seconds
+
 HAZMAT_DRY_FPS = 15
-HAZMAT_ANGLE = 90
+MOTOR_TEST_FPS = 10
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
 MOTION_TIME_BAR_SCALE = 0.1 # in seconds
+
+CAMERA_WAKEUP_TIME = 1.5
+CAMERA_NONE_GREY = 50
+
 MOTION_MIN_AREA = 500
 MOTION_THRESHOLD = 65
 MOTION_NEW_FRAME_WEIGHT = 0.4
-SERVER_FRAME_SCALE = 1
-MOTOR_TEST_FPS = 10
-MOTOR_SHUTOFF_TIME = 1.0 # in seconds
 
+HAZMAT_LEVENSHTEIN_THRESH = 0.4
+HAZMAT_ANGLE = 90
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
