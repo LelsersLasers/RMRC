@@ -362,6 +362,7 @@ def hazmat_main(hazmat_dq):
 
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
     last_clear = 0
+    hazmat_angle_change = STATE_HAZMAT_MASTER["hazmat_angle_change"]
 
     print("Creating easyocr reader...")
     reader = easyocr.Reader(["en"], gpu=True)
@@ -380,6 +381,9 @@ def hazmat_main(hazmat_dq):
 
             if hazmat_ds.s1["frame"] is not None:
                 frame = hazmat_ds.s1["frame"]
+
+                if not hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] == 0:
+                    hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
 
                 if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
 
@@ -421,7 +425,6 @@ def hazmat_main(hazmat_dq):
                         print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
                         print(all_found)
 
-                    hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
                     hazmat_ds.s2["angle"] += hazmat_angle_change
                     hazmat_ds.s2["angle"] %= 360
                 else:
