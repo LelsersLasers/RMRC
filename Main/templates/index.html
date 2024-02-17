@@ -390,9 +390,9 @@ input[type="range"] {
 			<output id="hazmat_levenshtein_thresh-output">0.4</output>
 			<input type="range" id="hazmat_levenshtein_thresh" name="hazmat_levenshtein_thresh" min="0" max="1" step="0.05" value="0.4" oninput="slider('hazmat_levenshtein_thresh', true)" />
 
-			<label for="hazmat_angle_change">Hazmat Angle (should divide 360): </label>
+			<label for="hazmat_angle_change">Hazmat Angle Change: </label>
 			<output id="hazmat_angle_change-output">90</output>
-			<input type="range" id="hazmat_angle_change" name="hazmat_angle_change" min="0" max="180" step="1" value="90" oninput="slider('hazmat_angle_change')" />
+			<input type="range" id="hazmat_angle_change" name="hazmat_angle_change" min="0" max="360" step="1" value="90" oninput="slider('hazmat_angle_change')" />
 
 			<h4>Debug Info</h4>
             <p id="calibration"></p>
@@ -787,12 +787,20 @@ input[type="range"] {
 			const value = float ? parseFloat(ele.value) : parseInt(ele.value);
 			console.log(value);
 			const output = document.getElementById(key + "-output");
-			output.innerHTML = value;
-			config_sliders[key] = value;
+
+			if (key == "hazmat_angle_change") {
+				// round to nearest divisor of 360
+				const divisors = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 60, 72, 90, 120, 180, 360];
+				const rounded = divisors.reduce((prev, curr) => Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev);
+				output.innerHTML = rounded;
+				config_sliders[key] = rounded;
+			} else {
+				output.innerHTML = value;
+				config_sliders[key] = value;
+			}
 
 			const type = CONFIG_TYPE[key];
-
-			fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + value);
+			fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + config_sliders[key]);
 		}
 
 		// function velocityLimitSlider() {
