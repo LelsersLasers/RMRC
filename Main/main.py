@@ -46,12 +46,6 @@ MOTION_TIME_BAR_SCALE = 0.1 # in seconds
 CAMERA_WAKEUP_TIME = 1.5
 CAMERA_NONE_GREY = 50
 
-MOTION_MIN_AREA = 500
-MOTION_THRESHOLD = 65
-MOTION_NEW_FRAME_WEIGHT = 0.4
-
-HAZMAT_LEVENSHTEIN_THRESH = 0.4
-HAZMAT_ANGLE = 90
 
 # ---------------------------------------------------------------------------- #
 # What master thread sends
@@ -60,6 +54,8 @@ STATE_HAZMAT_MASTER = {
     "run_hazmat": False,
     "quit": False,
     "clear": 0, # increment to clear all found hazmat labels
+    "hazmat_levenshtein_thresh": 0.4,
+    "hazmat_angle_change": 90,
 }
 # What hazmat thread sends
 STATE_HAZMAT = {
@@ -108,7 +104,11 @@ STATE_SERVER = {
         "qr": 0,
     },
     "view_mode": 0,
-    "power": 60,
+    "motion_min_area": 500,
+    "motion_threshold": 65,
+    "motion_new_frame_weight": 0.4,
+    "hazmat_levenshtein_thresh": 0.4,
+    "hazmat_angle_change": 90,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -119,7 +119,7 @@ STATE_MOTOR_SERVER = {
     "count": 0,
     "last_get": time.time(),
     "velocity_limit": {
-		"value": -1,
+		"value": 330,
 		"count": 0,
     },
     "motor_writes": 1,
@@ -252,20 +252,22 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/velocity_limit/<value>", methods=["GET"])
-    def velocity_limit(value):
-        server_motor_ds.s1["velocity_limit"]["value"] = int(value)
-        server_motor_ds.s1["velocity_limit"]["count"] += 1
-        server_motor_ds.put_s1(server_motor_dq)
-
-        response = jsonify(value)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/motor_writes/<value>", methods=["GET"])
-    def motor_writes(value):
-        server_motor_ds.s1["motor_writes"] = int(value)
-        server_motor_ds.put_s1(server_motor_dq)
+    @app.route("/config/<type>/<key>/<value>", methods=["GET"])
+    def config(type, key, value):
+        if type == "motor":
+            if key == "velocity_limit":
+                server_motor_ds.s1["velocity_limit"]["value"] = int(value)
+                server_motor_ds.s1["velocity_limit"]["count"] += 1
+                server_motor_ds.put_s1(server_motor_dq)
+            else:
+                server_motor_ds.s1[key] = int(value)
+                server_motor_ds.put_s1(server_motor_dq)
+        else:
+            try:
+                server_ds.s2[key] = int(value)
+            except ValueError:
+                server_ds.s2[key] = float(value)
+            server_ds.put_s2(server_dq)
 
         response = jsonify(value)
         response.headers.add("Access-Control-Allow-Origin", "*")
@@ -350,7 +352,7 @@ def server_main(server_dq, server_motor_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq, levenshtein_thresh):
+def hazmat_main(hazmat_dq):
     fps_controller = util.FPSController()
 
     all_found = []
@@ -381,6 +383,7 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
 
                 if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
 
+                    levenshtein_thresh = hazmat_ds.s1["hazmat_levenshtein_thresh"]
                     frame_results = hazmat.processScreenshot(frame, hazmat_ds.s2["angle"], reader, levenshtein_thresh)
                     levenshtein_results[hazmat_ds.s2["angle"]] = frame_results
 
@@ -418,7 +421,8 @@ def hazmat_main(hazmat_dq, levenshtein_thresh):
                         print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
                         print(all_found)
 
-                    hazmat_ds.s2["angle"] += HAZMAT_ANGLE
+                    hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
+                    hazmat_ds.s2["angle"] += hazmat_angle_change
                     hazmat_ds.s2["angle"] %= 360
                 else:
                     hazmat_ds.s2["angle"] = 0
@@ -621,7 +625,9 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             ratio_bar(frame, (end - start) / QR_TIME_BAR_SCALE, True)
         elif server_ds.s2["run"]["md"]:
             start = time.time()
-            motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, MOTION_MIN_AREA, MOTION_THRESHOLD)
+            motion_min_area = server_ds.s2["motion_min_area"]
+            motion_threshold = server_ds.s2["motion_threshold"]
+            motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, motion_min_area, motion_threshold)
             end = time.time()
 
             ratio_bar(frame, (end - start) / MOTION_TIME_BAR_SCALE, True, True)
@@ -630,7 +636,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
         if update_average_frame:
             update_average_frame = False
-            cv2.accumulateWeighted(frame_copy.astype("float"), average_frame, MOTION_NEW_FRAME_WEIGHT)
+            motion_new_frame_weight = server_ds.s2["motion_new_frame_weight"]
+            cv2.accumulateWeighted(frame_copy.astype("float"), average_frame, motion_new_frame_weight)
         # -------------------------------------------------------------------- #
 
 
@@ -646,6 +653,9 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
         # -------------------------------------------------------------------- #
         hazmat_ds.s1["run_hazmat"] = server_ds.s2["run"]["hazmat"]
         hazmat_ds.s1["clear"] = server_ds.s2["clear"]["hazmat"]
+
+        hazmat_ds.s1["hazmat_levenshtein_thresh"] = server_ds.s2["hazmat_levenshtein_thresh"]
+        hazmat_ds.s1["hazmat_angle_change"] = server_ds.s2["hazmat_angle_change"]
 
         hazmat_ds.s1["frame"] = frame_copy
         hazmat_ds.put_s1(hazmat_dq)
@@ -768,10 +778,7 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(
-        target=hazmat_main,
-        args=(hazmat_dq, HAZMAT_LEVENSHTEIN_THRESH)
-    )
+    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq,))
     hazmat_thread.daemon = True
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")

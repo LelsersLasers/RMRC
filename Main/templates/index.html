@@ -59,7 +59,7 @@ div {
     padding: 0;
 }
 
-h4 {
+h4, h5 {
 	margin-bottom: 0.25em;
 	margin-top: 0.5em;
 }
@@ -348,24 +348,51 @@ input[type="range"] {
 
 
             <h4>Config</h4>
+
+            <h5>Motors</h5>
+
             <label for="diagonal">Diagonal Multiplier: </label>
             <output id="diagonal-output">0.4</output>
             <input type="range" id="diagonal" name="diagonal" min="0" max="1.0" step="0.01" value="0.4" oninput="diagonalSlider()" />
 
             <br />
 
-			<label for="velocityLimit">Velocity Limit: </label>
-            <output id="velocityLimit-output">330</output>
-            <input type="range" id="velocityLimit" name="velocityLimit" min="1" max="1023" step="1" value="330" oninput="velocityLimitSlider()" />
+			<label for="velocity_limit">Velocity Limit: </label>
+            <output id="velocity_limit-output">330</output>
+            <input type="range" id="velocity_limit" name="velocity_limit" min="1" max="1023" step="1" value="330" oninput="slider('velocity_limit')" />
 
-            <label for="motorWrites">Min Motor Writes: </label>
-            <output id="motorWrites-output">1</output>
-            <input type="range" id="motorWrites" name="motorWrites" min="1" max="4" step="1" value="0" oninput="motorWritesSlider()" />
+            <label for="motor_writes">Min Motor Writes: </label>
+            <output id="motor_writes-output">1</output>
+            <input type="range" id="motor_writes" name="motor_writes" min="1" max="4" step="1" value="0" oninput="slider('motor_writes')" />
 
             <label for="writeEveryFrame">Write Motors Every Frame: </label>
             <input type="checkbox" id="writeEveryFrame" oninput="writeEveryFrameCheckbox()" />
 
             <br />
+
+            <h5>Motion Detection</h5>
+
+			<label for="motion_min_area">Motion Min Area: </label>
+            <output id="motion_min_area-output">500</output>
+            <input type="range" id="motion_min_area" name="motion_min_area" min="0" max="2000" step="1" value="500" oninput="slider('motion_min_area')" />
+
+			<label for="motion_threshold">Motion Threshold: </label>
+			<output id="motion_threshold-output">65</output>
+			<input type="range" id="motion_threshold" name="motion_threshold" min="0" max="255" step="1" value="65" oninput="slider('motion_threshold')" />
+
+			<label for="motion_new_frame_weight">Motion New Frame Weight: </label>
+			<output id="motion_new_frame_weight-output">0.4</output>
+			<input type="range" id="motion_new_frame_weight" name="motion_new_frame_weight" min="0" max="1" step="0.05" value="0.4" oninput="slider('motion_new_frame_weight', true)" />
+
+			<h5>Hazmat</h5>
+
+			<label for="hazmat_levenshtein_thresh">Hazmat Levenshtein Thresh: </label>
+			<output id="hazmat_levenshtein_thresh-output">0.4</output>
+			<input type="range" id="hazmat_levenshtein_thresh" name="hazmat_levenshtein_thresh" min="0" max="1" step="0.05" value="0.4" oninput="slider('hazmat_levenshtein_thresh', true)" />
+
+			<label for="hazmat_angle_change">Hazmat Angle (should divide 360): </label>
+			<output id="hazmat_angle_change-output">90</output>
+			<input type="range" id="hazmat_angle_change" name="hazmat_angle_change" min="0" max="180" step="1" value="90" oninput="slider('hazmat_angle_change')" />
 
 			<h4>Debug Info</h4>
             <p id="calibration"></p>
@@ -395,9 +422,26 @@ input[type="range"] {
 
 		let diagonal_multiplier = 0.4;
 
-		let velocity_limit = 330;
-        let motor_writes = 1;
         let write_every_frame = false;
+
+		let config_sliders = {
+			"velocity_limit": 330,
+			"motor_writes": 1,
+			"motion_min_area": 500,
+			"motion_threshold": 65,
+			"motion_new_frame_weight": 0.4,
+			"hazmat_levenshtein_thresh": 0.4,
+			"hazmat_angle_change": 90,
+		};
+		let CONFIG_TYPE = {
+			"velocity_limit": "motor",
+			"motor_writes": "motor",
+			"motion_min_area": "master",
+			"motion_threshold": "master",
+			"motion_new_frame_weight": "master",
+			"hazmat_levenshtein_thresh": "master",
+			"hazmat_angle_change": "master",
+		}
 
 		let show_sidebar = true;
 
@@ -458,10 +502,12 @@ input[type="range"] {
 
 				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
 
-				fetchAndInfo(FLASK_SERVER + "velocity_limit/" + velocity_limit);
-                fetchAndInfo(FLASK_SERVER + "motor_writes/" + motor_writes);
-                fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
-				
+				for (const key in config_sliders) {
+					const value = config_sliders[key];
+					const type = CONFIG_TYPE[key];
+					fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + value);
+				}
+				fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
 
                 connected = true;
             } catch (e) {
@@ -702,12 +748,7 @@ input[type="range"] {
             run_md = false;
 
             keys = {};
-            /* not reset when disconnected but resent
-                - view_mode
-                - velocity_limit
-                - motor_writes
-                - write_every_frame
-            */
+            // Note: config_sliders not reset when disconnected but resent
         }
 
 		
@@ -733,31 +774,47 @@ input[type="range"] {
             output.innerHTML = value;
             diagonal_multiplier = value;
         }
-		function velocityLimitSlider() {
-			const ele = document.getElementById("velocityLimit");
-			const value = parseInt(ele.value);
-			const output = document.getElementById("velocityLimit-output");
-			output.innerHTML = value;
-			velocity_limit = value;
-
-			fetchAndInfo(FLASK_SERVER + "velocity_limit/" + velocity_limit);
-		}
-        function motorWritesSlider() {
-            const ele = document.getElementById("motorWrites");
-            const value = parseInt(ele.value);
-            const output = document.getElementById("motorWrites-output");
-            output.innerHTML = value;
-            motor_writes = value;
-
-            fetchAndInfo(FLASK_SERVER + "motor_writes/" + motor_writes);
-        }
-        function writeEveryFrameCheckbox() {
+		function writeEveryFrameCheckbox() {
             const ele = document.getElementById("writeEveryFrame");
             const value = ele.checked;
             write_every_frame = value;
 
             fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
         }
+
+		function slider(key, float = false) {
+			const ele = document.getElementById(key);
+			const value = float ? parseFloat(ele.value) : parseInt(ele.value);
+			console.log(value);
+			const output = document.getElementById(key + "-output");
+			output.innerHTML = value;
+			config_sliders[key] = value;
+
+			const type = CONFIG_TYPE[key];
+
+			fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + value);
+		}
+
+		// function velocityLimitSlider() {
+		// 	const ele = document.getElementById("velocityLimit");
+		// 	const value = parseInt(ele.value);
+		// 	const output = document.getElementById("velocityLimit-output");
+		// 	output.innerHTML = value;
+		// 	velocity_limit = value;
+
+		// 	fetchAndInfo(FLASK_SERVER + "velocity_limit/" + velocity_limit);
+		// }
+        // function motorWritesSlider() {
+        //     const ele = document.getElementById("motorWrites");
+        //     const value = parseInt(ele.value);
+        //     const output = document.getElementById("motorWrites-output");
+        //     output.innerHTML = value;
+        //     motor_writes = value;
+
+        //     fetchAndInfo(FLASK_SERVER + "motor_writes/" + motor_writes);
+        // }
+        
+			
 
 		function display_keys() {
             const object_keys = Object.keys(keys);
