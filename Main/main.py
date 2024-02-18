@@ -18,8 +18,7 @@ import base64
 import traceback
 from multiprocessing import Process
 
-# import util
-import main_util as util
+import util
 import qr_detect
 import motion_detect
 import motors

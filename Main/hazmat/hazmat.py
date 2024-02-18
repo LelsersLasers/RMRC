@@ -4,11 +4,12 @@ import easyocr
 
 import time
 
+import util
+
 import hazmat.consts
 import hazmat.util
 import hazmat.levenshtein
 
-import main_util
 
 # ---------------------------------------------------------------------------- #
 def processScreenshot(img, angle, reader, levenshtein_thresh):
@@ -73,14 +74,14 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
 
 # ---------------------------------------------------------------------------- #
 def thread(hazmat_dq):
-    fps_controller = main_util.FPSController()
+    fps_controller = util.FPSController()
 
     all_found = []
     frame = hazmat.consts.STATE_FROM_MASTER["frame"]
 
     levenshtein_results = {}
 
-    hazmat_ds = main_util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
+    hazmat_ds = util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
     last_clear = hazmat.consts.STATE_FROM_MASTER["clear"]
     hazmat_angle_change = hazmat.consts.STATE_FROM_MASTER["hazmat_angle_change"]
 
