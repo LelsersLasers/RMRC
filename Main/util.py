@@ -93,6 +93,7 @@ class DoubleState:
 
 # ---------------------------------------------------------------------------- #
 def create_thread(target, args, name):
+    print(f"\nStarting {name} thread...")
     process_name = f"{name}_process"
     thread = multiprocessing.Process(target=target, args=args, name=process_name)
     thread.daemon = True

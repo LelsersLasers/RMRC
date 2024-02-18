@@ -362,8 +362,6 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    print("\nStarting camera threads...")
-
     camera_dqs = {}
     camera_threads = {}
 
@@ -379,25 +377,18 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    print("\nStarting hazmat thread...")
-
     hazmat_dq = util.DoubleQueue()
     hazmat_thread = util.create_thread(hazmat.main.thread, (hazmat_dq,), "hazmat")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    print("\nStarting server...")
-
     server_dq = util.DoubleQueue()
     server_motor_dq = util.DoubleQueue()
     flask_thread = util.create_thread(server.main.thread, (server_dq, server_motor_dq), "flask")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    print("\nStarting motor thread...")
-
     motor_dq = util.DoubleQueue()
-    motor_ds = util.DoubleState(motors.consts.STATE_FROM_MASTER, {})
     motor_thread = util.create_thread(motors.main.thread, (server_motor_dq, motor_dq, zero_video_capture), "motor")
     # ------------------------------------------------------------------------ #
 
