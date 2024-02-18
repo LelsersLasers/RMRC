@@ -234,7 +234,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
 
 
         if not video_capture_zero:
-            last_line = util.read_last_line(gpu_log_file)
+            last_line = master.util.read_last_line(gpu_log_file)
             peices = last_line.split()
             for i, peice in enumerate(peices):
                 if peice == "GR3D_FREQ":

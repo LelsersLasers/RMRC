@@ -1,6 +1,5 @@
 import signal
 import queue
-import os
 import time
 import multiprocessing
 
@@ -103,7 +102,6 @@ def create_thread(target, args, name):
 # ---------------------------------------------------------------------------- #
 
 
-
 # ---------------------------------------------------------------------------- #
 class GracefulKiller:
     kill_now = False
@@ -112,19 +110,4 @@ class GracefulKiller:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
     def exit_gracefully(self, *args):
         self.kill_now = True
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
-def read_last_line(f):
-    # with open('filename.txt', 'rb') as f:
-    try:  # catch OSError in case of a one line file 
-        f.seek(-2, os.SEEK_END)
-        while f.read(1) != b'\n':
-            f.seek(-2, os.SEEK_CUR)
-    except OSError:
-        f.seek(0)
-        
-    last_line = f.readline().decode()
-    return last_line
 # ---------------------------------------------------------------------------- #
