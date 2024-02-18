@@ -1,22 +1,11 @@
-# CAP_ARGS = {
-#     "webcam1": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_2D4AA0A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videorate ! video/x-raw,framerate=30/1 ! videoconvert ! appsink",
-#     "webcam2": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_348E60A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videorate ! video/x-raw,framerate=30/1 ! videoconvert ! appsink",
-#     "ir": "v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! appsink",
-# }
-
-CAP_ARGS = {
-    "webcam1": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_2D4AA0A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! appsink",
-    "webcam2": "v4l2src device=/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_348E60A0-video-index0 ! videoconvert ! video/x-raw,format=UYVY ! videoscale ! video/x-raw,width=320,height=240 ! videoconvert ! appsink",
-    "ir": "v4l2src device=/dev/v4l/by-id/usb-GroupGets_PureThermal__fw:v1.3.0__8003000b-5113-3238-3233-393800000000-video-index0 ! videoconvert ! appsink",
-}
-CAMERA_SIZE = (320, 240)
-
-
 import time
 import argparse
 import base64
 import traceback
-from multiprocessing import Process
+
+import cv2
+import numpy as np
+import psutil
 
 import util
 import qr_detect
@@ -31,9 +20,8 @@ import motors.main
 import server.consts
 import server.main
 
-import cv2
-import numpy as np
-import psutil
+import camera.consts
+import camera.main
 
 
 GPU_LOG_FILENAME = "tegrastats.log"
@@ -42,65 +30,6 @@ SERVER_FRAME_SCALE = 1
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
 MOTION_TIME_BAR_SCALE = 0.1 # in seconds
-
-CAMERA_WAKEUP_TIME = 1.5
-CAMERA_NONE_GREY = 50
-
-
-# ---------------------------------------------------------------------------- #
-STATE_CAMERA_MASTER = {
-    "quit": False,
-}
-STATE_CAMERA = {
-    "frame": None,
-    "ns": 0,
-    "fps": 20,
-    "time": time.time(),
-}
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
-def camera_main(camera_dq, key):
-    camera_ds = util.DoubleState(STATE_CAMERA_MASTER, STATE_CAMERA)
-
-    print(f"Opening camera {key}...")
-    if key is not None:
-        cap = cv2.VideoCapture(CAP_ARGS[key], cv2.CAP_GSTREAMER)
-    else:
-        cap = cv2.VideoCapture(0)
-    print(f"Camera {key} VideoCapture created.")
-
-    if not cap.isOpened():
-        raise RuntimeError(f"Can't open camera {key}. Are the cap_args set right? Is the camera plugged in?")
-    print(f"Camera {key} opened.")
-
-    time.sleep(CAMERA_WAKEUP_TIME)
-
-    fps_controller = util.FPSController()
-
-    try:
-        while not camera_ds.s1["quit"]:
-            camera_ds.update_s1(camera_dq)
-
-            ret, frame = cap.read()
-            if not ret or frame is None:
-                print(f"Camera {key} read failed.")
-                break
-
-            camera_ds.s2["time"] = time.time()
-
-            camera_ds.s2["frame"] = frame
-
-            fps_controller.update()
-            camera_ds.s2["fps"] = fps_controller.fps()
-
-            camera_ds.put_s2(camera_dq)
-    except KeyboardInterrupt: pass
-    finally:
-        print(f"Releasing camera {key}...")
-        cap.release()
-# ---------------------------------------------------------------------------- #
 
 
 # ---------------------------------------------------------------------------- #
@@ -149,7 +78,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
 
     camera_dses = {}
     for key in camera_dqs.keys():
-        camera_ds = util.DoubleState(STATE_CAMERA_MASTER, STATE_CAMERA)
+        camera_ds = util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
         camera_dses[key] = camera_ds
 
     base_key = None if video_capture_zero else "webcam1"
@@ -170,7 +99,8 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
             frames[key] = camera_ds.s2["frame"]
 
             if frames[key] is None:
-                frames[key] = np.zeros((CAMERA_SIZE[1], CAMERA_SIZE[0], 3), dtype=np.uint8) + CAMERA_NONE_GREY
+                frames[key] = np.zeros((camera.constsCAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
+                frames[key] += camera.consts.CAMERA_NONE_GREY
 
             if key == base_key and frames[key] is not None and camera_ds.s2["time"] > frame_read_time:
                 frame_read_time = camera_ds.s2["time"]
@@ -365,15 +295,15 @@ if __name__ == "__main__":
     camera_dqs = {}
     camera_threads = {}
 
-    cap_arg_keys = [None] if zero_video_capture else CAP_ARGS.keys()
+    cap_arg_keys = [None] if zero_video_capture else camera.consts.CAP_ARGS.keys()
     for key in cap_arg_keys:
         camera_dq = util.DoubleQueue()
-        camera_thread = util.create_thread(camera_main, (camera_dq, key), f"camera_{key}")
+        camera_thread = util.create_thread(camera.main.thread, (camera_dq, key), f"camera_{key}")
 
         camera_dqs[key] = camera_dq
         camera_threads[key] = camera_thread
 
-    time.sleep(CAMERA_WAKEUP_TIME * 2)
+    time.sleep(camera.consts.CAMERA_WAKEUP_TIME * 2)
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -415,10 +345,10 @@ if __name__ == "__main__":
     print("Closing camera threads...")
     for key in camera_threads.keys():
         print(f"Closing camera {key} capture and thread...")
-        STATE_CAMERA_MASTER["quit"] = True
+        camera.consts.STATE_CAMERA_MASTER["quit"] = True
 
         camera_dq = camera_dqs[key]
-        camera_dq.put_q1(STATE_CAMERA_MASTER)
+        camera_dq.put_q1(camera.consts.STATE_CAMERA_MASTER)
 
         camera_thread = camera_threads[key]
         util.close_thread(camera_thread)

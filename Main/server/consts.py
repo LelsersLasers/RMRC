@@ -1,5 +1,3 @@
-
-
 STATE_FROM_MASTER = {
     "frame": "",
     "ns": 0,
