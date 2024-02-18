@@ -14,7 +14,7 @@ def thread(server_dq, server_motor_dq):
     log.setLevel(logging.WARNING)
 
     app = flask.Flask(__name__)
-    server_ds = util.DoubleState(server.consts.STATE_FROM_SERVER, server.consts.STATE_FROM_SELF)
+    server_ds = util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
     server_motor_ds = util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
 
     @app.route("/")
