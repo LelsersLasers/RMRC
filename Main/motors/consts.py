@@ -36,7 +36,6 @@ STATE_FROM_SELF = {
     },
     "motor_fps": 20,
 }
-
 STATE_FROM_MASTER = {
     "quit": False,
 }

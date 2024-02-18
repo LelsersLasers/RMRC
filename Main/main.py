@@ -28,12 +28,12 @@ import hazmat.main
 import motors.consts
 import motors.main
 
+import server.consts
+import server.main
+
 import cv2
 import numpy as np
 import psutil
-
-from flask import Flask, render_template, jsonify
-import logging
 
 
 GPU_LOG_FILENAME = "tegrastats.log"
@@ -57,155 +57,6 @@ STATE_CAMERA = {
     "fps": 20,
     "time": time.time(),
 }
-# ---------------------------------------------------------------------------- #
-
-# ---------------------------------------------------------------------------- #
-STATE_SERVER_MASTER = {
-    "frame": "",
-    "ns": 0,
-    "w": 1,
-    "h": 1,
-    "hazmats_found": [],
-    "qr_found": [],
-    "fpses": [-1, -1, -1, -1, -1, -1], # last one is the motor_fps
-    "ram": 0,
-    "cpu": 0,
-    "gpu": -1,
-    "angle": 0,
-}
-STATE_SERVER = {
-    "run": {
-        "hazmat": False,
-        "qr": False,
-        "md": False,
-    },
-    "clear": {
-        "hazmat": 0,
-        "qr": 0,
-    },
-    "view_mode": 0,
-    "motion_min_area": 500,
-    "motion_threshold": 65,
-    "motion_new_frame_weight": 0.4,
-    "hazmat_levenshtein_thresh": 0.4,
-    "hazmat_angle_change": 90,
-}
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
-def server_main(server_dq, server_motor_dq):
-    app = Flask(__name__)
-    server_ds = util.DoubleState(STATE_SERVER_MASTER, STATE_SERVER)
-    server_motor_ds = util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
-
-    @app.route("/")
-    def index():
-        return render_template("index.html")
-    
-    @app.route("/calibrate", methods=["GET"])
-    def calibrate():
-        now = time.time()
-        response = jsonify(now)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/config/<type>/<key>/<value>", methods=["GET"])
-    def config(type, key, value):
-        if type == "motor":
-            if key == "velocity_limit":
-                server_motor_ds.s1["velocity_limit"]["value"] = int(value)
-                server_motor_ds.s1["velocity_limit"]["count"] += 1
-                server_motor_ds.put_s1(server_motor_dq)
-            else:
-                server_motor_ds.s1[key] = int(value)
-                server_motor_ds.put_s1(server_motor_dq)
-        else:
-            try:
-                server_ds.s2[key] = int(value)
-            except ValueError:
-                server_ds.s2[key] = float(value)
-            server_ds.put_s2(server_dq)
-
-        response = jsonify(value)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/write_every_frame/<value>", methods=["GET"])
-    def write_every_frame(value):
-        server_motor_ds.s1["write_every_frame"] = value == "true"
-        server_motor_ds.put_s1(server_motor_dq)
-
-        response = jsonify(value)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/power/<left>/<right>/", methods=["GET"])
-    def power(left, right):
-        # Has percent power built into values
-        server_motor_ds.s1["left"] = float(left)
-        server_motor_ds.s1["right"] = float(right)
-        server_motor_ds.s1["count"] += 1
-        server_motor_ds.put_s1(server_motor_dq)
-
-        response = jsonify({
-            "left": left,
-            "right": right,
-        })
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/run/<detection>/<state>/", methods=["GET"])
-    def run(detection, state):
-        server_ds.s2["run"][detection] = state == "true"
-        server_ds.put_s2(server_dq)
-
-        response = jsonify({
-            "detection": detection,
-            "state": state,
-        })
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-
-    @app.route("/clear/<detection>/", methods=["GET"])
-    def clear(detection):
-        server_ds.s2["clear"][detection] += 1
-        server_ds.put_s2(server_dq)
-
-        response = jsonify(detection)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-    
-    @app.route("/view/<view_mode>/", methods=["GET"])
-    def view(view_mode):
-        server_ds.s2["view_mode"] = int(view_mode)
-        server_ds.put_s2(server_dq)
-
-        response = jsonify(view_mode)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-
-    @app.route("/get", methods=["GET"])
-    def get():
-        server_ds.update_s1(server_dq)
-        server_motor_ds.update_s2(server_motor_dq)
-
-        server_motor_ds.s1["last_get"] = time.time()
-        server_motor_ds.put_s1(server_motor_dq)
-
-        # combine main info with motor info
-        server_ds.s1.update(server_motor_ds.s2)
-        server_ds.s1["fpses"][-1] = server_motor_ds.s2["motor_fps"]
-
-        response = jsonify(server_ds.s1)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-
-    app.run(debug=False, port=5000, host="0.0.0.0")
-
-    # TODO: should it be threaded or not?
-    # app.run(debug=False, port=5000, host="0.0.0.0", threaded=False)
-    # app.run(debug=False, port=5000, host="0.0.0.0", processes=1)
 # ---------------------------------------------------------------------------- #
 
 
@@ -288,13 +139,13 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     fps_controller = util.FPSController()
 
     all_qr_found = []
-    last_clear_qr = STATE_SERVER["clear"]["qr"]
+    last_clear_qr = server.consts.STATE_FROM_SELF["clear"]["qr"]
 
     average_frame = None
     update_average_frame = False
 
     hazmat_ds = util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
-    server_ds = util.DoubleState(STATE_SERVER_MASTER, STATE_SERVER)
+    server_ds = util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
 
     camera_dses = {}
     for key in camera_dqs.keys():
@@ -548,10 +399,7 @@ if __name__ == "__main__":
     server_dq = util.DoubleQueue()
     server_motor_dq = util.DoubleQueue()
 
-    log = logging.getLogger("werkzeug")
-    log.setLevel(logging.WARNING)
-
-    flask_thread = Process(target=server_main, args=(server_dq, server_motor_dq))
+    flask_thread = Process(target=server.main.thread, args=(server_dq, server_motor_dq))
     flask_thread.daemon = True
     flask_thread.start()
     print(f"Flask thread pid: {flask_thread.pid}")
