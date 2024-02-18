@@ -370,11 +370,7 @@ if __name__ == "__main__":
     cap_arg_keys = [None] if zero_video_capture else CAP_ARGS.keys()
     for key in cap_arg_keys:
         camera_dq = util.DoubleQueue()
-
-        camera_thread = Process(target=camera_main, args=(camera_dq, key))
-        camera_thread.daemon = True
-        camera_thread.start()
-        print(f"Camera {key} thread pid: {camera_thread.pid}")
+        camera_thread = util.create_thread(camera_main, (camera_dq, key), f"camera_{key}")
 
         camera_dqs[key] = camera_dq
         camera_threads[key] = camera_thread
@@ -386,11 +382,7 @@ if __name__ == "__main__":
     print("\nStarting hazmat thread...")
 
     hazmat_dq = util.DoubleQueue()
-
-    hazmat_thread = Process(target=hazmat.main.thread, args=(hazmat_dq,))
-    hazmat_thread.daemon = True
-    hazmat_thread.start()
-    print(f"Hazmat thread pid: {hazmat_thread.pid}")
+    hazmat_thread = util.create_thread(hazmat.main.thread, (hazmat_dq,), "hazmat")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -398,11 +390,7 @@ if __name__ == "__main__":
 
     server_dq = util.DoubleQueue()
     server_motor_dq = util.DoubleQueue()
-
-    flask_thread = Process(target=server.main.thread, args=(server_dq, server_motor_dq))
-    flask_thread.daemon = True
-    flask_thread.start()
-    print(f"Flask thread pid: {flask_thread.pid}")
+    flask_thread = util.create_thread(server.main.thread, (server_dq, server_motor_dq), "flask")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -410,11 +398,7 @@ if __name__ == "__main__":
 
     motor_dq = util.DoubleQueue()
     motor_ds = util.DoubleState(motors.consts.STATE_FROM_MASTER, {})
-
-    motor_thread = Process(target=motors.main.thread, args=(server_motor_dq, motor_dq, zero_video_capture))
-    motor_thread.daemon = True
-    motor_thread.start()
-    print(f"Motor thread pid: {motor_thread.pid}")
+    motor_thread = util.create_thread(motors.main.thread, (server_motor_dq, motor_dq, zero_video_capture), "motor")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #

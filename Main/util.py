@@ -2,8 +2,7 @@ import signal
 import queue
 import os
 import time
-
-from multiprocessing import Queue
+import multiprocessing
 
 
 # ---------------------------------------------------------------------------- #
@@ -54,8 +53,8 @@ def last_from_queue(q, last_value):
 
 class DoubleQueue:
     def __init__(self):
-        self.q1 = Queue()
-        self.q2 = Queue()
+        self.q1 = multiprocessing.Queue()
+        self.q2 = multiprocessing.Queue()
 
     def put_q1(self, item):
         self.q1.put_nowait(item)
@@ -90,6 +89,18 @@ class DoubleState:
     def put_s2(self, dq):
         dq.put_q2(self.s2)
 # ---------------------------------------------------------------------------- #
+        
+
+# ---------------------------------------------------------------------------- #
+def create_thread(target, args, name):
+    process_name = f"{name}_process"
+    thread = multiprocessing.Process(target=target, args=args, name=process_name)
+    thread.daemon = True
+    thread.start()
+    print(f"{name} process pid: {thread.pid}")
+    return thread
+# ---------------------------------------------------------------------------- #
+
 
 
 # ---------------------------------------------------------------------------- #
