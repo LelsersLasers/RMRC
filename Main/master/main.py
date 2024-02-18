@@ -82,9 +82,9 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
             ir_frame = frames[base_key]
         else:
             ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
-            master.util.fps_text(ir_frame, camera_dses["ir"].s2["fps"])
+            master.util.draw_fps_text(ir_frame, camera_dses["ir"].s2["fps"])
 
-            master.util.fps_text(frames["webcam2"], camera_dses["webcam2"].s2["fps"])
+            master.util.draw_fps_text(frames["webcam2"], camera_dses["webcam2"].s2["fps"])
         # -------------------------------------------------------------------- #
         
 
@@ -97,7 +97,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
             hazmat_frame = np.zeros_like(frame)
 
         time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
-        master.util.ratio_bar(
+        master.util.draw_ratio_bar(
             hazmat_frame,
             time_since_last_hazmat_update / master.consts.HAZMAT_DELAY_BAR_SCALE,
             hazmat_ds.s1["run_hazmat"],
@@ -125,7 +125,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
 
             end = time.time()
 
-            master.util.ratio_bar(frame, (end - start) / master.consts.QR_TIME_BAR_SCALE, True)
+            master.util.draw_ratio_bar(frame, (end - start) / master.consts.QR_TIME_BAR_SCALE, True)
         elif server_ds.s2["run"]["md"]:
             start = time.time()
             motion_min_area = server_ds.s2["motion_min_area"]
@@ -133,9 +133,9 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
             master.motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, motion_min_area, motion_threshold)
             end = time.time()
 
-            master.util.ratio_bar(frame, (end - start) / master.consts.MOTION_TIME_BAR_SCALE, True, True)
+            master.util.draw_ratio_bar(frame, (end - start) / master.consts.MOTION_TIME_BAR_SCALE, True, True)
         else:
-            master.util.ratio_bar(frame, 0, False)
+            master.util.draw_ratio_bar(frame, 0, False)
 
         if update_average_frame:
             update_average_frame = False
@@ -166,8 +166,8 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
 
 
         # -------------------------------------------------------------------- #
-        master.util.fps_text(frame, camera_dses[base_key].s2["fps"])
-        master.util.fps_text(hazmat_frame, hazmat_ds.s2["hazmat_fps"])
+        master.util.draw_fps_text(frame, camera_dses[base_key].s2["fps"])
+        master.util.draw_fps_text(hazmat_frame, hazmat_ds.s2["hazmat_fps"])
 
         if server_ds.s2["view_mode"] == 0:
             top_combined = cv2.hconcat([frame, hazmat_frame])
