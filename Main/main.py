@@ -19,15 +19,16 @@ import traceback
 from multiprocessing import Process
 
 import util
-import hazmat
 import qr_detect
 import motion_detect
 import motors
 
+import hazmat.consts
+import hazmat.hazmat
+
 import cv2
 import numpy as np
 import psutil
-import easyocr
 
 from flask import Flask, render_template, jsonify
 import logging
@@ -37,7 +38,6 @@ GPU_LOG_FILENAME = "tegrastats.log"
 SERVER_FRAME_SCALE = 1
 MOTOR_SHUTOFF_TIME = 1.0 # in seconds
 
-HAZMAT_DRY_FPS = 15
 MOTOR_TEST_FPS = 10
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
@@ -46,26 +46,6 @@ MOTION_TIME_BAR_SCALE = 0.1 # in seconds
 CAMERA_WAKEUP_TIME = 1.5
 CAMERA_NONE_GREY = 50
 
-
-# ---------------------------------------------------------------------------- #
-# What master thread sends
-STATE_HAZMAT_MASTER = {
-    "frame": None, # latest main camera frame
-    "run_hazmat": False,
-    "quit": False,
-    "clear": 0, # increment to clear all found hazmat labels
-    "hazmat_levenshtein_thresh": 0.4,
-    "hazmat_angle_change": 90,
-}
-# What hazmat thread sends
-STATE_HAZMAT = {
-    "hazmat_fps": HAZMAT_DRY_FPS,
-    "hazmat_frame": None,
-    "hazmats_found": [],
-    "last_update": time.time(),
-    "angle": 0,
-}
-# ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
 STATE_CAMERA_MASTER = {
@@ -352,105 +332,105 @@ def server_main(server_dq, server_motor_dq):
 
 
 # ---------------------------------------------------------------------------- #
-def hazmat_main(hazmat_dq):
-    fps_controller = util.FPSController()
+# def hazmat_main(hazmat_dq):
+#     fps_controller = util.FPSController()
 
-    all_found = []
-    frame = STATE_HAZMAT_MASTER["frame"]
+#     all_found = []
+#     frame = STATE_HAZMAT_MASTER["frame"]
 
-    levenshtein_results = {}
+#     levenshtein_results = {}
 
-    hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
-    last_clear = STATE_HAZMAT_MASTER["clear"]
-    hazmat_angle_change = STATE_HAZMAT_MASTER["hazmat_angle_change"]
+#     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
+#     last_clear = STATE_HAZMAT_MASTER["clear"]
+#     hazmat_angle_change = STATE_HAZMAT_MASTER["hazmat_angle_change"]
 
-    print("Creating easyocr reader...")
-    reader = easyocr.Reader(["en"], gpu=True)
-    print("easyocr reader created.")
+#     print("Creating easyocr reader...")
+#     reader = easyocr.Reader(["en"], gpu=True)
+#     print("easyocr reader created.")
 
-    try:
-        while not hazmat_ds.s1["quit"]:
-            hazmat_ds.update_s1(hazmat_dq)
+#     try:
+#         while not hazmat_ds.s1["quit"]:
+#             hazmat_ds.update_s1(hazmat_dq)
 
-            # ---------------------------------------------------------------- #
-            if hazmat_ds.s1["clear"] > last_clear:
-                last_clear = hazmat_ds.s1["clear"]
-                all_found = []
-                print("Cleared all found hazmat labels.")
-            # ---------------------------------------------------------------- #
+#             # ---------------------------------------------------------------- #
+#             if hazmat_ds.s1["clear"] > last_clear:
+#                 last_clear = hazmat_ds.s1["clear"]
+#                 all_found = []
+#                 print("Cleared all found hazmat labels.")
+#             # ---------------------------------------------------------------- #
 
-            if hazmat_ds.s1["frame"] is not None:
-                frame = hazmat_ds.s1["frame"]
+#             if hazmat_ds.s1["frame"] is not None:
+#                 frame = hazmat_ds.s1["frame"]
 
-                if not hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] == 0:
-                    hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
+#                 if not hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] == 0:
+#                     hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
 
-                if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
+#                 if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
 
-                    levenshtein_thresh = hazmat_ds.s1["hazmat_levenshtein_thresh"]
-                    frame_results = hazmat.processScreenshot(frame, hazmat_ds.s2["angle"], reader, levenshtein_thresh)
-                    levenshtein_results[hazmat_ds.s2["angle"]] = frame_results
+#                     levenshtein_thresh = hazmat_ds.s1["hazmat_levenshtein_thresh"]
+#                     frame_results = hazmat.processScreenshot(frame, hazmat_ds.s2["angle"], reader, levenshtein_thresh)
+#                     levenshtein_results[hazmat_ds.s2["angle"]] = frame_results
 
-                    fontScale = 0.5
-                    fontColor = (0, 0, 255)
-                    thickness = 1
-                    lineType = 2
+#                     fontScale = 0.5
+#                     fontColor = (0, 0, 255)
+#                     thickness = 1
+#                     lineType = 2
 
-                    for results in levenshtein_results.values():
-                        for result in results:
-                            all_found.append(result.closest)
+#                     for results in levenshtein_results.values():
+#                         for result in results:
+#                             all_found.append(result.closest)
 
-                            frame = cv2.drawContours(frame, [result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
+#                             frame = cv2.drawContours(frame, [result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
 
-                            x, y, w, h = cv2.boundingRect(result.detection_result.cnt.cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
+#                             x, y, w, h = cv2.boundingRect(result.detection_result.cnt.cnt)
+#                             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
 
-                            corner = (x + 5, y - 10)
+#                             corner = (x + 5, y - 10)
 
-                            cv2.putText(
-                                frame,
-                                result.string,
-                                corner,
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                fontScale,
-                                fontColor,
-                                thickness,
-                                lineType,
-                            )
+#                             cv2.putText(
+#                                 frame,
+#                                 result.string,
+#                                 corner,
+#                                 cv2.FONT_HERSHEY_SIMPLEX,
+#                                 fontScale,
+#                                 fontColor,
+#                                 thickness,
+#                                 lineType,
+#                             )
 
-                    if len(levenshtein_results[hazmat_ds.s2["angle"]]) > 0:
-                        all_found = list(set(all_found))
-                        all_found.sort()
+#                     if len(levenshtein_results[hazmat_ds.s2["angle"]]) > 0:
+#                         all_found = list(set(all_found))
+#                         all_found.sort()
 
-                        print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
-                        print(all_found)
+#                         print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
+#                         print(all_found)
 
-                    hazmat_ds.s2["angle"] += hazmat_angle_change
-                    hazmat_ds.s2["angle"] %= 360
-                else:
-                    hazmat_ds.s2["angle"] = 0
-                    levenshtein_results = {}
+#                     hazmat_ds.s2["angle"] += hazmat_angle_change
+#                     hazmat_ds.s2["angle"] %= 360
+#                 else:
+#                     hazmat_ds.s2["angle"] = 0
+#                     levenshtein_results = {}
 
-                hazmat_ds.s2["hazmat_frame"] = frame
+#                 hazmat_ds.s2["hazmat_frame"] = frame
 
-            # ---------------------------------------------------------------- #
-            fps_controller.update()
-            hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
+#             # ---------------------------------------------------------------- #
+#             fps_controller.update()
+#             hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
 
-            all_found = list(set(all_found))
-            all_found.sort()
-            hazmat_ds.s2["hazmats_found"] = all_found
+#             all_found = list(set(all_found))
+#             all_found.sort()
+#             hazmat_ds.s2["hazmats_found"] = all_found
 
-            hazmat_ds.s2["last_update"] = time.time()
+#             hazmat_ds.s2["last_update"] = time.time()
 
-            hazmat_ds.put_s2(hazmat_dq)
-            # ---------------------------------------------------------------- #
+#             hazmat_ds.put_s2(hazmat_dq)
+#             # ---------------------------------------------------------------- #
 
-            # ---------------------------------------------------------------- #
-            if not hazmat_ds.s1["run_hazmat"]:
-                time.sleep(1 / HAZMAT_DRY_FPS)
-            # ---------------------------------------------------------------- #
-    except KeyboardInterrupt: pass
+#             # ---------------------------------------------------------------- #
+#             if not hazmat_ds.s1["run_hazmat"]:
+#                 time.sleep(1 / HAZMAT_DRY_FPS)
+#             # ---------------------------------------------------------------- #
+#     except KeyboardInterrupt: pass
 # ---------------------------------------------------------------------------- #
 
 
@@ -538,7 +518,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     average_frame = None
     update_average_frame = False
 
-    hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
+    hazmat_ds = util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
     server_ds = util.DoubleState(STATE_SERVER_MASTER, STATE_SERVER)
 
     camera_dses = {}
@@ -781,7 +761,7 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat_main, args=(hazmat_dq,))
+    hazmat_thread = Process(target=hazmat.hazmat.thread, args=(hazmat_dq,))
     hazmat_thread.daemon = True
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
@@ -848,8 +828,8 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------------------ #
     print("Closing hazmat thread...")
-    STATE_HAZMAT_MASTER["quit"] = True
-    hazmat_dq.put_q1(STATE_HAZMAT_MASTER)
+    hazmat.consts.STATE_FROM_MASTER["quit"] = True
+    hazmat_dq.put_q1(hazmat.consts.STATE_FROM_MASTER)
 
     util.close_thread(hazmat_thread)
     # ------------------------------------------------------------------------ #
