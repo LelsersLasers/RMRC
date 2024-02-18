@@ -149,8 +149,8 @@ STATE_MOTOR_MASTER = {
 def motor_main(server_motor_dq, motor_dq, zero_video_capture):
     server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
     motor_ds = util.DoubleState(STATE_MOTOR_MASTER, {})
-    last_count = 0
-    last_velocity_count = 0
+    last_count = STATE_MOTOR_SERVER["count"]
+    last_velocity_count = STATE_MOTOR_SERVER["velocity_limit"]["count"]
 
     fps_controller = util.FPSController()
 
@@ -356,12 +356,12 @@ def hazmat_main(hazmat_dq):
     fps_controller = util.FPSController()
 
     all_found = []
-    frame = None
+    frame = STATE_HAZMAT_MASTER["frame"]
 
     levenshtein_results = {}
 
     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
-    last_clear = 0
+    last_clear = STATE_HAZMAT_MASTER["clear"]
     hazmat_angle_change = STATE_HAZMAT_MASTER["hazmat_angle_change"]
 
     print("Creating easyocr reader...")
@@ -533,7 +533,7 @@ def master_main(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_fi
     fps_controller = util.FPSController()
 
     all_qr_found = []
-    last_clear_qr = 0
+    last_clear_qr = STATE_SERVER["clear"]["qr"]
 
     average_frame = None
     update_average_frame = False
