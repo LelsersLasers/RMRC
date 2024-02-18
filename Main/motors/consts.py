@@ -11,7 +11,6 @@ CLOSE_WAIT_TIME = 0.25
 MOTOR_TEST_FPS = 10
 
 
-
 STATE_FROM_SERVER = {
     "left": 0,
     "right": 0,
