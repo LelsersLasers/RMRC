@@ -4,16 +4,16 @@ import easyocr
 
 import time
 
-import consts
-import util
-import levenshtein
+import hazmat.consts
+import hazmat.util
+import hazmat.levenshtein
 
 import main_util
 
 # ---------------------------------------------------------------------------- #
 def processScreenshot(img, angle, reader, levenshtein_thresh):
     # ------------------------------------------------------------------------ #
-    rotated = util.Rotated.from_image_and_angle(img, angle)
+    rotated = hazmat.util.Rotated.from_image_and_angle(img, angle)
 
     detection_results = []
     result = reader.readtext(rotated.image)
@@ -27,16 +27,16 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
         # ---------------------------------------------------------------- #
         cnt_rotated = np.array(r[0], dtype=np.int32)
         cnt = rotated.unrotate_cnt(cnt_rotated, img.shape)
-        cnt = util.CNT(cnt, img.shape, True)
+        cnt = hazmat.util.CNT(cnt, img.shape, True)
         # ---------------------------------------------------------------- #
     
-        detection_result = util.DetectionResult(cnt, text, confidence)
+        detection_result = hazmat.util.DetectionResult(cnt, text, confidence)
         detection_results.append(detection_result)
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    util.combine_nearby(detection_results) # support for 2 words per label
-    util.combine_nearby(detection_results) # support for 3 words per label
+    hazmat.util.combine_nearby(detection_results) # support for 2 words per label
+    hazmat.util.combine_nearby(detection_results) # support for 3 words per label
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
@@ -59,13 +59,13 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
 
     levenshtein_results = []
     for detection_result in detection_results:
-        closest, distance = levenshtein.checkList(detection_result.text, words)
+        closest, distance = hazmat.levenshtein.checkList(detection_result.text, words)
         ratio = distance / len(closest)
         if ratio <= levenshtein_thresh:
-            levenshtein_result = util.LevenshteinResult(detection_result, closest, ratio)
+            levenshtein_result = hazmat.util.LevenshteinResult(detection_result, closest, ratio)
             levenshtein_results.append(levenshtein_result)
 
-    levenshtein_results = util.remove_dups(levenshtein_results, lambda x: x.detection_result.cnt)
+    levenshtein_results = hazmat.util.remove_dups(levenshtein_results, lambda x: x.detection_result.cnt)
 
     return levenshtein_results
     # ------------------------------------------------------------------------ #
@@ -76,13 +76,13 @@ def thread(hazmat_dq):
     fps_controller = main_util.FPSController()
 
     all_found = []
-    frame = consts.STATE_FROM_MASTER["frame"]
+    frame = hazmat.consts.STATE_FROM_MASTER["frame"]
 
     levenshtein_results = {}
 
-    hazmat_ds = main_util.DoubleState(consts.STATE_FROM_MASTER, consts.STATE_FROM_SELF)
-    last_clear = consts.STATE_FROM_MASTER["clear"]
-    hazmat_angle_change = consts.STATE_FROM_MASTER["hazmat_angle_change"]
+    hazmat_ds = main_util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
+    last_clear = hazmat.consts.STATE_FROM_MASTER["clear"]
+    hazmat_angle_change = hazmat.consts.STATE_FROM_MASTER["hazmat_angle_change"]
 
     print("Creating easyocr reader...")
     reader = easyocr.Reader(["en"], gpu=True)
@@ -168,7 +168,7 @@ def thread(hazmat_dq):
 
             # ---------------------------------------------------------------- #
             if not hazmat_ds.s1["run_hazmat"]:
-                time.sleep(1 / consts.HAZMAT_DRY_FPS)
+                time.sleep(1 / hazmat.consts.HAZMAT_DRY_FPS)
             # ---------------------------------------------------------------- #
     except KeyboardInterrupt: pass
 # ---------------------------------------------------------------------------- #
