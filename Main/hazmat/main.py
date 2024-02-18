@@ -1,8 +1,8 @@
+import time
+
 import cv2
 import numpy as np
 import easyocr
-
-import time
 
 import util
 

@@ -21,10 +21,12 @@ from multiprocessing import Process
 import util
 import qr_detect
 import motion_detect
-import motors
 
 import hazmat.consts
-import hazmat.hazmat
+import hazmat.main
+
+import motors.consts
+import motors.main
 
 import cv2
 import numpy as np
@@ -36,9 +38,7 @@ import logging
 
 GPU_LOG_FILENAME = "tegrastats.log"
 SERVER_FRAME_SCALE = 1
-MOTOR_SHUTOFF_TIME = 1.0 # in seconds
 
-MOTOR_TEST_FPS = 10
 HAZMAT_DELAY_BAR_SCALE = 2  # in seconds
 QR_TIME_BAR_SCALE = 0.1     # in seconds
 MOTION_TIME_BAR_SCALE = 0.1 # in seconds
@@ -92,134 +92,12 @@ STATE_SERVER = {
 }
 # ---------------------------------------------------------------------------- #
 
-# ---------------------------------------------------------------------------- #
-STATE_MOTOR_SERVER = {
-    "left": 0,
-    "right": 0,
-    "count": 0,
-    "last_get": time.time(),
-    "velocity_limit": {
-		"value": 330,
-		"count": 0,
-    },
-    "motor_writes": 1,
-    "write_every_frame": False,
-}
-STATE_MOTOR = {
-    "motors": {
-        "target": {
-            "left": 0,
-            "right": 0,
-        },
-        "current": {
-            "left": 0,
-            "right": 0,
-        }
-    },
-    "motor_fps": 20,
-}
-
-STATE_MOTOR_MASTER = {
-    "quit": False,
-}
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
-def motor_main(server_motor_dq, motor_dq, zero_video_capture):
-    server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
-    motor_ds = util.DoubleState(STATE_MOTOR_MASTER, {})
-    last_count = STATE_MOTOR_SERVER["count"]
-    last_velocity_count = STATE_MOTOR_SERVER["velocity_limit"]["count"]
-
-    fps_controller = util.FPSController()
-
-    try:
-        if not zero_video_capture:
-            dxl_controller = motors.DynamixelController()
-            dxl_controller.set_torque_status(True)
-
-        while not motor_ds.s1["quit"]:
-            server_motor_ds.update_s1(server_motor_dq)
-            motor_ds.update_s1(motor_dq)
-
-            fps_controller.update()
-            server_motor_ds.s2["motor_fps"] = fps_controller.fps()
-
-            now = time.time()
-
-            if not zero_video_capture:
-                dxl_controller.min_writes = server_motor_ds.s1["motor_writes"]
-
-                # speed calulations use velocity_limit
-                velocity_limit_changed = server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count
-                idle_shutoff = now - server_motor_ds.s1["last_get"] > MOTOR_SHUTOFF_TIME
-                should_write_velocities = (server_motor_ds.s1["write_every_frame"]
-                                    or server_motor_ds.s1["count"] > last_count
-                                    or velocity_limit_changed
-                                    or idle_shutoff)
-
-                if velocity_limit_changed:
-                    last_velocity_count = server_motor_ds.s1["velocity_limit"]["count"]
-                    dxl_controller.velocity_limit = server_motor_ds.s1["velocity_limit"]["value"]
-                if should_write_velocities:
-                    last_count = server_motor_ds.s1["count"]
-
-                    if idle_shutoff:
-                        server_motor_ds.s1["left"] = 0
-                        server_motor_ds.s1["right"] = 0
-                    else:
-                        dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
-                        dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
-
-                    print(f"Writing speeds: {dxl_controller.speeds}")
-                    dxl_controller.update_speeds(dxl_controller.speeds)
-                    
-                dxl_controller.try_write_speeds()
-                dxl_controller.update_status_and_check_errors()
-
-                server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
-                server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
-            else:
-                server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
-                server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
-
-                # just to test
-                import random
-                ratio_left  = random.random() + 0.5
-                ratio_right = random.random() + 0.5
-                server_motor_ds.s2["motors"]["current"]["left"]  = server_motor_ds.s1["left"] * ratio_left
-                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] * ratio_right
-
-                time.sleep(1 / MOTOR_TEST_FPS)
-
-            server_motor_ds.put_s2(server_motor_dq)
-    except KeyboardInterrupt: pass
-    finally:
-        if not zero_video_capture:
-            print("Closing dynamixel controller...")
-            dxl_controller.close()
-
-            # dxl_controller.update_speeds({
-            #     "left": 0,
-            #     "right": 0,
-            # })
-            # for _ in range(3):
-            #     dxl_controller.try_write_speeds()
-            # time.sleep(0.25)
-            # dxl_controller.set_torque_status(False)
-            # time.sleep(0.25)
-            # dxl_controller.port_handler.closePort()
-           
-            print("Closed dynamixel controller...")
-# ---------------------------------------------------------------------------- #
-
 
 # ---------------------------------------------------------------------------- #
 def server_main(server_dq, server_motor_dq):
     app = Flask(__name__)
     server_ds = util.DoubleState(STATE_SERVER_MASTER, STATE_SERVER)
-    server_motor_ds = util.DoubleState(STATE_MOTOR_SERVER, STATE_MOTOR)
+    server_motor_ds = util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
 
     @app.route("/")
     def index():
@@ -262,8 +140,8 @@ def server_main(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
-    @app.route("/motors/<left>/<right>/", methods=["GET"])
-    def motors(left, right):
+    @app.route("/power/<left>/<right>/", methods=["GET"])
+    def power(left, right):
         # Has percent power built into values
         server_motor_ds.s1["left"] = float(left)
         server_motor_ds.s1["right"] = float(right)
@@ -328,109 +206,6 @@ def server_main(server_dq, server_motor_dq):
     # TODO: should it be threaded or not?
     # app.run(debug=False, port=5000, host="0.0.0.0", threaded=False)
     # app.run(debug=False, port=5000, host="0.0.0.0", processes=1)
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
-# def hazmat_main(hazmat_dq):
-#     fps_controller = util.FPSController()
-
-#     all_found = []
-#     frame = STATE_HAZMAT_MASTER["frame"]
-
-#     levenshtein_results = {}
-
-#     hazmat_ds = util.DoubleState(STATE_HAZMAT_MASTER, STATE_HAZMAT)
-#     last_clear = STATE_HAZMAT_MASTER["clear"]
-#     hazmat_angle_change = STATE_HAZMAT_MASTER["hazmat_angle_change"]
-
-#     print("Creating easyocr reader...")
-#     reader = easyocr.Reader(["en"], gpu=True)
-#     print("easyocr reader created.")
-
-#     try:
-#         while not hazmat_ds.s1["quit"]:
-#             hazmat_ds.update_s1(hazmat_dq)
-
-#             # ---------------------------------------------------------------- #
-#             if hazmat_ds.s1["clear"] > last_clear:
-#                 last_clear = hazmat_ds.s1["clear"]
-#                 all_found = []
-#                 print("Cleared all found hazmat labels.")
-#             # ---------------------------------------------------------------- #
-
-#             if hazmat_ds.s1["frame"] is not None:
-#                 frame = hazmat_ds.s1["frame"]
-
-#                 if not hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] == 0:
-#                     hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
-
-#                 if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
-
-#                     levenshtein_thresh = hazmat_ds.s1["hazmat_levenshtein_thresh"]
-#                     frame_results = hazmat.processScreenshot(frame, hazmat_ds.s2["angle"], reader, levenshtein_thresh)
-#                     levenshtein_results[hazmat_ds.s2["angle"]] = frame_results
-
-#                     fontScale = 0.5
-#                     fontColor = (0, 0, 255)
-#                     thickness = 1
-#                     lineType = 2
-
-#                     for results in levenshtein_results.values():
-#                         for result in results:
-#                             all_found.append(result.closest)
-
-#                             frame = cv2.drawContours(frame, [result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
-
-#                             x, y, w, h = cv2.boundingRect(result.detection_result.cnt.cnt)
-#                             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
-
-#                             corner = (x + 5, y - 10)
-
-#                             cv2.putText(
-#                                 frame,
-#                                 result.string,
-#                                 corner,
-#                                 cv2.FONT_HERSHEY_SIMPLEX,
-#                                 fontScale,
-#                                 fontColor,
-#                                 thickness,
-#                                 lineType,
-#                             )
-
-#                     if len(levenshtein_results[hazmat_ds.s2["angle"]]) > 0:
-#                         all_found = list(set(all_found))
-#                         all_found.sort()
-
-#                         print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
-#                         print(all_found)
-
-#                     hazmat_ds.s2["angle"] += hazmat_angle_change
-#                     hazmat_ds.s2["angle"] %= 360
-#                 else:
-#                     hazmat_ds.s2["angle"] = 0
-#                     levenshtein_results = {}
-
-#                 hazmat_ds.s2["hazmat_frame"] = frame
-
-#             # ---------------------------------------------------------------- #
-#             fps_controller.update()
-#             hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
-
-#             all_found = list(set(all_found))
-#             all_found.sort()
-#             hazmat_ds.s2["hazmats_found"] = all_found
-
-#             hazmat_ds.s2["last_update"] = time.time()
-
-#             hazmat_ds.put_s2(hazmat_dq)
-#             # ---------------------------------------------------------------- #
-
-#             # ---------------------------------------------------------------- #
-#             if not hazmat_ds.s1["run_hazmat"]:
-#                 time.sleep(1 / HAZMAT_DRY_FPS)
-#             # ---------------------------------------------------------------- #
-#     except KeyboardInterrupt: pass
 # ---------------------------------------------------------------------------- #
 
 
@@ -761,7 +536,7 @@ if __name__ == "__main__":
 
     hazmat_dq = util.DoubleQueue()
 
-    hazmat_thread = Process(target=hazmat.hazmat.thread, args=(hazmat_dq,))
+    hazmat_thread = Process(target=hazmat.main.thread, args=(hazmat_dq,))
     hazmat_thread.daemon = True
     hazmat_thread.start()
     print(f"Hazmat thread pid: {hazmat_thread.pid}")
@@ -786,9 +561,9 @@ if __name__ == "__main__":
     print("\nStarting motor thread...")
 
     motor_dq = util.DoubleQueue()
-    motor_ds = util.DoubleState(STATE_MOTOR_MASTER, {})
+    motor_ds = util.DoubleState(motors.consts.STATE_FROM_MASTER, {})
 
-    motor_thread = Process(target=motor_main, args=(server_motor_dq, motor_dq, zero_video_capture))
+    motor_thread = Process(target=motors.main.thread, args=(server_motor_dq, motor_dq, zero_video_capture))
     motor_thread.daemon = True
     motor_thread.start()
     print(f"Motor thread pid: {motor_thread.pid}")
@@ -841,8 +616,8 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------------------ #
     print("Closing motor thread...")
-    STATE_MOTOR_MASTER["quit"] = True
-    motor_dq.put_q1(STATE_MOTOR_MASTER)
+    motors.consts.STATE_FROM_MASTER["quit"] = True
+    motor_dq.put_q1(motors.consts.STATE_FROM_MASTER)
 
     util.close_thread(motor_thread)
     # ------------------------------------------------------------------------ #

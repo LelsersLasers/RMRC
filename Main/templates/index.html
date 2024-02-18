@@ -862,7 +862,7 @@ input[type="range"] {
 				else if (x_input > 0)	speed_right *= diagonal_multiplier;
 			}
 
-			const base_path = "motors";
+			const base_path = "power";
 			const path = base_path + "/" + speed_left + "/" + speed_right;
 			fetchAndInfo(FLASK_SERVER + path);
 		}
@@ -909,7 +909,7 @@ input[type="range"] {
 			} else if (key == "x") {
 				fetchAndInfo(FLASK_SERVER + "clear/qr");
 			} else if (key == "z") {
-				const base_path = "motors";
+				const base_path = "power";
 				const path = base_path + "/0/0";
 				fetchAndInfo(FLASK_SERVER + path);
 			}

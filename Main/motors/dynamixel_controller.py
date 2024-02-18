@@ -1,5 +1,6 @@
-import dynamixel_sdk
 import time
+import dynamixel_sdk
+import motors.consts
 
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w210/
 # https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/api_reference/python/python_porthandler/#python
@@ -8,9 +9,6 @@ DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
 
 BAUDRATE = 57600
-MAX_POWER_START = 330
-MAX_WRITES = 3
-CLOSE_WAIT_TIME = 0.25
 
 ADDR_TORQUE_ENABLE = 64
 ADDR_GOAL_VELOCITY = 104
@@ -49,7 +47,7 @@ class DynamixelController:
 			"right": 0,
 		}
 
-		self.velocity_limit = MAX_POWER_START
+		self.velocity_limit = motors.consts.MAX_POWER_START
 
 		self.to_writes = { # to_writes[id] = #
 			1: 0,
@@ -63,7 +61,7 @@ class DynamixelController:
 			3: 0,
 			4: 0,
 		}
-		self.min_writes = 1
+		self.min_writes = motors.consts.MOTOR_MIN_WRITES
 
 	def reboot_all_motors(self):
 		for side_ids in DYNAMIXEL_IDS.values():
@@ -75,14 +73,14 @@ class DynamixelController:
 			"left": 0,
 			"right": 0,
 		})
-		for _ in range(MAX_WRITES):
+		for _ in range(motors.consts.MAX_WRITES):
 			self.try_write_speeds()
 
-		time.sleep(CLOSE_WAIT_TIME)
+		time.sleep(motors.consts.CLOSE_WAIT_TIME)
 
 		self.set_torque_status(False)
 
-		time.sleep(CLOSE_WAIT_TIME)
+		time.sleep(motors.consts.CLOSE_WAIT_TIME)
 		
 		self.port_handler.closePort()
 
@@ -112,7 +110,7 @@ class DynamixelController:
 			power = int(speed * orientation * self.velocity_limit)
 
 			for id in side_ids:
-				if self.to_writes[id] > 0 and self.has_wrote[id] < MAX_WRITES:
+				if self.to_writes[id] > 0 and self.has_wrote[id] < motors.consts.MAX_WRITES:
 					success = True
 
 					dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
