@@ -6,7 +6,7 @@ import motors.consts
 import motors.dynamixel_controller
 
 
-def thread(server_motor_dq, motor_dq, zero_video_capture):
+def thread(server_motor_dq, motor_dq, video_capture_zero):
     server_motor_ds = util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
     motor_ds = util.DoubleState(motors.consts.STATE_FROM_MASTER, {})
     last_count = motors.consts.STATE_FROM_SERVER["count"]
@@ -15,7 +15,7 @@ def thread(server_motor_dq, motor_dq, zero_video_capture):
     fps_controller = util.FPSController()
 
     try:
-        if not zero_video_capture:
+        if not video_capture_zero:
             dxl_controller = motors.dynamixel_controller.DynamixelController()
             dxl_controller.set_torque_status(True)
 
@@ -28,7 +28,7 @@ def thread(server_motor_dq, motor_dq, zero_video_capture):
 
             now = time.time()
 
-            if not zero_video_capture:
+            if not video_capture_zero:
                 dxl_controller.min_writes = server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
@@ -76,7 +76,7 @@ def thread(server_motor_dq, motor_dq, zero_video_capture):
             server_motor_ds.put_s2(server_motor_dq)
     except KeyboardInterrupt: pass
     finally:
-        if not zero_video_capture:
+        if not video_capture_zero:
             print("Closing dynamixel controller...")
             dxl_controller.close()
 

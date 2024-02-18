@@ -3,7 +3,7 @@ import numpy as np
 import pyzbar.pyzbar as pyzbar
 
 
-def qr_detect(frame):
+def qr_detect_and_draw(frame):
     decoded_objects = pyzbar.decode(frame)
 
     links = []
