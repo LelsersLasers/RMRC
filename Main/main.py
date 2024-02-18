@@ -345,10 +345,10 @@ if __name__ == "__main__":
     print("Closing camera threads...")
     for key in camera_threads.keys():
         print(f"Closing camera {key} capture and thread...")
-        camera.consts.STATE_CAMERA_MASTER["quit"] = True
+        camera.consts.STATE_FROM_MASTER["quit"] = True
 
         camera_dq = camera_dqs[key]
-        camera_dq.put_q1(camera.consts.STATE_CAMERA_MASTER)
+        camera_dq.put_q1(camera.consts.STATE_FROM_MASTER)
 
         camera_thread = camera_threads[key]
         util.close_thread(camera_thread)
