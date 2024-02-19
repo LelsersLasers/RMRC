@@ -14,6 +14,9 @@ def thread(server_dq, server_motor_dq):
     log.setLevel(logging.WARNING)
 
     app = flask.Flask(__name__)
+
+    fps_controller = util.FPSController()
+
     server_ds = util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
     server_motor_ds = util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
 
@@ -113,7 +116,10 @@ def thread(server_dq, server_motor_dq):
 
         # combine main info with motor info
         server_ds.s1.update(server_motor_ds.s2)
-        server_ds.s1["fpses"][-1] = server_motor_ds.s2["motor_fps"]
+        server_ds.s1["fpses"][-2] = server_motor_ds.s2["motor_fps"]
+
+        fps_controller.update()
+        server_ds.s1["fpses"][-1] = fps_controller.fps()
 
         response = flask.jsonify(server_ds.s1)
         response.headers.add("Access-Control-Allow-Origin", "*")

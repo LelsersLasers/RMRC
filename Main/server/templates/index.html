@@ -125,6 +125,7 @@ span {
 #irbar      { background-color: #8FBCBB; }
 #masterbar  { background-color: #A3BE8C; }
 #motorbar   { background-color: #D08770; }
+#backendbar { background-color: #BF616A; }
 #frontendbar{ background-color: #B48EAD; }
 
 #cpubar { background-color: #D08770; }
@@ -270,6 +271,9 @@ input[type="range"] {
 			</div>
 			<div class="bar" id="motorbar">
 				<span id="fps-motor">20 FPS (motor)</span>
+			</div>
+            <div class="bar" id="backendbar">
+				<span id="backend-motor">20 FPS (backend)</span>
 			</div>
 			<div class="bar" id="frontendbar">
 				<span id="fps-frontend">20 FPS (frontend)</span>
@@ -531,7 +535,7 @@ input[type="range"] {
 						max_fpses = max_fpses.slice(-MAX_LEN);
 						const max_ratio_fps = Math.max(...max_fpses);
 
-						const fps_ids = ["webcam1", "hazmat", "webcam2", "ir", "master", "motor", "frontend"];
+						const fps_ids = ["webcam1", "hazmat", "webcam2", "ir", "master", "motor", "backend", "frontend"];
 
 						for (let i = 0; i < fps_ids.length; i++) {
 							const fps_id = fps_ids[i];

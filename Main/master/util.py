@@ -23,6 +23,7 @@ def draw_ratio_bar(frame, ratio, active, loading = False):
     cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
 # ---------------------------------------------------------------------------- #
 
+
 # ---------------------------------------------------------------------------- #
 def read_last_line(f):
     # with open('filename.txt', 'rb') as f:

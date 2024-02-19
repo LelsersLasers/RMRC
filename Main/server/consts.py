@@ -5,7 +5,7 @@ STATE_FROM_MASTER = {
     "h": 1,
     "hazmats_found": [],
     "qr_found": [],
-    "fpses": [-1, -1, -1, -1, -1, -1], # last one is the motor_fps
+    "fpses": [-1, -1, -1, -1, -1, -1, -1], # [-2] = motor_fps, [-1] = server /get fps
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
