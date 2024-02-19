@@ -510,6 +510,11 @@ input[type="range"] {
 		setInterval(function() {
 			const path = "get";
 			const start_ms = now_ms();
+
+            t1 = start_ms;
+            delta = (t1 - t0) / 1000;
+            t0 = t1;
+
 			fetch(FLASK_SERVER + path)
 				.then(response => response.json())
 				.then(data => {
@@ -520,10 +525,6 @@ input[type="range"] {
 						frames += 1;
 
 						const now = now_ms();
-	
-						t1 = now;
-						delta = (t1 - t0) / 1000;
-						t0 = t1;
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
