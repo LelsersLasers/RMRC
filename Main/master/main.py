@@ -48,7 +48,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     base_key = None if video_capture_zero else "webcam1"
     frame_copy = None
 
-    killer = util.GracefulKiller()
+    killer = master.util.GracefulKiller()
 
     frame_read_time = time.time()
 

@@ -1,5 +1,33 @@
 import os
+import signal
+
 import cv2
+
+
+# ---------------------------------------------------------------------------- #
+class GracefulKiller:
+    kill_now = False
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+    def exit_gracefully(self, *args):
+        self.kill_now = True
+# ---------------------------------------------------------------------------- #
+
+
+# ---------------------------------------------------------------------------- #
+def read_last_line(f):
+    # with open('filename.txt', 'rb') as f:
+    try:  # catch OSError in case of a one line file 
+        f.seek(-2, os.SEEK_END)
+        while f.read(1) != b'\n':
+            f.seek(-2, os.SEEK_CUR)
+    except OSError:
+        f.seek(0)
+        
+    last_line = f.readline().decode()
+    return last_line
+# ---------------------------------------------------------------------------- #
 
 
 # ---------------------------------------------------------------------------- #
@@ -21,19 +49,4 @@ def draw_ratio_bar(frame, ratio, active, loading = False):
     color = (0, 255, 0) if loading else ((0, 0, 255) if active else (255, 255, 0))
 
     cv2.line(frame, (5, 5), (5 + int(w), 5), color, 3)
-# ---------------------------------------------------------------------------- #
-
-
-# ---------------------------------------------------------------------------- #
-def read_last_line(f):
-    # with open('filename.txt', 'rb') as f:
-    try:  # catch OSError in case of a one line file 
-        f.seek(-2, os.SEEK_END)
-        while f.read(1) != b'\n':
-            f.seek(-2, os.SEEK_CUR)
-    except OSError:
-        f.seek(0)
-        
-    last_line = f.readline().decode()
-    return last_line
 # ---------------------------------------------------------------------------- #
