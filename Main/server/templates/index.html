@@ -273,7 +273,7 @@ input[type="range"] {
 				<span id="fps-motor">20 FPS (motor)</span>
 			</div>
             <div class="bar" id="backendbar">
-				<span id="backend-motor">20 FPS (backend)</span>
+				<span id="fps-backend">20 FPS (backend)</span>
 			</div>
 			<div class="bar" id="frontendbar">
 				<span id="fps-frontend">20 FPS (frontend)</span>
@@ -529,7 +529,7 @@ input[type="range"] {
                         // -------------------------------------------------- //
 						const fpses = data["fpses"];
 						const fps_values = [...fpses, 1 / delta];
-						
+
 						const max_fps = Math.max(...fps_values);
 						max_fpses.push(max_fps);
 						max_fpses = max_fpses.slice(-MAX_LEN);

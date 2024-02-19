@@ -217,6 +217,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
                 camera_dses[base_key].s2["fps"],
                 fps_controller.fps(),
                 -1,
+                -1,
             ]
         else:
             fpses = [
@@ -225,6 +226,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
                 camera_dses["webcam2"].s2["fps"],
                 camera_dses["ir"].s2["fps"],
                 fps_controller.fps(),
+                -1,
                 -1,
             ]
         server_ds.s1["fpses"] = fpses
