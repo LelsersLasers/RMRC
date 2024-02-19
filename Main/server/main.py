@@ -3,7 +3,7 @@ import time
 import flask
 import logging
 
-import util
+import shared_util
 
 import motors.consts
 import server.consts
@@ -15,10 +15,10 @@ def thread(server_dq, server_motor_dq):
 
     app = flask.Flask(__name__)
 
-    fps_controller = util.FPSController()
+    fps_controller = shared_util.FPSController()
 
-    server_ds = util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
-    server_motor_ds = util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
+    server_ds = shared_util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
+    server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
 
     @app.route("/")
     def index():

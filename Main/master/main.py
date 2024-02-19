@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import psutil
 
-import util
+import shared_util
 
 import master.consts
 import master.util
@@ -29,7 +29,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
-    fps_controller = util.FPSController()
+    fps_controller = shared_util.FPSController()
 
     all_qr_found = []
     last_clear_qr = server.consts.STATE_FROM_SELF["clear"]["qr"]
@@ -37,12 +37,12 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     average_frame = None
     update_average_frame = False
 
-    hazmat_ds = util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
-    server_ds = util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
+    hazmat_ds = shared_util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
+    server_ds = shared_util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
 
     camera_dses = {}
     for key in camera_dqs.keys():
-        camera_ds = util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
+        camera_ds = shared_util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
         camera_dses[key] = camera_ds
 
     base_key = None if video_capture_zero else "webcam1"

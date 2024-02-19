@@ -1,11 +1,11 @@
 import time
 import cv2
-import util
+import shared_util
 import camera.consts
 
 
 def thread(camera_dq, key):
-    camera_ds = util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
+    camera_ds = shared_util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
 
     print(f"Opening camera {key}...")
     if key is not None:
@@ -20,7 +20,7 @@ def thread(camera_dq, key):
 
     time.sleep(camera.consts.CAMERA_WAKEUP_TIME)
 
-    fps_controller = util.FPSController()
+    fps_controller = shared_util.FPSController()
 
     try:
         while not camera_ds.s1["quit"]:

@@ -1,18 +1,19 @@
 import time
 
-import util
+import shared_util
 
 import motors.consts
 import motors.dynamixel_controller
 
 
 def thread(server_motor_dq, motor_dq, video_capture_zero):
-    server_motor_ds = util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
-    motor_ds = util.DoubleState(motors.consts.STATE_FROM_MASTER, {})
+    fps_controller = shared_util.FPSController()
+
+    server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
+    motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_MASTER, {})
     last_count = motors.consts.STATE_FROM_SERVER["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
 
-    fps_controller = util.FPSController()
 
     try:
         if not video_capture_zero:

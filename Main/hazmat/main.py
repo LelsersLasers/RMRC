@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import easyocr
 
-import util
+import shared_util
 
 import hazmat.consts
 import hazmat.util
@@ -74,14 +74,14 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
 
 # ---------------------------------------------------------------------------- #
 def thread(hazmat_dq):
-    fps_controller = util.FPSController()
+    fps_controller = shared_util.FPSController()
 
     all_found = []
     frame = hazmat.consts.STATE_FROM_MASTER["frame"]
 
     levenshtein_results = {}
 
-    hazmat_ds = util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
+    hazmat_ds = shared_util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
     last_clear = hazmat.consts.STATE_FROM_MASTER["clear"]
     hazmat_angle_change = hazmat.consts.STATE_FROM_MASTER["hazmat_angle_change"]
 
