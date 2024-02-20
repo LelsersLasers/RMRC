@@ -5,7 +5,11 @@ STATE_FROM_MASTER = {
     "h": 1,
     "hazmats_found": [],
     "qr_found": [],
-    "fpses": [-1, -1, -1, -1, -1, -1, -1], # [-2] = motor_fps, [-1] = server /get fps
+
+    # webcam1, hazmat, webcam2, ir, master, motor, backend
+    # motor and backend are set in server /get route, rest are sent from master.main.thread
+    "fpses": [-1, -1, -1, -1, -1, -1, -1],
+    
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
