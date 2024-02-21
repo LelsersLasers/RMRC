@@ -77,9 +77,7 @@ class DynamixelController:
 			self.try_write_speeds()
 
 		time.sleep(motors.consts.CLOSE_WAIT_TIME)
-
 		self.set_torque_status(False)
-
 		time.sleep(motors.consts.CLOSE_WAIT_TIME)
 		
 		self.port_handler.closePort()
