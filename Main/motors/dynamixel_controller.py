@@ -82,9 +82,6 @@ class DynamixelController:
 		
 		self.port_handler.closePort()
 
-	# def close_port(self):
-	# 	self.port_handler.closePort()
-
 	def set_torque_status(self, status):
 		status_code = 1 if status else 0
 		for side_ids in DYNAMIXEL_IDS.values():
