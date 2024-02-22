@@ -63,7 +63,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
             frames[key] = camera_ds.s2["frame"]
 
             if frames[key] is None:
-                frames[key] = np.zeros((camera.constsCAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
+                frames[key] = np.zeros((camera.consts.CAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
                 frames[key] += camera.consts.CAMERA_NONE_GREY
 
             if key == base_key and frames[key] is not None and camera_ds.s2["time"] > frame_read_time:
