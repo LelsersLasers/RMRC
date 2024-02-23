@@ -52,26 +52,21 @@ def create_thread(target, args, name):
     return thread
 
 def close_thread(t):
-    # wait 2.5 seconds for thread to finish otherwise terminate
-    
-    # TODO: does joint actually call terminate?
-
     print(f"\nClosing {t.name=} thread...")
 
     print(f"1) {thread_str(t)}")
     t.join(2.5)
     print(f"2) {thread_str(t)}")
 
-    # TODO: is this necessary?
     if t.is_alive():
         t.terminate()
+        t.join(2.5)
         print(f"3) {thread_str(t)}")
 
-    # TODO: is this necessary?
     try:
         # multiprocessing.Process.close() was added in Python 3.7
         # (catch does not exist for Python 3.6)
         t.close()
-    except:
+    except AttributeError:
         pass
 # ---------------------------------------------------------------------------- #
