@@ -53,8 +53,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    motor_dq = util.DoubleQueue()
-    motor_thread = util.create_thread(motors.main.thread, (server_motor_dq, motor_dq, video_capture_zero), "motor")
+    motor_thread = util.create_thread(motors.main.thread, (server_motor_dq, video_capture_zero), "motor")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -73,20 +72,13 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------------------ #
     for key in camera_threads.keys():
-        camera.consts.STATE_FROM_MASTER["quit"] = True
-        camera_dq = camera_dqs[key]
-        camera_dq.put_q1(camera.consts.STATE_FROM_MASTER)
         camera_thread = camera_threads[key]
         util.close_thread(camera_thread)
 
-    hazmat.consts.STATE_FROM_MASTER["quit"] = True
-    hazmat_dq.put_q1(hazmat.consts.STATE_FROM_MASTER)
     util.close_thread(hazmat_thread)
 
     util.close_thread(flask_thread)
 
-    motors.consts.STATE_FROM_MASTER["quit"] = True
-    motor_dq.put_q1(motors.consts.STATE_FROM_MASTER)
     util.close_thread(motor_thread)
     # ------------------------------------------------------------------------ #
 

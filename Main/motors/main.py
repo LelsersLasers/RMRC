@@ -6,9 +6,8 @@ import motors.consts
 import motors.dynamixel_controller
 
 
-def thread(server_motor_dq, motor_dq, video_capture_zero):
+def thread(server_motor_dq, video_capture_zero):
     server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
-    motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_MASTER, {})
     last_count = motors.consts.STATE_FROM_SERVER["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
 
@@ -20,9 +19,8 @@ def thread(server_motor_dq, motor_dq, video_capture_zero):
             dxl_controller = motors.dynamixel_controller.DynamixelController()
             dxl_controller.set_torque_status(True)
 
-        while not graceful_killer.kill_now and not motor_ds.s1["quit"]:
+        while not graceful_killer.kill_now:
             server_motor_ds.update_s1(server_motor_dq)
-            motor_ds.update_s1(motor_dq)
 
             fps_controller.update()
             server_motor_ds.s2["motor_fps"] = fps_controller.fps()

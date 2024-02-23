@@ -90,7 +90,7 @@ def thread(hazmat_dq):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
-    while not graceful_killer.kill_now and not hazmat_ds.s1["quit"]:
+    while not graceful_killer.kill_now:
         hazmat_ds.update_s1(hazmat_dq)
 
         # -------------------------------------------------------------------- #

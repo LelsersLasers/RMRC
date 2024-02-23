@@ -5,7 +5,7 @@ import camera.consts
 
 
 def thread(camera_dq, key):
-    camera_ds = shared_util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
+    camera_ds = shared_util.DoubleState({}, camera.consts.STATE_FROM_SELF)
 
     print(f"Opening camera {key}...")
     if key is not None:
@@ -24,7 +24,7 @@ def thread(camera_dq, key):
     graceful_killer = shared_util.GracefulKiller()
 
     try:
-        while not graceful_killer.kill_now and not camera_ds.s1["quit"]:
+        while not graceful_killer.kill_now:
             camera_ds.update_s1(camera_dq)
 
             ret, frame = cap.read()

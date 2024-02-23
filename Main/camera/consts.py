@@ -19,9 +19,6 @@ CAMERA_WAKEUP_TIME = 1.5
 CAMERA_NONE_GREY = 50
 
 
-STATE_FROM_MASTER = {
-    "quit": False,
-}
 STATE_FROM_SELF = {
     "frame": None,
     "ns": 0,

@@ -46,7 +46,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
     camera_dses = {}
     frame_read_times = {}
     for key in camera_dqs.keys():
-        camera_ds = shared_util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
+        camera_ds = shared_util.DoubleState({}, camera.consts.STATE_FROM_SELF)
         camera_dses[key] = camera_ds
         frame_read_times[key] = camera.consts.STATE_FROM_SELF["time"]
 
