@@ -428,8 +428,8 @@ input[type="range"] {
 
         const TIME_SCALES = {
             "hazmat": 2000,
-            "qr": 50,
-            "motion": 100,
+            "qr": 25,
+            "motion": 50,
         };
 
         let show_sidebar = true;
@@ -645,13 +645,16 @@ input[type="range"] {
 
                         for (let i = 0; i < time_ids.length; i++) {
                             const time_id = time_ids[i];
-                            const time = data["timebars"][time_id] * 1000;
+                            const time = data["timebars"][time_id];
+							const time_value = time > 0 ? time * 1000 : -1;
+
                             const time_ele = document.getElementById(time_id + "-time");
-                            time_ele.innerHTML = `${time.toFixed(0)} MS (${time_id})`;
+                            time_ele.innerHTML = `${time_value.toFixed(0)} MS (${time_id})`;
 
                             const timebar = document.getElementById(time_id + "-timebar");
-                            const ratio = time / TIME_SCALES[time_id];
-                            timebar.style.width = (ratio * 100) + "%";
+                            const ratio = time_value / TIME_SCALES[time_id];
+							const width = time > 0 ? (ratio * 100) : 100;
+                            timebar.style.width = width + "%";
                         }
                         // -------------------------------------------------- //
 
