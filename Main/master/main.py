@@ -201,11 +201,10 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
                 bottom_combined = all_frames[zoom_on]
 
             combined = cv2.vconcat([top_combined, bottom_combined])
-            combine_downscaled = cv2.resize(combined, (0, 0), fx=master.consts.SERVER_FRAME_SCALE, fy=master.consts.SERVER_FRAME_SCALE)
 
-            server_ds.s1["frame"] = base64.b64encode(cv2.imencode(".jpg", combine_downscaled)[1]).decode()
-            server_ds.s1["w"] = combine_downscaled.shape[1]
-            server_ds.s1["h"] = combine_downscaled.shape[0]
+            server_ds.s1["frame"] = base64.b64encode(cv2.imencode(".jpg", combined)[1]).decode()
+            server_ds.s1["w"] = combined.shape[1]
+            server_ds.s1["h"] = combined.shape[0]
         # -------------------------------------------------------------------- #
 
 
