@@ -10,13 +10,11 @@ import hazmat.main
 import motors.consts
 import motors.main
 
-import server.consts
 import server.main
 
 import camera.consts
 import camera.main
 
-import master.consts
 import master.main
 
 
@@ -63,15 +61,10 @@ if __name__ == "__main__":
     print("\nStarting master thread...\n")
 
     try:
-        gpu_log_file = None if video_capture_zero else open(master.consts.GPU_LOG_FILENAME, 'rb')
-        master.main.thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file)
+        master.main.thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
-    # except: pass
-    finally:
-        if not video_capture_zero:
-            gpu_log_file.close()
     # ------------------------------------------------------------------------ #
 
 
