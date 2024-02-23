@@ -421,8 +421,11 @@ input[type="range"] {
 		let last_frame = "";
 
 		let max_fpses = [1];
+        const FPS_RATIO_MAX = 100;
+
         let max_delays = [250];
         const MAX_LEN = 3 * FRONT_END_FPS;
+        const DELAY_RATIO_BASE = 250;
 
 		let ms_offset = 0;
 		let calibrated = false;
@@ -534,7 +537,7 @@ input[type="range"] {
 						const max_fps = Math.max(...fps_values);
 						max_fpses.push(max_fps);
 						max_fpses = max_fpses.slice(-MAX_LEN);
-						const max_ratio_fps = Math.max(...max_fpses);
+						const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
 
 						const fps_ids = ["webcam1", "hazmat", "webcam2", "ir", "master", "motor", "backend", "frontend"];
 
@@ -545,7 +548,7 @@ input[type="range"] {
 							fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
 
 							const fpsbar = document.getElementById(fps_id + "bar");
-							const ratio = fps / max_ratio_fps;
+							const ratio = Math.min(fps / max_ratio_fps, 1.0);
 							fpsbar.style.width = ratio * 100 + "%";
 						}
                         // -------------------------------------------------- //
@@ -674,7 +677,7 @@ input[type="range"] {
                         const ping = now - start_ms;
                         const ping_delay = ping.toFixed(0);
 
-                        const max_delay = Math.max(inital_delay, average_delay, ping_delay, 250);
+                        const max_delay = Math.max(inital_delay, average_delay, ping_delay, DELAY_RATIO_BASE);
 						max_delays.push(max_delay);
 						max_delays = max_delays.slice(-MAX_LEN);
 						const max_ratio_delay = Math.max(...max_delays);
