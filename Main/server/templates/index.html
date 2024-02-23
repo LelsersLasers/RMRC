@@ -136,6 +136,8 @@ span {
 #qr-timebar     { background-color: #5E81AC; }
 #motion-timebar { background-color: #5E81AC; }
 
+#updateratiobar { background-color: #B48EAD; }
+
 #anglebar { background-color: #A3BE8C; }
 
 kbd {
@@ -294,25 +296,29 @@ input[type="range"] {
 				<span id="stats-ram">20% (ram)</span>
 			</div>
 
+			<h4>Master stats</h4>
+			<div class="bar" id="hazmat-timebar">
+				<span id="hazmat-time">0 MS (hazmat)</span>
+			</div>
+			<div class="bar" id="qr-timebar">
+				<span id="qr-time">0 MS (qr)</span>
+			</div>
+			<div class="bar" id="motion-timebar">
+				<span id="motion-time">0 MS (motion)</span>
+			</div>
+			<div class="bar" id="updateratiobar">
+				<span id="updateratio-percent">0% (updates)</span>
+			</div>
+
 			<h4>Detected Hazmat Labels:</h4>
 			<div class="bar" id="anglebar">
 				<span id="angle">0°</span>
 			</div>
-            <div class="bar" id="hazmat-timebar">
-				<span id="hazmat-time">0 MS (hazmat)</span>
-			</div>
 			<p id="hazmats"></p>
 
 			<h4>Detected QR Codes:</h4>
-            <div class="bar" id="qr-timebar">
-				<span id="qr-time">0 MS (qr)</span>
-			</div>
 			<p id="qrs"></p>
 
-            <h4>Motion Detection:</h4>
-            <div class="bar" id="motion-timebar">
-				<span id="motion-time">0 MS (motion)</span>
-			</div>
 
 			<h4>Controls</h4>
 			<p>
@@ -667,6 +673,14 @@ input[type="range"] {
 						anglebar.style.width = (angle / 360) * 100 + "%";
                         // -------------------------------------------------- //
 
+                        // -------------------------------------------------- //
+						const combined_ratio = data["update_combined_ratio"] * 100;
+						const combined_ratio_ele = document.getElementById("updateratio-percent");
+						combined_ratio_ele.innerHTML = `${combined_ratio.toFixed(0)}% (updates)`;
+
+						const combined_ratio_bar = document.getElementById("updateratiobar");
+						combined_ratio_bar.style.width = combined_ratio + "%";
+                        // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
 						const frame_ele = document.getElementById("frame");
@@ -683,7 +697,6 @@ input[type="range"] {
 						const qrs = [...new Set(data["qr_found"])];
 						qrs_ele.innerHTML = qrs.sort().join("<br />");
                         // -------------------------------------------------- //
-
 
                         // -------------------------------------------------- //
 						const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);

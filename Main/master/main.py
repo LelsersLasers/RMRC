@@ -56,6 +56,8 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
+    update_combined_count = []
+
     while not graceful_killer.kill_now:
         fps_controller.update()
 
@@ -239,6 +241,10 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
         server_ds.s1["ram"] = psutil.virtual_memory().percent
         server_ds.s1["cpu"] = psutil.cpu_percent()
 
+        update_combined_count.append(int(should_update_combined))
+        update_combined_count = update_combined_count[-master.consts.UPDATE_COMBINED_COUNT_LEN:]
+        update_combined_ratio = sum(update_combined_count) / len(update_combined_count)
+        server_ds.s1["update_combined_ratio"] = update_combined_ratio
 
         if not video_capture_zero:
             last_line = master.util.read_last_line(gpu_log_file)
@@ -250,7 +256,10 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
                     break        
 
         server_ds.put_s1(server_dq)
+        # -------------------------------------------------------------------- #
 
+
+        # -------------------------------------------------------------------- #
         if not should_update_combined:
             time.sleep(1 / master.consts.DRY_PASS_FPS)
         # -------------------------------------------------------------------- #
