@@ -76,7 +76,7 @@ def thread(server_motor_dq, motor_dq, video_capture_zero):
 
             server_motor_ds.put_s2(server_motor_dq)
         print("\n\n\n\n\nTESTTESTTEST\n\n\n\n\n")
-    except KeyboardInterrupt: pass
+    # except KeyboardInterrupt: pass
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
