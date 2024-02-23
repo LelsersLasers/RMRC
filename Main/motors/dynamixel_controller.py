@@ -80,7 +80,7 @@ class DynamixelController:
 		self.set_torque_status(False)
 		time.sleep(motors.consts.CLOSE_WAIT_TIME)
 		
-		# self.port_handler.closePort()
+		self.port_handler.closePort()
 
 	def set_torque_status(self, status):
 		status_code = 1 if status else 0

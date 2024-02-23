@@ -75,21 +75,22 @@ def thread(server_motor_dq, motor_dq, video_capture_zero):
                 time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
 
             server_motor_ds.put_s2(server_motor_dq)
+        print("\n\n\n\n\nTESTTESTTEST\n\n\n\n\n")
     except KeyboardInterrupt: pass
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
-            # dxl_controller.close()
+            dxl_controller.close()
 
-            dxl_controller.update_speeds({
-                "left": 0,
-                "right": 0,
-            })
-            for _ in range(3):
-                dxl_controller.try_write_speeds()
-            time.sleep(0.25)
-            dxl_controller.set_torque_status(False)
-            time.sleep(0.25)
+            # dxl_controller.update_speeds({
+            #     "left": 0,
+            #     "right": 0,
+            # })
+            # for _ in range(3):
+            #     dxl_controller.try_write_speeds()
+            # time.sleep(0.25)
+            # dxl_controller.set_torque_status(False)
+            # time.sleep(0.25)
             # dxl_controller.port_handler.closePort()
            
             print("Closed dynamixel controller...")
