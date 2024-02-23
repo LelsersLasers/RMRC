@@ -63,13 +63,15 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
         server_ds.update_s2(server_dq)
         hazmat_ds.update_s2(hazmat_dq)
 
-        update_view_mode = server_ds.s2["view_mode"]["count"] > view_mode_count
-        update_hazmat = hazmat_ds.s2["last_update"] > last_hazmat_time
-
         should_update_combined  = server_ds.s2["run"]["qr"]
         should_update_combined |= server_ds.s2["run"]["md"]
-        should_update_combined |= update_view_mode
-        should_update_combined |= update_hazmat
+
+        if server_ds.s2["view_mode"]["count"] > view_mode_count:
+            view_mode_count = server_ds.s2["view_mode"]["count"]
+            should_update_combined = True
+        if hazmat_ds.s2["last_update"] > last_hazmat_time:
+            last_hazmat_time = hazmat_ds.s2["last_update"]
+            should_update_combined = True
         # -------------------------------------------------------------------- #
 
         # -------------------------------------------------------------------- #
