@@ -29,7 +29,6 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
-    fps_controller = shared_util.FPSController()
 
     all_qr_found = []
     last_clear_qr = server.consts.STATE_FROM_SELF["clear"]["qr"]
@@ -48,11 +47,12 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
     base_key = None if video_capture_zero else "webcam1"
     frame_copy = None
 
-    killer = shared_util.GracefulKiller()
+    fps_controller = shared_util.FPSController()
+    graceful_killer = shared_util.GracefulKiller()
 
     frame_read_time = time.time()
 
-    while not killer.kill_now and not hazmat_ds.s1["quit"]:
+    while not graceful_killer.kill_now:
         fps_controller.update()
 
         # -------------------------------------------------------------------- #

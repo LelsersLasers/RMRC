@@ -21,9 +21,10 @@ def thread(camera_dq, key):
     time.sleep(camera.consts.CAMERA_WAKEUP_TIME)
 
     fps_controller = shared_util.FPSController()
+    graceful_killer = shared_util.GracefulKiller()
 
     try:
-        while not camera_ds.s1["quit"]:
+        while not graceful_killer.kill_now and not camera_ds.s1["quit"]:
             camera_ds.update_s1(camera_dq)
 
             ret, frame = cap.read()
@@ -32,14 +33,12 @@ def thread(camera_dq, key):
                 break
 
             camera_ds.s2["time"] = time.time()
-
             camera_ds.s2["frame"] = frame
 
             fps_controller.update()
             camera_ds.s2["fps"] = fps_controller.fps()
 
             camera_ds.put_s2(camera_dq)
-    except KeyboardInterrupt: pass
     finally:
         print(f"Releasing camera {key}...")
         cap.release()
