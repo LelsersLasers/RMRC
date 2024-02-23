@@ -58,6 +58,11 @@ def close_thread(t):
     t.join(2.5)
     print(f"2) {t.name=} {t.pid=} {t.exitcode=} {t.is_alive()=}")
 
+    # TODO: is this necessary?
+    if t.is_alive():
+        t.terminate()
+        print(f"3) {t.name=} {t.pid=} {t.exitcode=} {t.is_alive()=}")
+
     try:
         # multiprocessing.Process.terminate() was added in Python 3.7
         # (catch does not exist for Python 3.6)
