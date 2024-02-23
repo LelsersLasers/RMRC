@@ -263,4 +263,7 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
                     break        
 
         server_ds.put_s1(server_dq)
+
+        if not should_update_combined:
+            time.sleep(1 / master.consts.DRY_PASS_FPS)
         # -------------------------------------------------------------------- #
