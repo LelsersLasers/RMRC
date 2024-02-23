@@ -75,40 +75,25 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
 
-    print("\n\nExiting...")
+    print("\n\nExiting...\n\n")
 
 
     # ------------------------------------------------------------------------ #
-    print("Closing camera threads...")
     for key in camera_threads.keys():
-        print(f"Closing camera {key} capture and thread...")
         camera.consts.STATE_FROM_MASTER["quit"] = True
-
         camera_dq = camera_dqs[key]
         camera_dq.put_q1(camera.consts.STATE_FROM_MASTER)
-
         camera_thread = camera_threads[key]
         util.close_thread(camera_thread)
-    # ------------------------------------------------------------------------ #
 
-    # ------------------------------------------------------------------------ #
-    print("Closing hazmat thread...")
     hazmat.consts.STATE_FROM_MASTER["quit"] = True
     hazmat_dq.put_q1(hazmat.consts.STATE_FROM_MASTER)
-
     util.close_thread(hazmat_thread)
-    # ------------------------------------------------------------------------ #
 
-    # ------------------------------------------------------------------------ #
-    print("Closing server...")
     util.close_thread(flask_thread)
-    # ------------------------------------------------------------------------ #
 
-    # ------------------------------------------------------------------------ #
-    print("Closing motor thread...")
     motors.consts.STATE_FROM_MASTER["quit"] = True
     motor_dq.put_q1(motors.consts.STATE_FROM_MASTER)
-
     util.close_thread(motor_thread)
     # ------------------------------------------------------------------------ #
 

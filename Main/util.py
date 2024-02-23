@@ -40,18 +40,23 @@ def last_from_queue(q, last_value):
 
 # ---------------------------------------------------------------------------- #
 def create_thread(target, args, name):
-    print(f"\nStarting {name} thread...")
     process_name = f"{name}_process"
     thread = multiprocessing.Process(target=target, args=args, name=process_name)
     thread.daemon = True
     thread.start()
-    print(f"{name} process pid: {thread.pid}")
+    print(f"\nStarting {thread.name=}: {thread.pid=} {thread.is_alive()=}")
     return thread
 
 def close_thread(t):
     # wait 2.5 seconds for thread to finish otherwise terminate
+    
+    # TODO: does joint actually call terminate?
+
+    print(f"\nClosing {t.name=} thread...")
+
+    print(f"1) {t.name=} {t.pid=} {t.exitcode=} {t.is_alive()=}")
     t.join(2.5)
-    # TODO: does this actually call terminate?
+    print(f"2) {t.name=} {t.pid=} {t.exitcode=} {t.is_alive()=}")
 
     try:
         # multiprocessing.Process.terminate() was added in Python 3.7
