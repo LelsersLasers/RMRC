@@ -1,5 +1,6 @@
 import time
 import signal
+import multiprocessing
 
 # ---------------------------------------------------------------------------- #
 class GracefulKiller:
@@ -15,6 +16,7 @@ class GracefulKiller:
         self.kill_now = False
     
     def exit_gracefully(self, *args):
+        print(f"GracefulKiller: {multiprocessing.current_process().name}")
         self.kill_now = True
 # ---------------------------------------------------------------------------- #
 
