@@ -1,4 +1,18 @@
 import time
+import signal
+
+# ---------------------------------------------------------------------------- #
+class GracefulKiller:
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+        self.kill_now = False
+    
+    def exit_gracefully(self, *args):
+        self.kill_now = True
+# ---------------------------------------------------------------------------- #
+
 
 # ---------------------------------------------------------------------------- #
 class FPSController:

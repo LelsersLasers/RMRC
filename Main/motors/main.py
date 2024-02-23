@@ -2,8 +2,6 @@ import time
 
 import shared_util
 
-import master.util
-
 import motors.consts
 import motors.dynamixel_controller
 
@@ -16,7 +14,7 @@ def thread(server_motor_dq, motor_dq, video_capture_zero):
     last_count = motors.consts.STATE_FROM_SERVER["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
 
-    killer = master.util.GracefulKiller()
+    killer = shared_util.GracefulKiller()
 
     try:
         if not video_capture_zero:
