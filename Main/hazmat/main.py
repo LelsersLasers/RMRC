@@ -74,8 +74,6 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
 
 # ---------------------------------------------------------------------------- #
 def thread(hazmat_dq):
-    fps_controller = shared_util.FPSController()
-
     all_found = []
     frame = hazmat.consts.STATE_FROM_MASTER["frame"]
 
@@ -89,87 +87,90 @@ def thread(hazmat_dq):
     reader = easyocr.Reader(["en"], gpu=True)
     print("easyocr reader created.")
 
-    try:
-        while not hazmat_ds.s1["quit"]:
-            hazmat_ds.update_s1(hazmat_dq)
+    fps_controller = shared_util.FPSController()
+    graceful_killer = shared_util.GracefulKiller()
 
-            # ---------------------------------------------------------------- #
-            if hazmat_ds.s1["clear"] > last_clear:
-                last_clear = hazmat_ds.s1["clear"]
-                all_found = []
-                print("Cleared all found hazmat labels.")
-            # ---------------------------------------------------------------- #
+    while not graceful_killer.kill_now and not hazmat_ds.s1["quit"]:
+        hazmat_ds.update_s1(hazmat_dq)
 
-            if hazmat_ds.s1["frame"] is not None:
-                frame = hazmat_ds.s1["frame"]
+        # -------------------------------------------------------------------- #
+        if hazmat_ds.s1["clear"] > last_clear:
+            last_clear = hazmat_ds.s1["clear"]
+            all_found = []
+            print("Cleared all found hazmat labels.")
+        # -------------------------------------------------------------------- #
 
-                if not hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] == 0:
-                    hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
+        # -------------------------------------------------------------------- #
+        if hazmat_ds.s1["frame"] is not None:
+            frame = hazmat_ds.s1["frame"]
 
-                if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
+            if not hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] == 0:
+                hazmat_angle_change = hazmat_ds.s1["hazmat_angle_change"]
 
-                    levenshtein_thresh = hazmat_ds.s1["hazmat_levenshtein_thresh"]
-                    frame_results = processScreenshot(frame, hazmat_ds.s2["angle"], reader, levenshtein_thresh)
-                    levenshtein_results[hazmat_ds.s2["angle"]] = frame_results
+            if hazmat_ds.s1["run_hazmat"] or hazmat_ds.s2["angle"] != 0:
 
-                    fontScale = 0.5
-                    fontColor = (0, 0, 255)
-                    thickness = 1
-                    lineType = 2
+                levenshtein_thresh = hazmat_ds.s1["hazmat_levenshtein_thresh"]
+                frame_results = processScreenshot(frame, hazmat_ds.s2["angle"], reader, levenshtein_thresh)
+                levenshtein_results[hazmat_ds.s2["angle"]] = frame_results
 
-                    for results in levenshtein_results.values():
-                        for result in results:
-                            all_found.append(result.closest)
+                fontScale = 0.5
+                fontColor = (0, 0, 255)
+                thickness = 1
+                lineType = 2
 
-                            frame = cv2.drawContours(frame, [result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
+                for results in levenshtein_results.values():
+                    for result in results:
+                        all_found.append(result.closest)
 
-                            x, y, w, h = cv2.boundingRect(result.detection_result.cnt.cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
+                        frame = cv2.drawContours(frame, [result.detection_result.cnt.cnt], -1, (255, 0, 0), 3)
 
-                            corner = (x + 5, y - 10)
+                        x, y, w, h = cv2.boundingRect(result.detection_result.cnt.cnt)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 225, 0), 4)
 
-                            cv2.putText(
-                                frame,
-                                result.string,
-                                corner,
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                fontScale,
-                                fontColor,
-                                thickness,
-                                lineType,
-                            )
+                        corner = (x + 5, y - 10)
 
-                    if len(levenshtein_results[hazmat_ds.s2["angle"]]) > 0:
-                        all_found = list(set(all_found))
-                        all_found.sort()
+                        cv2.putText(
+                            frame,
+                            result.string,
+                            corner,
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale,
+                            fontColor,
+                            thickness,
+                            lineType,
+                        )
 
-                        print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
-                        print(all_found)
+                if len(levenshtein_results[hazmat_ds.s2["angle"]]) > 0:
+                    all_found = list(set(all_found))
+                    all_found.sort()
 
-                    hazmat_ds.s2["angle"] += hazmat_angle_change
-                    hazmat_ds.s2["angle"] %= 360
-                else:
-                    hazmat_ds.s2["angle"] = 0
-                    levenshtein_results = {}
+                    print([result.string for result in levenshtein_results[hazmat_ds.s2["angle"]]])
+                    print(all_found)
 
-                hazmat_ds.s2["hazmat_frame"] = frame
+                hazmat_ds.s2["angle"] += hazmat_angle_change
+                hazmat_ds.s2["angle"] %= 360
+            else:
+                hazmat_ds.s2["angle"] = 0
+                levenshtein_results = {}
 
-            # ---------------------------------------------------------------- #
-            fps_controller.update()
-            hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
+            hazmat_ds.s2["hazmat_frame"] = frame
+        # -------------------------------------------------------------------- #
 
-            all_found = list(set(all_found))
-            all_found.sort()
-            hazmat_ds.s2["hazmats_found"] = all_found
+        # -------------------------------------------------------------------- #
+        fps_controller.update()
+        hazmat_ds.s2["hazmat_fps"] = fps_controller.fps()
 
-            hazmat_ds.s2["last_update"] = time.time()
+        all_found = list(set(all_found))
+        all_found.sort()
+        hazmat_ds.s2["hazmats_found"] = all_found
 
-            hazmat_ds.put_s2(hazmat_dq)
-            # ---------------------------------------------------------------- #
+        hazmat_ds.s2["last_update"] = time.time()
 
-            # ---------------------------------------------------------------- #
-            if not hazmat_ds.s1["run_hazmat"]:
-                time.sleep(1 / hazmat.consts.HAZMAT_DRY_FPS)
-            # ---------------------------------------------------------------- #
-    except KeyboardInterrupt: pass
+        hazmat_ds.put_s2(hazmat_dq)
+        # -------------------------------------------------------------------- #
+
+        # -------------------------------------------------------------------- #
+        if not hazmat_ds.s1["run_hazmat"]:
+            time.sleep(1 / hazmat.consts.HAZMAT_DRY_FPS)
+        # -------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
