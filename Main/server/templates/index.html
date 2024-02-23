@@ -132,6 +132,10 @@ span {
 #gpubar { background-color: #D08770; }
 #rambar { background-color: #EBCB8B; }
 
+#hazmat-timebar { background-color: #5E81AC; }
+#qr-timebar     { background-color: #5E81AC; }
+#motion-timebar { background-color: #5E81AC; }
+
 #anglebar { background-color: #A3BE8C; }
 
 kbd {
@@ -294,10 +298,21 @@ input[type="range"] {
 			<div class="bar" id="anglebar">
 				<span id="angle">0°</span>
 			</div>
+            <div class="bar" id="hazmat-timebar">
+				<span id="hazmat-time">0 MS (hazmat)</span>
+			</div>
 			<p id="hazmats"></p>
 
 			<h4>Detected QR Codes:</h4>
+            <div class="bar" id="qr-timebar">
+				<span id="qr-time">0 MS (qr)</span>
+			</div>
 			<p id="qrs"></p>
+
+            <h4>Motion Detection:</h4>
+            <div class="bar" id="motion-timebar">
+				<span id="motion-time">0 MS (motion)</span>
+			</div>
 
 			<h4>Controls</h4>
 			<p>
@@ -409,9 +424,15 @@ input[type="range"] {
 			"motion_new_frame_weight": "master",
 			"hazmat_levenshtein_thresh": "master",
 			"hazmat_angle_change": "master",
-		}
+		};
 
-		let show_sidebar = true;
+        const TIME_SCALES = {
+            "hazmat": 2000,
+            "qr": 50,
+            "motion": 100,
+        };
+
+        let show_sidebar = true;
 
 		let t0 = now_ms();
 		let t1 = now_ms();
@@ -617,6 +638,21 @@ input[type="range"] {
 							const statbar = document.getElementById(stats_id + "bar");
 							statbar.style.width = stat + "%";
 						}
+                        // -------------------------------------------------- //
+
+                        // -------------------------------------------------- //
+                        const time_ids = ["hazmat", "qr", "motion"];
+
+                        for (let i = 0; i < time_ids.length; i++) {
+                            const time_id = time_ids[i];
+                            const time = data["timebars"][time_id] * 1000;
+                            const time_ele = document.getElementById(time_id + "-time");
+                            time_ele.innerHTML = `${time.toFixed(0)} MS (${time_id})`;
+
+                            const timebar = document.getElementById(time_id + "-timebar");
+                            const ratio = time / TIME_SCALES[time_id];
+                            timebar.style.width = (ratio * 100) + "%";
+                        }
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //

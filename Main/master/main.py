@@ -69,6 +69,8 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
         if server_ds.s2["view_mode"]["count"] > view_mode_count:
             view_mode_count = server_ds.s2["view_mode"]["count"]
             should_update_combined = True
+
+        server_ds.s1["timebars"]["hazmat"] = time.time() - hazmat_ds.s2["last_update"]
         if hazmat_ds.s2["last_update"] > last_hazmat_time:
             last_hazmat_time = hazmat_ds.s2["last_update"]
             should_update_combined = True
@@ -107,22 +109,11 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
             else:
                 base_frame_shape = frame.shape
                 ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
-
-                # master.util.draw_fps_text(ir_frame, camera_dses["ir"].s2["fps"])
-                # master.util.draw_fps_text(frames["webcam2"], camera_dses["webcam2"].s2["fps"])
             
             if hazmat_ds.s2["hazmat_frame"] is not None:
                 hazmat_frame = hazmat_ds.s2["hazmat_frame"]
             else:
                 hazmat_frame = np.zeros_like(frame)
-
-            # time_since_last_hazmat_update = time.time() - hazmat_ds.s2["last_update"]
-            # master.util.draw_ratio_bar(
-            #     hazmat_frame,
-            #     time_since_last_hazmat_update / master.consts.HAZMAT_DELAY_BAR_SCALE,
-            #     hazmat_ds.s1["run_hazmat"],
-            #     hazmat_ds.s2["hazmat_frame"] is None
-            # )
         # -------------------------------------------------------------------- #
 
 
@@ -143,19 +134,18 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
                     print(qr_found_this_frame)
                     print(all_qr_found)
 
-            end = time.time()
+            server_ds.s1["timebars"]["qr"] = time.time() - start
+        else:
+            server_ds.s1["timebars"]["qr"] = -1
 
-            # master.util.draw_ratio_bar(frame, (end - start) / master.consts.QR_TIME_BAR_SCALE, True)
-        elif server_ds.s2["run"]["md"]:
+        if server_ds.s2["run"]["md"]:
             start = time.time()
             motion_min_area = server_ds.s2["motion_min_area"]
             motion_threshold = server_ds.s2["motion_threshold"]
             master.motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, motion_min_area, motion_threshold)
-            end = time.time()
-
-            # master.util.draw_ratio_bar(frame, (end - start) / master.consts.MOTION_TIME_BAR_SCALE, True, True)
-        # else:
-            # master.util.draw_ratio_bar(frame, 0, False)
+            server_ds.s1["timebars"]["motion"] = time.time() - start
+        else:
+            server_ds.s1["timebars"]["motion"] = -1
 
         if update_average_frame:
             update_average_frame = False
@@ -184,9 +174,6 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
 
 
         # -------------------------------------------------------------------- #
-        # master.util.draw_fps_text(frame, camera_dses[base_key].s2["fps"])
-        # master.util.draw_fps_text(hazmat_frame, hazmat_ds.s2["hazmat_fps"])
-
         if should_update_combined:
             if server_ds.s2["view_mode"]["value"] == 0:
                 top_combined = cv2.hconcat([frame, hazmat_frame])

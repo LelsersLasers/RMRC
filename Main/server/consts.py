@@ -13,7 +13,13 @@ STATE_FROM_MASTER = {
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
+
     "angle": 0,
+    "timebars": {
+        "hazmat": 0,
+        "qr": 0,
+        "motion": 0,
+    }
 }
 STATE_FROM_SELF = {
     "run": {
