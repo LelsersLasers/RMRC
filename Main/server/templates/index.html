@@ -132,9 +132,8 @@ span {
 #gpubar { background-color: #D08770; }
 #rambar { background-color: #EBCB8B; }
 
-#hazmat-timebar { background-color: #5E81AC; }
-#qr-timebar     { background-color: #5E81AC; }
-#motion-timebar { background-color: #5E81AC; }
+.timebar-idle	{ background-color: #5E81AC; }
+.timebar-active { background-color: #A3BE8C; }
 
 #updateratiobar { background-color: #B48EAD; }
 
@@ -297,13 +296,13 @@ input[type="range"] {
 			</div>
 
 			<h4>Master stats</h4>
-			<div class="bar" id="hazmat-timebar">
+			<div class="bar timebar-idle" id="hazmat-timebar">
 				<span id="hazmat-time">0 MS (hazmat)</span>
 			</div>
-			<div class="bar" id="qr-timebar">
+			<div class="bar timebar-idle" id="qr-timebar">
 				<span id="qr-time">0 MS (qr)</span>
 			</div>
-			<div class="bar" id="motion-timebar">
+			<div class="bar timebar-idle" id="motion-timebar">
 				<span id="motion-time">0 MS (motion)</span>
 			</div>
 			<div class="bar" id="updateratiobar">
@@ -921,12 +920,39 @@ input[type="range"] {
 			} else if (key == "h") {
 				run_hazmat = !run_hazmat;
 				fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+
+				const timebar_ele = document.getElementById("hazmat-timebar");
+				if (run_hazmat) {
+					timebar_ele.classList.remove("timebar-idle");
+					timebar_ele.classList.add("timebar-active");
+				} else {
+					timebar_ele.classList.remove("timebar-active");
+					timebar_ele.classList.add("timebar-idle");
+				}
 			} else if (key == "r") {
 				run_qr = !run_qr;
 				fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
+
+				const timebar_ele = document.getElementById("qr-timebar");
+				if (run_qr) {
+					timebar_ele.classList.remove("timebar-idle");
+					timebar_ele.classList.add("timebar-active");
+				} else {
+					timebar_ele.classList.remove("timebar-active");
+					timebar_ele.classList.add("timebar-idle");
+				}
 			} else if (key == "m") {
 				run_md = !run_md;
 				fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
+
+				const timebar_ele = document.getElementById("motion-timebar");
+				if (run_md) {
+					timebar_ele.classList.remove("timebar-idle");
+					timebar_ele.classList.add("timebar-active");
+				} else {
+					timebar_ele.classList.remove("timebar-active");
+					timebar_ele.classList.add("timebar-idle");
+				}
 			} else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
 				view_mode = key;
 				fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
