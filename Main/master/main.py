@@ -242,7 +242,8 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file):
         server_ds.s1["cpu"] = psutil.cpu_percent()
 
         update_combined_count.append(int(should_update_combined))
-        update_combined_count = update_combined_count[-master.consts.UPDATE_COMBINED_COUNT_LEN:]
+        updated_combined_keep_count = int(master.consts.UPDATE_COMBINED_COUNT_KEEP_TIME * fps_controller.fps())
+        update_combined_count = update_combined_count[-updated_combined_keep_count:]
         update_combined_ratio = sum(update_combined_count) / len(update_combined_count)
         server_ds.s1["update_combined_ratio"] = update_combined_ratio
 
