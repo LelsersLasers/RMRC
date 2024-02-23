@@ -2,6 +2,8 @@ import time
 
 import shared_util
 
+import master.util
+
 import motors.consts
 import motors.dynamixel_controller
 
@@ -14,13 +16,14 @@ def thread(server_motor_dq, motor_dq, video_capture_zero):
     last_count = motors.consts.STATE_FROM_SERVER["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
 
+    killer = master.util.GracefulKiller()
 
     try:
         if not video_capture_zero:
             dxl_controller = motors.dynamixel_controller.DynamixelController()
             dxl_controller.set_torque_status(True)
 
-        while not motor_ds.s1["quit"]:
+        while not motor_ds.s1["quit"] and not killer.kill_now:
             server_motor_ds.update_s1(server_motor_dq)
             motor_ds.update_s1(motor_dq)
 
