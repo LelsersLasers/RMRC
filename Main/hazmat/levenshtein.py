@@ -23,8 +23,7 @@ def findDistance(word1, word2):
                 c = distances[w1 - 1][w2 - 1]
                 value = (min(a, b, c)) + 1
                 distances[w1].append(value)
-    return distances[-1][-1]
-    # return distances[w1][w2]
+    return distances[w1][w2]
 
 
 def checkList(myWord, list):
