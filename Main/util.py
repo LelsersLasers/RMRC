@@ -49,11 +49,13 @@ def create_thread(target, args, name):
     return thread
 
 def close_thread(t):
-    t.join(1)
-    t.terminate()
-    t.join(1)
+    # wait 2.5 seconds for thread to finish otherwise terminate
+    t.join(2.5)
+    # TODO: does this actually call terminate?
 
-    try:    
+    try:
+        # multiprocessing.Process.terminate() was added in Python 3.7
+        # (catch does not exist for Python 3.6)
         t.close()
     except:
         pass

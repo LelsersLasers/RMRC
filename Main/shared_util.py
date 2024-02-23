@@ -7,8 +7,10 @@ class GracefulKiller:
     def __init__(self):
         # SIGINT =  Ctrl+C
         signal.signal(signal.SIGINT, self.exit_gracefully)
+
+        # TODO: should have this or not?
         # SIGTERM =  kill
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
+        # signal.signal(signal.SIGTERM, self.exit_gracefully)
 
         self.kill_now = False
     
