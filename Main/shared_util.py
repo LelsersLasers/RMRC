@@ -3,8 +3,11 @@ import signal
 
 # ---------------------------------------------------------------------------- #
 class GracefulKiller:
+    # "captures" SIGINT and SIGTERM signals to allow for graceful exit
     def __init__(self):
+        # SIGINT =  Ctrl+C
         signal.signal(signal.SIGINT, self.exit_gracefully)
+        # SIGTERM =  kill
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
         self.kill_now = False
