@@ -17,7 +17,7 @@ import server.consts
 import camera.consts
 
 
-def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
+def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
     print("\nHold 'wasd' to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")
     print("Press 'h' to toggle running hazmat detection.")
@@ -43,11 +43,11 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
     gpu_log_file = None if video_capture_zero else open(master.consts.GPU_LOG_FILENAME, 'rb')
 
-    camera_dses = {}
+    camera_sses = {}
     frame_read_times = {}
-    for key in camera_dqs.keys():
-        camera_ds = shared_util.DoubleState({}, camera.consts.STATE_FROM_SELF)
-        camera_dses[key] = camera_ds
+    for key in camera_sqs.keys():
+        camera_ss = shared_util.SingleState(camera.consts.STATE_FROM_SELF)
+        camera_sses[key] = camera_ss
         frame_read_times[key] = camera.consts.STATE_FROM_SELF["time"]
 
     last_hazmat_time = hazmat.consts.STATE_FROM_SELF["last_update"]
@@ -82,24 +82,24 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
             # ---------------------------------------------------------------- #
             frames = {}
-            for key, camera_dq in camera_dqs.items():
-                camera_ds = camera_dses[key]
-                camera_ds.update_s2(camera_dq)
-                frames[key] = camera_ds.s2["frame"]
+            for key, camera_sq in camera_sqs.items():
+                camera_ss = camera_sses[key]
+                camera_ss.update_s2(camera_sq)
+                frames[key] = camera_ss.s["frame"]
 
                 if frames[key] is None:
                     frames[key]  = np.zeros((camera.consts.CAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
                     frames[key] += camera.consts.CAMERA_NONE_GREY
 
-                if key == base_key and frames[key] is not None and camera_ds.s2["time"] > frame_read_times[key]:
+                if key == base_key and frames[key] is not None and camera_ss.s["time"] > frame_read_times[key]:
                     frame_copy = frames[key].copy()
 
                     if average_frame is None:
                         average_frame = frames[key].copy().astype("float")
                     update_average_frame = True
                 
-                if camera_ds.s2["time"] > frame_read_times[key]:
-                    frame_read_times[key] = camera_ds.s2["time"]
+                if camera_ss.s["time"] > frame_read_times[key]:
+                    frame_read_times[key] = camera_ss.s["time"]
                     should_update_combined = True
 
             frame = frames[base_key]            
@@ -219,20 +219,20 @@ def thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero):
 
             if video_capture_zero:
                 fpses = [
-                    camera_dses[base_key].s2["fps"],
+                    camera_sses[base_key].s["fps"],
                     hazmat_ds.s2["hazmat_fps"],
-                    camera_dses[base_key].s2["fps"],
-                    camera_dses[base_key].s2["fps"],
+                    camera_sses[base_key].s["fps"],
+                    camera_sses[base_key].s["fps"],
                     fps_controller.fps(),
                     -1,
                     -1,
                 ]
             else:
                 fpses = [
-                    camera_dses["webcam1"].s2["fps"],
+                    camera_sses["webcam1"].s["fps"],
                     hazmat_ds.s2["hazmat_fps"],
-                    camera_dses["webcam2"].s2["fps"],
-                    camera_dses["ir"].s2["fps"],
+                    camera_sses["webcam2"].s["fps"],
+                    camera_sses["ir"].s2["fps"],
                     fps_controller.fps(),
                     -1,
                     -1,

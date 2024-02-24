@@ -26,6 +26,23 @@ class DoubleQueue:
         self.q1.cancel_join_thread()
         self.q2.cancel_join_thread()
 
+
+class SingleQueue:
+    def __init__(self):
+        self.q = multiprocessing.Queue()
+
+    def put(self, item):
+        self.q.put_nowait(item)
+
+    def last(self, value):
+        return last_from_queue(self.q, value)
+
+    def close(self):
+        self.q.close()
+        # basically `allow_exit_without_flush`
+        self.q.cancel_join_thread()
+
+
 def last_from_queue(q, last_value):
 	value = last_value
 

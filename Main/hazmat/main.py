@@ -74,14 +74,12 @@ def processScreenshot(img, angle, reader, levenshtein_thresh):
 
 # ---------------------------------------------------------------------------- #
 def thread(hazmat_dq):
-    all_found = []
-    frame = hazmat.consts.STATE_FROM_MASTER["frame"]
-
-    levenshtein_results = {}
-
     hazmat_ds = shared_util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
     last_clear = hazmat.consts.STATE_FROM_MASTER["clear"]
     hazmat_angle_change = hazmat.consts.STATE_FROM_MASTER["hazmat_angle_change"]
+
+    all_found = []
+    levenshtein_results = {}
 
     print("Creating easyocr reader...")
     reader = easyocr.Reader(["en"], gpu=True)

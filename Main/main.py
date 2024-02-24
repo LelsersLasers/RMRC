@@ -27,15 +27,15 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    camera_dqs = {}
+    camera_sqs = {}
     camera_threads = {}
 
     cap_arg_keys = [None] if video_capture_zero else camera.consts.CAP_ARGS.keys()
     for key in cap_arg_keys:
-        camera_dq = util.DoubleQueue()
-        camera_thread = util.create_thread(camera.main.thread, (camera_dq, key), f"camera_{key}")
+        camera_sq = util.SingleQueue()
+        camera_thread = util.create_thread(camera.main.thread, (camera_sq, key), f"camera_{key}")
 
-        camera_dqs[key] = camera_dq
+        camera_sqs[key] = camera_sq
         camera_threads[key] = camera_thread
 
     time.sleep(camera.consts.CAMERA_WAKEUP_TIME * 2)
@@ -89,8 +89,8 @@ if __name__ == "__main__":
     server_dq.close()
     server_motor_dq.close()
 
-    for camera_dq in camera_dqs.values():
-        camera_dq.close()
+    for camera_sq in camera_sqs.values():
+        camera_sq.close()
     # ------------------------------------------------------------------------ #
 
     print("Done.")

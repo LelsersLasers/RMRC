@@ -53,4 +53,15 @@ class DoubleState:
         dq.put_q1(self.s1)
     def put_s2(self, dq):
         dq.put_q2(self.s2)
+
+
+class SingleState:
+    def __init__(self, s):
+        self.s = s
+
+    def update_s(self, ss):
+        self.s = ss.last(self.s)
+
+    def put_s(self, dq):
+        dq.put(self.s)
 # ---------------------------------------------------------------------------- #
