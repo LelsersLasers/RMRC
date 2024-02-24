@@ -60,7 +60,7 @@ if __name__ == "__main__":
     print("\nStarting master thread...\n")
 
     try:
-        master.main.thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero)
+        master.main.thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
