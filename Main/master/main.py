@@ -84,7 +84,7 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             frames = {}
             for key, camera_sq in camera_sqs.items():
                 camera_ss = camera_sses[key]
-                camera_ss.update_s2(camera_sq)
+                camera_ss.update_s(camera_sq)
                 frames[key] = camera_ss.s["frame"]
 
                 if frames[key] is None:
