@@ -1,3 +1,24 @@
 # RMRC
 
-Code written by Millan Kumar (and Audrey Lin and Dr. J and Sienna Li) for Bishop's RMRC team
+Code written by The Knight Sky for Bishop's RMRC team
+
+## The Team
+
+- Dr. J
+- Dr. Keller
+- Audrey Lin
+- Ryan Zhu
+- Mia Gover
+- Sienna Li
+- Millan Kumar
+- Victor Joulin-Batejat
+- Charlie Fredberg
+- Grace Yao
+- Amy Yan
+
+## Setup (TODO update!)
+
+The code is designed to just be cloned and run.
+The main changes are:
+- Changing `LATENCY_TIMER` in the library's code
+- Changing the `easyocr` order of checking GPU backends 
