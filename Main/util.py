@@ -44,15 +44,15 @@ class SingleQueue:
 
 
 def last_from_queue(q, last_value):
-	value = last_value
+    value = last_value
 
-	while True:
-		try:
-			value = q.get_nowait()
-		except queue.Empty:
-			break
+    while True:
+        try:
+            value = q.get_nowait()
+        except queue.Empty:
+            break
 
-	return value
+    return value
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
