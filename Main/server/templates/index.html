@@ -758,25 +758,21 @@ input[type="range"] {
                 })
                 .catch(e => {
                     console.log(`fetch 'get' failed: ${e}`);
-                    disconnect();
+                    
+                    calibrated = false;
+                    connected = false;
+
+                    run_hazmat = false;
+                    run_qr = false;
+                    run_md = false;
+
+                    keys = {};
+                    display_keys();
+                    
+                    // Note: config_sliders and write_every_frame not reset when disconnected
+                    // but resent when reconnected
                 });
         }, DELAY);
-
-        function disconnect() {
-            calibrated = false;
-
-            connected = false;
-            run_hazmat = false;
-            run_qr = false;
-            run_md = false;
-
-            keys = {};
-
-            display_keys();
-            
-            // Note: config_sliders and write_every_frame not reset when disconnected
-            // but resent when reconnected
-        }
 
         
         function setPower(value) {	
@@ -962,9 +958,18 @@ input[type="range"] {
         }
 
         function visibilitychange(e) {
-            disconnect();
+            const base_path = "power";
+            const path = base_path + "/0/0";
+            fetchAndInfo(FLASK_SERVER + path);
+
+            keys = {};
+            display_keys();
+
+            calibrated = false;
+            connected = false;
 
             if (document.visibilityState == "visible") {
+                try_calibrate();
                 try_connect();
             }
         }
