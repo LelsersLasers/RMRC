@@ -232,7 +232,7 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
                     camera_sses["webcam1"].s["fps"],
                     hazmat_ds.s2["hazmat_fps"],
                     camera_sses["webcam2"].s["fps"],
-                    camera_sses["ir"].s2["fps"],
+                    camera_sses["ir"].s["fps"],
                     fps_controller.fps(),
                     -1,
                     -1,
