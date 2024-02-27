@@ -57,7 +57,7 @@ def last_from_queue(q, last_value):
 
 # ---------------------------------------------------------------------------- #
 def thread_str(t):
-    return f"{t.name=} {t.pid=} {t.exitcode=} {t.is_alive()=}"
+    return f"Name: {t.name}\tPID: {t.pid}\tExit code: {t.exitcode}\tAlive: {t.is_alive()}"
 
 
 def create_thread(target, args, name):
@@ -69,7 +69,7 @@ def create_thread(target, args, name):
     return thread
 
 def close_thread(t):
-    print(f"\nClosing {t.name=} thread...")
+    print(f"\nClosing {t.name} thread...")
 
     print(f"1) {thread_str(t)}")
     t.join(2.5)
