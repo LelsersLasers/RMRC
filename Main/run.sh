@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# jetson_clocks without any options: set CPU, GPU, and EMC clocks to maximum
+sudo jetson_clocks
+
 chmod 777 /dev/ttyUSB0
 bash -c "echo 1 > /sys/bus/usb-serial/devices/ttyUSB0/latency_timer"
 
