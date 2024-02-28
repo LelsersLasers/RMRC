@@ -151,6 +151,7 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             else:
                 server_ds.s1["timebars"]["motion"] = -1
 
+            # must be updated after possible motion detection
             if update_average_frame:
                 update_average_frame = False
                 motion_new_frame_weight = server_ds.s2["motion_new_frame_weight"]
