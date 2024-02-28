@@ -25,8 +25,6 @@ def thread(camera_sq, key):
 
     try:
         while not graceful_killer.kill_now:
-            camera_ss.update_s(camera_sq)
-
             ret, frame = cap.read()
             if not ret or frame is None:
                 print(f"Camera {key} read failed.")
