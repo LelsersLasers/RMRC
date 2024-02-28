@@ -18,7 +18,8 @@ import camera.consts
 
 
 def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
-    print("\nHold 'wasd' to move the robot.")
+    print("\nControls:")
+    print("Hold 'wasd' to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")
     print("Press 'h' to toggle running hazmat detection.")
     print("Press 'r' to toggle running qr detection.")
@@ -27,7 +28,8 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
     print("Press 'x' to clear all found QR codes.")
     print("Press 't'/'T' to increase/decrease power by 20%.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
-    print("Press 5 to toggle sidebar.\n")
+    print("Press 5 to toggle sidebar.")
+    print("Press 'l' to invert controls.\n")
 
 
     all_qr_found = []

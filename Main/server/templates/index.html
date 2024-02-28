@@ -337,6 +337,7 @@ input[type="range"] {
                 Press <kbd>1-4</kbd> to switched focused feed.<br />
                 Press <kbd>0</kbd> to show camera grid.<br />
                 Press <kbd>5</kbd> to toggle sidebar.<br />
+                Press <kbd>l</kbd> to invert controls.<br />
             </p>
 
 
@@ -961,6 +962,11 @@ input[type="range"] {
                 const base_path = "power";
                 const path = base_path + "/0/0";
                 fetchAndInfo(FLASK_SERVER + path);
+            } else if (key == "l") {
+                invert = !invert;
+                const ele = document.getElementById("invert");
+                ele.checked = invert;
+                calculate_power();
             }
 
             display_keys();
