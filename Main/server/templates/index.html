@@ -243,7 +243,7 @@ input[type="range"] {
             <input type="range" id="power" name="power" min="1" max="100" step="1" value="60" oninput="powerSlider()" />
 
             <label class="pointer" for="invert">Invert Controls:</label>
-            <input type="checkbox" id="invert" />
+            <input type="checkbox" id="invert" oninput="calculate_power()" />
 
             <br />
             
