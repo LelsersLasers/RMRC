@@ -93,16 +93,16 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
                     frames[key]  = np.zeros((camera.consts.CAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
                     frames[key] += camera.consts.CAMERA_NONE_GREY
 
-                if key == base_key and frames[key] is not None and camera_ss.s["time"] > frame_read_times[key]:
-                    frame_copy = frames[key].copy()
-
-                    if average_frame is None:
-                        average_frame = frames[key].copy().astype("float")
-                    update_average_frame = True
-                
                 if camera_ss.s["time"] > frame_read_times[key]:
                     frame_read_times[key] = camera_ss.s["time"]
                     should_update_combined = True
+
+                    if key == base_key and frames[key] is not None:
+                        frame_copy = frames[key].copy()
+
+                        if average_frame is None:
+                            average_frame = frames[key].copy().astype("float")
+                        update_average_frame = True
 
             frame = frames[base_key]            
             # ---------------------------------------------------------------- #
