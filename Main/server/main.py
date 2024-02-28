@@ -31,6 +31,15 @@ def thread(server_dq, server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
+    @app.route("/invert/<state>", methods=["GET"])
+    def invert(state):
+        server_ds.s2["invert"] = state == "true"
+        server_ds.put_s2(server_dq)
+
+        response = flask.jsonify(state)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+
     @app.route("/config/<type>/<key>/<value>", methods=["GET"])
     def config(type, key, value):
         if type == "motor":

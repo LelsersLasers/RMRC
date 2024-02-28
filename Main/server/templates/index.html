@@ -507,6 +507,8 @@ input[type="range"] {
 
                 fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
 
+                fetchAndInfo(FLASK_SERVER + "invert/" + invert);
+
                 for (const key in config_sliders) {
                     const value = config_sliders[key];
                     const type = CONFIG_TYPE[key];
@@ -790,6 +792,7 @@ input[type="range"] {
             const ele = document.getElementById("invert");
             const value = ele.checked;
             invert = value;
+            fetchAndInfo(FLASK_SERVER + "invert/" + invert);
             calculate_power();
         }
         

@@ -35,6 +35,7 @@ STATE_FROM_SELF = {
         "value": 0,
         "count": 0,
     },
+    "invert": False,
     "motion_min_area": 500,
     "motion_threshold": 65,
     "motion_new_frame_weight": 0.4,

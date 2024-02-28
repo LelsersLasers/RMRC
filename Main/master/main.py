@@ -54,7 +54,6 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
 
     last_hazmat_time = hazmat.consts.STATE_FROM_SELF["last_update"]
 
-    base_key = None if video_capture_zero else "webcam1"
     frame_copy = None
 
     fps_controller = shared_util.FPSController()
@@ -68,6 +67,8 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             # ---------------------------------------------------------------- #
             server_ds.update_s2(server_dq)
             hazmat_ds.update_s2(hazmat_dq)
+
+            base_key = None if video_capture_zero else ("webcam1" if not server_ds.s2["invert"] else "webcam2")
 
             should_update_combined  = server_ds.s2["run"]["qr"]
             should_update_combined |= server_ds.s2["run"]["md"]
