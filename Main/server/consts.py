@@ -1,6 +1,5 @@
 STATE_FROM_MASTER = {
     "frame": "",
-    "ns": 0,
     "w": 1,
     "h": 1,
     "hazmats_found": [],
