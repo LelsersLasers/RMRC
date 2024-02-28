@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     server_dq = util.DoubleQueue()
     server_motor_dq = util.DoubleQueue()
-    flask_thread = util.create_thread(server.main.thread, (server_dq, server_motor_dq), "flask")
+    server_thread = util.create_thread(server.main.thread, (server_dq, server_motor_dq), "server")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     util.close_thread(hazmat_thread)
 
-    util.close_thread(flask_thread)
+    util.close_thread(server_thread)
 
     util.close_thread(motor_thread)
     # ------------------------------------------------------------------------ #
