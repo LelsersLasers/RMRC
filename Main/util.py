@@ -26,35 +26,64 @@ class DoubleQueue:
         self.q1.cancel_join_thread()
         self.q2.cancel_join_thread()
 
+
+class SingleQueue:
+    def __init__(self):
+        self.q = multiprocessing.Queue()
+
+    def put(self, item):
+        self.q.put_nowait(item)
+
+    def last(self, value):
+        return last_from_queue(self.q, value)
+
+    def close(self):
+        self.q.close()
+        # basically `allow_exit_without_flush`
+        self.q.cancel_join_thread()
+
+
 def last_from_queue(q, last_value):
-	value = last_value
+    value = last_value
 
-	while True:
-		try:
-			value = q.get_nowait()
-		except queue.Empty:
-			break
+    while True:
+        try:
+            value = q.get_nowait()
+        except queue.Empty:
+            break
 
-	return value
+    return value
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
+def thread_str(t):
+    return f"Name: {t.name} PID: {t.pid} Exit code: {t.exitcode} Alive: {t.is_alive()}"
+
+
 def create_thread(target, args, name):
-    print(f"\nStarting {name} thread...")
     process_name = f"{name}_process"
     thread = multiprocessing.Process(target=target, args=args, name=process_name)
     thread.daemon = True
     thread.start()
-    print(f"{name} process pid: {thread.pid}")
+    print(f"\nStarting {thread_str(thread)}...")
     return thread
 
 def close_thread(t):
-    t.join(1)
-    t.terminate()
-    t.join(1)
+    print(f"\nClosing {t.name} thread...")
 
-    try:    
+    print(f"1) {thread_str(t)}")
+    t.join(2.5)
+    print(f"2) {thread_str(t)}")
+
+    if t.is_alive():
+        t.terminate()
+        t.join(2.5)
+        print(f"3) {thread_str(t)}")
+
+    try:
+        # multiprocessing.Process.close() was added in Python 3.7
+        # (catch does not exist for Python 3.6)
         t.close()
-    except:
+    except AttributeError:
         pass
 # ---------------------------------------------------------------------------- #

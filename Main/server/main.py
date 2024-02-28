@@ -99,7 +99,8 @@ def thread(server_dq, server_motor_dq):
     
     @app.route("/view/<view_mode>/", methods=["GET"])
     def view(view_mode):
-        server_ds.s2["view_mode"] = int(view_mode)
+        server_ds.s2["view_mode"]["value"] = int(view_mode)
+        server_ds.s2["view_mode"]["count"] += 1
         server_ds.put_s2(server_dq)
 
         response = flask.jsonify(view_mode)

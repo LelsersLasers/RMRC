@@ -1,18 +1,17 @@
 import time
 import signal
+import multiprocessing
 
 # ---------------------------------------------------------------------------- #
 class GracefulKiller:
-    # "captures" SIGINT and SIGTERM signals to allow for graceful exit
+    # "captures" SIGINT signal to allow for graceful exit
     def __init__(self):
-        # SIGINT =  Ctrl+C
+        # SIGINT = Ctrl+C
         signal.signal(signal.SIGINT, self.exit_gracefully)
-        # SIGTERM =  kill
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
-
         self.kill_now = False
     
     def exit_gracefully(self, *args):
+        print(f"GracefulKiller: {multiprocessing.current_process().name}")
         self.kill_now = True
 # ---------------------------------------------------------------------------- #
 
@@ -54,4 +53,15 @@ class DoubleState:
         dq.put_q1(self.s1)
     def put_s2(self, dq):
         dq.put_q2(self.s2)
+
+
+class SingleState:
+    def __init__(self, s):
+        self.s = s
+
+    def update_s(self, ss):
+        self.s = ss.last(self.s)
+
+    def put_s(self, dq):
+        dq.put(self.s)
 # ---------------------------------------------------------------------------- #

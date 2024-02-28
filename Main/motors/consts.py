@@ -17,8 +17,8 @@ STATE_FROM_SERVER = {
     "count": 0,
     "last_get": time.time(),
     "velocity_limit": {
-		"value": MAX_POWER_START,
-		"count": 0,
+        "value": MAX_POWER_START,
+        "count": 0,
     },
     "motor_writes": MOTOR_MIN_WRITES,
     "write_every_frame": False,
@@ -35,7 +35,4 @@ STATE_FROM_SELF = {
         }
     },
     "motor_fps": 20,
-}
-STATE_FROM_MASTER = {
-    "quit": False,
 }

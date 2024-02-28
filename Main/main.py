@@ -10,13 +10,11 @@ import hazmat.main
 import motors.consts
 import motors.main
 
-import server.consts
 import server.main
 
 import camera.consts
 import camera.main
 
-import master.consts
 import master.main
 
 
@@ -29,15 +27,15 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    camera_dqs = {}
+    camera_sqs = {}
     camera_threads = {}
 
     cap_arg_keys = [None] if video_capture_zero else camera.consts.CAP_ARGS.keys()
     for key in cap_arg_keys:
-        camera_dq = util.DoubleQueue()
-        camera_thread = util.create_thread(camera.main.thread, (camera_dq, key), f"camera_{key}")
+        camera_sq = util.SingleQueue()
+        camera_thread = util.create_thread(camera.main.thread, (camera_sq, key), f"camera_{key}")
 
-        camera_dqs[key] = camera_dq
+        camera_sqs[key] = camera_sq
         camera_threads[key] = camera_thread
 
     time.sleep(camera.consts.CAMERA_WAKEUP_TIME * 2)
@@ -55,59 +53,31 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    motor_dq = util.DoubleQueue()
-    motor_thread = util.create_thread(motors.main.thread, (server_motor_dq, motor_dq, video_capture_zero), "motor")
+    motor_thread = util.create_thread(motors.main.thread, (server_motor_dq, video_capture_zero), "motor")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
     print("\nStarting master thread...\n")
 
     try:
-        gpu_log_file = None if video_capture_zero else open(master.consts.GPU_LOG_FILENAME, 'rb')
-        master.main.thread(hazmat_dq, server_dq, camera_dqs, video_capture_zero, gpu_log_file)
+        master.main.thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
-    # except: pass
-    finally:
-        if not video_capture_zero:
-            gpu_log_file.close()
     # ------------------------------------------------------------------------ #
 
 
-    print("\n\nExiting...")
+    print("\n\nExiting...\n\n")
 
 
     # ------------------------------------------------------------------------ #
-    print("Closing camera threads...")
     for key in camera_threads.keys():
-        print(f"Closing camera {key} capture and thread...")
-        camera.consts.STATE_FROM_MASTER["quit"] = True
-
-        camera_dq = camera_dqs[key]
-        camera_dq.put_q1(camera.consts.STATE_FROM_MASTER)
-
         camera_thread = camera_threads[key]
         util.close_thread(camera_thread)
-    # ------------------------------------------------------------------------ #
-
-    # ------------------------------------------------------------------------ #
-    print("Closing hazmat thread...")
-    hazmat.consts.STATE_FROM_MASTER["quit"] = True
-    hazmat_dq.put_q1(hazmat.consts.STATE_FROM_MASTER)
 
     util.close_thread(hazmat_thread)
-    # ------------------------------------------------------------------------ #
 
-    # ------------------------------------------------------------------------ #
-    print("Closing server...")
     util.close_thread(flask_thread)
-    # ------------------------------------------------------------------------ #
-
-    # ------------------------------------------------------------------------ #
-    print("Closing motor thread...")
-    motors.consts.STATE_FROM_MASTER["quit"] = True
-    motor_dq.put_q1(motors.consts.STATE_FROM_MASTER)
 
     util.close_thread(motor_thread)
     # ------------------------------------------------------------------------ #
@@ -119,8 +89,8 @@ if __name__ == "__main__":
     server_dq.close()
     server_motor_dq.close()
 
-    for camera_dq in camera_dqs.values():
-        camera_dq.close()
+    for camera_sq in camera_sqs.values():
+        camera_sq.close()
     # ------------------------------------------------------------------------ #
 
     print("Done.")

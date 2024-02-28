@@ -13,7 +13,14 @@ STATE_FROM_MASTER = {
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
+    "update_combined_ratio": 0,
+
     "angle": 0,
+    "timebars": {
+        "hazmat": 0,
+        "qr": 0,
+        "motion": 0,
+    }
 }
 STATE_FROM_SELF = {
     "run": {
@@ -25,7 +32,10 @@ STATE_FROM_SELF = {
         "hazmat": 0,
         "qr": 0,
     },
-    "view_mode": 0,
+    "view_mode": {
+        "value": 0,
+        "count": 0,
+    },
     "motion_min_area": 500,
     "motion_threshold": 65,
     "motion_new_frame_weight": 0.4,
