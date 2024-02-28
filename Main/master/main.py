@@ -27,9 +27,9 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
     print("Press 'c' to clear all found hazmat labels.")
     print("Press 'x' to clear all found QR codes.")
     print("Press 't'/'T' to increase/decrease power by 20%.")
+    print("Press 'l' to invert controls.")
     print("Press 1-4 to switched focused feed (0 to show grid).")
-    print("Press 5 to toggle sidebar.")
-    print("Press 'l' to invert controls.\n")
+    print("Press 5 to toggle sidebar.\n")
 
 
     all_qr_found = []
