@@ -243,7 +243,7 @@ input[type="range"] {
             <input type="range" id="power" name="power" min="1" max="100" step="1" value="60" oninput="powerSlider()" />
 
             <label class="pointer" for="invert">Invert Controls:</label>
-            <input type="checkbox" id="invert" oninput="calculate_power()" />
+            <input type="checkbox" id="invert" oninput="invertCheckbox()" />
 
             <br />
             
@@ -404,6 +404,8 @@ input[type="range"] {
         const CALIBRATE_FREQUENCE = 10 * FRONT_END_FPS;
 
         let keys = {}; // keys[key] = true | if key is down
+
+        let invert = false;
 
         let run_hazmat = false;
         let run_qr = false;
@@ -585,13 +587,15 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
+                        const invert_mod = invert ? -1 : 1;
+
                         const motors = data["motors"];
                         const motors_ids = ["left", "right"];
                         for (let i = 0; i < motors_ids.length; i++) {
                             const motors_id = motors_ids[i];
 
-                            const target  = motors["target"][motors_id]  * 100;
-                            const current = motors["current"][motors_id] * 100;
+                            const target  = motors["target"][motors_id]  * 100 * invert_mod;
+                            const current = motors["current"][motors_id] * 100 * invert_mod;
 
                             const current_abs = Math.abs(current);
                             const target_abs  = Math.abs(target);
@@ -600,17 +604,18 @@ input[type="range"] {
                             const inner_width_raw = Math.min(current_abs, target_abs);
                             const inner_width = inner_width_raw / outer_width * 100;
 
-                            const outer_ele = document.getElementById(motors_id + "-outer");
+                            const output_id = invert ? (motors_id == "left" ? "right" : "left") : motors_id;
+                            const outer_ele = document.getElementById(output_id + "-outer");
                             outer_ele.style.width = outer_width + "%";
-                            const inner_ele = document.getElementById(motors_id + "-inner");
+                            const inner_ele = document.getElementById(output_id + "-inner");
                             inner_ele.style.width = inner_width + "%";
 
-                            const motor_ele = document.getElementById("motor-" + motors_id);
+                            const motor_ele = document.getElementById("motor-" + output_id);
 
                             // 7: 0-100 (3) + "." + 2 decimal places + sign
                             const current_text = current.toFixed(2).padStart(7, " ");
                             const target_text  = target.toFixed(2).padStart(7, " ");
-                            motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${motors_id})`;
+                            motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${output_id})`;
 
                             let target_ele = outer_ele;
                             let current_ele = inner_ele;
@@ -779,6 +784,13 @@ input[type="range"] {
                 });
         }, DELAY);
 
+
+        function invertCheckbox() {
+            const ele = document.getElementById("invert");
+            const value = ele.checked;
+            invert = value;
+            calculate_power();
+        }
         
         function setPower(value) {	
             const output = document.getElementById("power-ouput");
@@ -843,7 +855,7 @@ input[type="range"] {
             let x_input = 0;
             let y_input = 0;
 
-            let invert_mod = document.getElementById("invert").checked ? -1 : 1;
+            const invert_mod = invert ? -1 : 1;
 
             if (keys['w'])	y_input += 1 * invert_mod;
             if (keys['s'])	y_input -= 1 * invert_mod;
