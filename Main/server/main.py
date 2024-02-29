@@ -97,13 +97,6 @@ def thread(server_dq, server_motor_dq):
         server_ds.put_s2(server_dq)
         return create_response(detection)
     
-    @app.route("/view/<view_mode>/", methods=["GET"])
-    def view(view_mode):
-        server_ds.s2["view_mode"]["value"] = int(view_mode)
-        server_ds.s2["view_mode"]["count"] += 1
-        server_ds.put_s2(server_dq)
-        return create_response(view_mode)
-
     @app.route("/get", methods=["GET"])
     def get():
         server_ds.update_s1(server_dq)

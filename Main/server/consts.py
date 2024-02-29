@@ -1,7 +1,11 @@
 STATE_FROM_MASTER = {
-    "frame": "",
-    "w": 1,
-    "h": 1,
+    "frames": {
+		"webcam1": "",
+		"hazmat": "",
+		"webcam2": "",
+		"ir": "",
+    },
+	
     "hazmats_found": [],
     "qr_found": [],
 
@@ -30,10 +34,6 @@ STATE_FROM_SELF = {
     "clear": {
         "hazmat": 0,
         "qr": 0,
-    },
-    "view_mode": {
-        "value": 0,
-        "count": 0,
     },
     "invert": False,
     "motion_min_area": 500,

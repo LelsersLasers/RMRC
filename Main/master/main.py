@@ -41,8 +41,6 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
     hazmat_ds = shared_util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
     server_ds = shared_util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
 
-    view_mode_count = server.consts.STATE_FROM_SELF["view_mode"]["count"]
-
     gpu_log_file = None if video_capture_zero else open(master.consts.GPU_LOG_FILENAME, 'rb')
 
     camera_sses = {}
@@ -73,10 +71,6 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
 
             should_update_combined  = server_ds.s2["run"]["qr"]
             should_update_combined |= server_ds.s2["run"]["md"]
-
-            if server_ds.s2["view_mode"]["count"] > view_mode_count:
-                view_mode_count = server_ds.s2["view_mode"]["count"]
-                should_update_combined = True
 
             server_ds.s1["timebars"]["hazmat"] = time.time() - hazmat_ds.s2["last_update"]
             if hazmat_ds.s2["last_update"] > last_hazmat_time:
@@ -184,34 +178,43 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
 
             # -----------------------------------------------------------------#
             if should_update_combined:
-                if server_ds.s2["view_mode"]["value"] == 0:
-                    top_combined = cv2.hconcat([frame, hazmat_frame])
-                    if video_capture_zero:
-                        bottom_combined = cv2.hconcat([frames[base_key], ir_frame])
-                    else:
-                        bottom_combined = cv2.hconcat([frames[alt_key], ir_frame])
+                server_ds.s1["frames"]["webcam1"] = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode()
+                server_ds.s1["frames"]["hazmat"]  = base64.b64encode(cv2.imencode(".jpg", hazmat_frame)[1]).decode()
+                server_ds.s1["frames"]["ir"]      = base64.b64encode(cv2.imencode(".jpg", ir_frame)[1]).decode()
+
+                if video_capture_zero:
+                    server_ds.s1["frames"]["webcam2"] = server_ds.s1["frames"]["webcam1"]
                 else:
-                    zoom_on = server_ds.s2["view_mode"]["value"] - 1
-                    if video_capture_zero:
-                        all_frames = [frame, hazmat_frame, frames[base_key], ir_frame]
-                    else:
-                        all_frames = [frame, hazmat_frame, frames[alt_key], ir_frame]
+                    server_ds.s1["frames"]["webcam2"] = base64.b64encode(cv2.imencode(".jpg", frames[alt_key])[1]).decode()
+            # if should_update_combined:
+            #     if server_ds.s2["view_mode"]["value"] == 0:
+            #         top_combined = cv2.hconcat([frame, hazmat_frame])
+            #         if video_capture_zero:
+            #             bottom_combined = cv2.hconcat([frames[base_key], ir_frame])
+            #         else:
+            #             bottom_combined = cv2.hconcat([frames[alt_key], ir_frame])
+            #     else:
+            #         zoom_on = server_ds.s2["view_mode"]["value"] - 1
+            #         if video_capture_zero:
+            #             all_frames = [frame, hazmat_frame, frames[base_key], ir_frame]
+            #         else:
+            #             all_frames = [frame, hazmat_frame, frames[alt_key], ir_frame]
 
-                    top_frames = []
-                    for i, f in enumerate(all_frames):
-                        if i != zoom_on:
-                            top_frames.append(f)
+            #         top_frames = []
+            #         for i, f in enumerate(all_frames):
+            #             if i != zoom_on:
+            #                 top_frames.append(f)
 
-                    top_combined = cv2.hconcat(top_frames)
-                    resize_factor = all_frames[zoom_on].shape[1] / top_combined.shape[1]
-                    top_combined = cv2.resize(top_combined, (0, 0), fx=resize_factor, fy=resize_factor)
-                    bottom_combined = all_frames[zoom_on]
+            #         top_combined = cv2.hconcat(top_frames)
+            #         resize_factor = all_frames[zoom_on].shape[1] / top_combined.shape[1]
+            #         top_combined = cv2.resize(top_combined, (0, 0), fx=resize_factor, fy=resize_factor)
+            #         bottom_combined = all_frames[zoom_on]
 
-                combined = cv2.vconcat([top_combined, bottom_combined])
+            #     combined = cv2.vconcat([top_combined, bottom_combined])
 
-                server_ds.s1["frame"] = base64.b64encode(cv2.imencode(".jpg", combined)[1]).decode()
-                server_ds.s1["w"] = combined.shape[1]
-                server_ds.s1["h"] = combined.shape[0]
+            #     server_ds.s1["frame"] = base64.b64encode(cv2.imencode(".jpg", combined)[1]).decode()
+            #     server_ds.s1["w"] = combined.shape[1]
+            #     server_ds.s1["h"] = combined.shape[0]
             # ---------------------------------------------------------------- #
 
 

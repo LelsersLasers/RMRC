@@ -28,19 +28,35 @@ html, body {
     color: #ECEFF4;
 }
 
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
 
-#frame {
-    margin: 0 auto;
-    padding: 0;
+#webcam1 { grid-column: 1; grid-row: 1; }
+#hazmat  { grid-column: 2; grid-row: 1; }
+#webcam2 { grid-column: 1; grid-row: 2; }
+#ir      { grid-column: 2; grid-row: 2; }
+
+#frameholder {
+    display: grid;
+    gap: 0;
+
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+
+    width: 100%;
+    height: 100%;
+
+    justify-self: center;
+    align-self: center;
 }
 
 #mainbar {
     display: flex;
-    justify-content: center;
-    align-items: center;
 
-    margin: 1em;
-    margin-right: 0;
+    margin: 0;
+    margin-left: 1em;
 }
 
 #sidebar {
@@ -77,7 +93,7 @@ p {
     padding-top: 0.1em;
     padding-bottom: 0.1em;
     min-width: 20px;
-    max-width: 105%;
+    max-width: 101%;
 }
 
 
@@ -223,8 +239,12 @@ input[type="range"] {
 <body>
     <div id="main">
         <div id="mainbar">
-            <img id="frame" />
-        </div>
+            <div id="frameholder">
+                <img id="webcam1" />
+                <img id="hazmat" />
+                <img id="webcam2" />
+                <img id="ir" />
+            </div>
         <div id="sidebar">
             <h4>Delays</h4>
             <div class="bar" id="initalbar">
@@ -401,6 +421,9 @@ input[type="range"] {
         const FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
         const FRONT_END_FPS = 20;
 
+        const GRID_FRAME_RATIO = 4 / 3;
+        const ZOOM_FRAME_RATIO = 1;
+
         const DELAY = 1000 / FRONT_END_FPS;
         const CALIBRATE_FREQUENCE = 10 * FRONT_END_FPS;
 
@@ -504,8 +527,6 @@ input[type="range"] {
                 fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
                 fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
                 fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
-
-                fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
 
                 fetchAndInfo(FLASK_SERVER + "invert/" + invert);
 
@@ -695,9 +716,13 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
-                        const frame_ele = document.getElementById("frame");
-                        const frame = data["frame"];
-                        frame_ele.src = "data:image/jpg;base64," + frame;
+                        const frames_ids = ["webcam1", "hazmat", "webcam2", "ir"];
+                        for (let i = 0; i < frames_ids.length; i++) {
+                            const frame_id = frames_ids[i];
+                            const frame = data["frames"][frame_id];
+                            const frame_ele = document.getElementById(frame_id);
+                            frame_ele.src = "data:image/jpeg;base64," + frame;
+                        }
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
@@ -711,7 +736,7 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
-                        const ratio = parseFloat(data["w"]) / parseFloat(data["h"]);
+                        const ratio = view_mode == 0 ? GRID_FRAME_RATIO : ZOOM_FRAME_RATIO;
 
                         const EM = 16; // 1em = 16px (usually)
                         const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - (show_sidebar ? 3 : 2) * EM;
@@ -720,10 +745,13 @@ input[type="range"] {
                         const w = Math.min(max_w, max_h * ratio);
                         const h = Math.min(max_h, max_w / ratio);
                         
-                        frame_ele.style.width = w + "px";
-                        frame_ele.style.height = h + "px";
+                        const frameholder_ele = document.getElementById("frameholder");
+                        frameholder_ele.style.width = w + "px";
+                        frameholder_ele.style.height = h + "px";
 
-                        const sidebar_w = (window.innerWidth * w - 3 * EM) * (show_sidebar ? 1 : 0);
+                        console.log({ iw: window.innerWidth, w, sw: (window.innerWidth - w - 3 * EM) })
+
+                        const sidebar_w = (window.innerWidth - w - 5 * EM) * (show_sidebar ? 1 : 0);
                         const sidebar_ele = document.getElementById("sidebar");
                         sidebar_ele.style.width = sidebar_w + "px";
                         // -------------------------------------------------- //
@@ -955,8 +983,7 @@ input[type="range"] {
                     timebar_ele.classList.add("timebar-idle");
                 }
             } else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
-                view_mode = key;
-                fetchAndInfo(FLASK_SERVER + "view/" + view_mode);
+                view_mode = parseInt(key);
             } else if (key == "c") {
                 fetchAndInfo(FLASK_SERVER + "clear/hazmat");
             } else if (key == "x") {
