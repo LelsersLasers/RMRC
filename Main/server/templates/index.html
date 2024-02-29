@@ -969,6 +969,7 @@ input[type="range"] {
                 invert = !invert;
                 const ele = document.getElementById("invert");
                 ele.checked = invert;
+                fetchAndInfo(FLASK_SERVER + "invert/" + invert);
                 calculate_power();
             }
 
