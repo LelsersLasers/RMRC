@@ -69,6 +69,7 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             hazmat_ds.update_s2(hazmat_dq)
 
             base_key = None if video_capture_zero else ("webcam1" if not server_ds.s2["invert"] else "webcam2")
+            alt_key  = None if video_capture_zero else ("webcam2" if not server_ds.s2["invert"] else "webcam1")
 
             should_update_combined  = server_ds.s2["run"]["qr"]
             should_update_combined |= server_ds.s2["run"]["md"]
@@ -188,13 +189,13 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
                     if video_capture_zero:
                         bottom_combined = cv2.hconcat([frames[base_key], ir_frame])
                     else:
-                        bottom_combined = cv2.hconcat([frames["webcam2"], ir_frame])
+                        bottom_combined = cv2.hconcat([frames[alt_key], ir_frame])
                 else:
                     zoom_on = server_ds.s2["view_mode"]["value"] - 1
                     if video_capture_zero:
                         all_frames = [frame, hazmat_frame, frames[base_key], ir_frame]
                     else:
-                        all_frames = [frame, hazmat_frame, frames["webcam2"], ir_frame]
+                        all_frames = [frame, hazmat_frame, frames[alt_key], ir_frame]
 
                     top_frames = []
                     for i, f in enumerate(all_frames):
