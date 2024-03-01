@@ -48,38 +48,28 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
     for key in camera_sqs.keys():
         camera_ss = shared_util.SingleState(camera.consts.STATE_FROM_SELF)
         camera_sses[key] = camera_ss
-        frame_read_times[key] = camera.consts.STATE_FROM_SELF["time"]
+        frame_read_times[key] = 0
 
-    last_hazmat_time = hazmat.consts.STATE_FROM_SELF["last_update"]
+    last_hazmat_time = 0
 
     frame_copy = None
 
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
-    update_combined_count = []
     try:
         while not graceful_killer.kill_now:
             fps_controller.update()
 
             # ---------------------------------------------------------------- #
             server_ds.update_s2(server_dq)
-            hazmat_ds.update_s2(hazmat_dq)
 
             base_key = None if video_capture_zero else ("webcam1" if not server_ds.s2["invert"] else "webcam2")
-            alt_key  = None if video_capture_zero else ("webcam2" if not server_ds.s2["invert"] else "webcam1")
-
-            should_update_combined  = server_ds.s2["run"]["qr"]
-            should_update_combined |= server_ds.s2["run"]["md"]
-
-            server_ds.s1["timebars"]["hazmat"] = time.time() - hazmat_ds.s2["last_update"]
-            if hazmat_ds.s2["last_update"] > last_hazmat_time:
-                last_hazmat_time = hazmat_ds.s2["last_update"]
-                should_update_combined = True
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
             frames = {}
+            update_base_frame = server_ds.s2["run"]["md"] or server_ds.s2["run"]["qr"]
             for key, camera_sq in camera_sqs.items():
                 camera_ss = camera_sses[key]
                 camera_ss.update_s(camera_sq)
@@ -91,31 +81,34 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
 
                 if camera_ss.s["time"] > frame_read_times[key]:
                     frame_read_times[key] = camera_ss.s["time"]
-                    should_update_combined = True
 
                     if key == base_key and frames[key] is not None:
                         frame_copy = frames[key].copy()
 
+                        update_base_frame = True
+                        update_average_frame = True
+
                         if average_frame is None:
                             average_frame = frames[key].copy().astype("float")
-                        update_average_frame = True
+                    elif key != base_key:
+                        server_ds.s1["frames"][key] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
 
             frame = frames[base_key]            
             # ---------------------------------------------------------------- #
 
 
             # ---------------------------------------------------------------- #
-            if should_update_combined:
-                if video_capture_zero:
-                    ir_frame = frames[base_key]
-                else:
-                    base_frame_shape = frame.shape
-                    ir_frame = cv2.resize(frames["ir"], (base_frame_shape[1], base_frame_shape[0]))
-                
+            hazmat_ds.update_s2(hazmat_dq)
+
+            if hazmat_ds.s2["last_update"] > last_hazmat_time:
+                last_hazmat_time = hazmat_ds.s2["last_update"]
+
                 if hazmat_ds.s2["hazmat_frame"] is not None:
                     hazmat_frame = hazmat_ds.s2["hazmat_frame"]
                 else:
                     hazmat_frame = np.zeros_like(frame)
+
+                server_ds.s1["frames"]["hazmat"] = base64.b64encode(cv2.imencode(".jpg", hazmat_frame)[1]).decode()
             # ---------------------------------------------------------------- #
 
 
@@ -177,44 +170,13 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
 
 
             # -----------------------------------------------------------------#
-            if should_update_combined:
+            if video_capture_zero:
+                server_ds.s1["frames"]["webcam2"] = server_ds.s1["frames"]["webcam1"]
+                server_ds.s1["frames"]["ir"]      = server_ds.s1["frames"]["webcam1"]
+
+            if update_base_frame:
+                update_base_frame = False
                 server_ds.s1["frames"]["webcam1"] = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode()
-                server_ds.s1["frames"]["hazmat"]  = base64.b64encode(cv2.imencode(".jpg", hazmat_frame)[1]).decode()
-                server_ds.s1["frames"]["ir"]      = base64.b64encode(cv2.imencode(".jpg", ir_frame)[1]).decode()
-
-                if video_capture_zero:
-                    server_ds.s1["frames"]["webcam2"] = server_ds.s1["frames"]["webcam1"]
-                else:
-                    server_ds.s1["frames"]["webcam2"] = base64.b64encode(cv2.imencode(".jpg", frames[alt_key])[1]).decode()
-            # if should_update_combined:
-            #     if server_ds.s2["view_mode"]["value"] == 0:
-            #         top_combined = cv2.hconcat([frame, hazmat_frame])
-            #         if video_capture_zero:
-            #             bottom_combined = cv2.hconcat([frames[base_key], ir_frame])
-            #         else:
-            #             bottom_combined = cv2.hconcat([frames[alt_key], ir_frame])
-            #     else:
-            #         zoom_on = server_ds.s2["view_mode"]["value"] - 1
-            #         if video_capture_zero:
-            #             all_frames = [frame, hazmat_frame, frames[base_key], ir_frame]
-            #         else:
-            #             all_frames = [frame, hazmat_frame, frames[alt_key], ir_frame]
-
-            #         top_frames = []
-            #         for i, f in enumerate(all_frames):
-            #             if i != zoom_on:
-            #                 top_frames.append(f)
-
-            #         top_combined = cv2.hconcat(top_frames)
-            #         resize_factor = all_frames[zoom_on].shape[1] / top_combined.shape[1]
-            #         top_combined = cv2.resize(top_combined, (0, 0), fx=resize_factor, fy=resize_factor)
-            #         bottom_combined = all_frames[zoom_on]
-
-            #     combined = cv2.vconcat([top_combined, bottom_combined])
-
-            #     server_ds.s1["frame"] = base64.b64encode(cv2.imencode(".jpg", combined)[1]).decode()
-            #     server_ds.s1["w"] = combined.shape[1]
-            #     server_ds.s1["h"] = combined.shape[0]
             # ---------------------------------------------------------------- #
 
 
@@ -222,6 +184,10 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             server_ds.s1["hazmats_found"] = hazmat_ds.s2["hazmats_found"]
             server_ds.s1["angle"] = hazmat_ds.s2["angle"]
             server_ds.s1["qr_found"] = all_qr_found
+
+            server_ds.s1["timebars"]["hazmat"] = time.time() - hazmat_ds.s2["last_update"]
+
+            server_ds.s1["timebars"]["hazmat"] = time.time() - hazmat_ds.s2["last_update"]
 
             server_ds.s1["time"] = frame_read_times[base_key]
 
@@ -250,12 +216,6 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             server_ds.s1["ram"] = psutil.virtual_memory().percent
             server_ds.s1["cpu"] = psutil.cpu_percent()
 
-            update_combined_count.append(int(should_update_combined))
-            updated_combined_keep_count = int(master.consts.UPDATE_COMBINED_COUNT_KEEP_TIME * fps_controller.fps())
-            update_combined_count = update_combined_count[-updated_combined_keep_count:]
-            update_combined_ratio = sum(update_combined_count) / len(update_combined_count)
-            server_ds.s1["update_combined_ratio"] = update_combined_ratio
-
             if gpu_log_file is not None:
                 last_line = master.util.read_last_line(gpu_log_file)
                 peices = last_line.split()
@@ -266,12 +226,6 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
                         break        
 
             server_ds.put_s1(server_dq)
-            # ---------------------------------------------------------------- #
-
-
-            # ---------------------------------------------------------------- #
-            if not should_update_combined:
-                time.sleep(1 / master.consts.DRY_PASS_FPS)
             # ---------------------------------------------------------------- #
     finally:
         if gpu_log_file is not None:

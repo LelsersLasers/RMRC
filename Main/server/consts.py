@@ -16,7 +16,7 @@ STATE_FROM_MASTER = {
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
-    "update_combined_ratio": 0,
+    "bined_ratio": 0,
 
     "angle": 0,
     "timebars": {

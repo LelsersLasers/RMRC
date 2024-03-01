@@ -334,9 +334,6 @@ input[type="range"] {
             <div class="bar timebar-idle" id="motion-timebar">
                 <span id="motion-time">0 MS (motion)</span>
             </div>
-            <div class="bar" id="updateratiobar">
-                <span id="updateratio-percent">0% (updates)</span>
-            </div>
 
             <h4>Detected Hazmat Labels:</h4>
             <div class="bar" id="anglebar">
@@ -711,21 +708,21 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
-                        const combined_ratio = data["update_combined_ratio"] * 100;
-                        const combined_ratio_ele = document.getElementById("updateratio-percent");
-                        combined_ratio_ele.innerHTML = `${combined_ratio.toFixed(0)}% (updates)`;
-
-                        const combined_ratio_bar = document.getElementById("updateratiobar");
-                        combined_ratio_bar.style.width = combined_ratio + "%";
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
                         const frames_ids = ["webcam1", "hazmat", "webcam2", "ir"];
                         for (let i = 0; i < frames_ids.length; i++) {
                             const frame_id = frames_ids[i];
                             const frame = data["frames"][frame_id];
                             const frame_ele = document.getElementById(frame_id);
                             frame_ele.src = "data:image/jpeg;base64," + frame;
+                        }
+
+                        if (invert) {
+                            const webcam1_ele = document.getElementById("webcam1");
+                            const webcam2_ele = document.getElementById("webcam2");
+
+                            const temp = webcam1_ele.className;
+                            webcam1_ele.className = webcam2_ele.className;
+                            webcam2_ele.className = temp;
                         }
                         // -------------------------------------------------- //
 
@@ -776,8 +773,9 @@ input[type="range"] {
                         max_delays = max_delays.slice(-MAX_LEN);
                         const max_ratio_delay = Math.max(...max_delays);
 
-                        if (last_frame != data["frame"]) {
-                            last_frame = data["frame"];
+                        const base_key = invert ? "webcam2" : "webcam1";
+                        if (last_frame != data["frames"][base_key]) {
+                            last_frame = data["frames"][base_key];
 
                             const delay_inital_ele = document.getElementById("delay-inital");
                             delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
