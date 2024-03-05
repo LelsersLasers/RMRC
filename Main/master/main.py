@@ -29,11 +29,9 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
-    # TODO: fix average frames including the most recent frame
-
 
     average_frame = None
-    update_average_frame = False
+    last_frame = None
 
     detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_SERVER, detection.consts.STATE_FROM_SELF)
     server_ds = shared_util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
@@ -48,8 +46,6 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
         frame_read_times[key] = 0
 
     last_detection_time = 0
-
-    frame_copy = None
 
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
@@ -66,7 +62,6 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
 
             # ---------------------------------------------------------------- #
             frames = {}
-            update_base_frame = server_ds.s2["run"]["md"] or server_ds.s2["run"]["qr"]
             for key, camera_sq in camera_sqs.items():
                 camera_ss = camera_sses[key]
                 camera_ss.update_s(camera_sq)
@@ -80,13 +75,16 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
                     frame_read_times[key] = camera_ss.s["time"]
 
                     if key == base_key and frames[key] is not None:
-                        frame_copy = frames[key].copy()
+                        server_ds.s1["frames"]["webcam1"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
 
-                        update_base_frame = True
-                        update_average_frame = True
-
-                        if average_frame is None:
+                        if average_frame is None or last_frame is None:
                             average_frame = frames[key].copy().astype("float")
+                            last_frame = frames[key]
+                        else:
+                            motion_new_frame_weight = server_ds.s2["motion_new_frame_weight"]
+                            cv2.accumulateWeighted(last_frame.astype("float"), average_frame, motion_new_frame_weight)
+                        last_frame = frames[key]
+
                     elif key != base_key:
                         server_ds.s1["frames"][key] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
 
@@ -118,26 +116,15 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
             detection_ds.s1["motion_threshold"] = server_ds.s2["motion_threshold"]
             detection_ds.s1["motion_new_frame_weight"] = server_ds.s2["motion_new_frame_weight"]
 
-            detection_ds.s1["frame"] = frame_copy
+            detection_ds.s1["frame"] = frame
             detection_ds.s1["average_frame"] = average_frame.copy()
             detection_ds.put_s1(detection_dq)
-            # ---------------------------------------------------------------- #
-
-            # ---------------------------------------------------------------- #
-            if update_average_frame:
-                update_average_frame = False
-                motion_new_frame_weight = server_ds.s2["motion_new_frame_weight"]
-                cv2.accumulateWeighted(frame_copy.astype("float"), average_frame, motion_new_frame_weight)
             # ---------------------------------------------------------------- #
 
             # -----------------------------------------------------------------#
             if video_capture_zero:
                 server_ds.s1["frames"]["webcam2"] = server_ds.s1["frames"]["webcam1"]
                 server_ds.s1["frames"]["ir"]      = server_ds.s1["frames"]["webcam1"]
-
-            if update_base_frame:
-                update_base_frame = False
-                server_ds.s1["frames"]["webcam1"] = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode()
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
