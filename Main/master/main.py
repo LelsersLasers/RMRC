@@ -26,7 +26,9 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     print("Press 'x' to clear all found QR codes.")
     print("Press 't'/'T' to increase/decrease power by 20%.")
     print("Press 'l' to invert controls.")
-    print("Press 1-4 to switched focused feed (0 to show grid).")
+    print("Press 1-4 to switched focused feed.")
+    print("Press 1-4 again to super zoom on focused feed.")
+    print("Press 0 to show camera grid.")
     print("Press 5 to toggle sidebar.\n")
 
 
