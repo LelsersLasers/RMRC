@@ -9,15 +9,13 @@ import shared_util
 
 import master.consts
 import master.util
-import master.qr_detect
-import master.motion_detect
 
-import hazmat.consts
+import detection.consts
 import server.consts
 import camera.consts
 
 
-def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
+def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     print("\nControls:")
     print("Hold 'wasd' to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")
@@ -31,14 +29,13 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
     print("Press 1-4 to switched focused feed (0 to show grid).")
     print("Press 5 to toggle sidebar.\n")
 
+    # TODO: fix average frames including the most recent frame
 
-    all_qr_found = []
-    last_clear_qr = server.consts.STATE_FROM_SELF["clear"]["qr"]
 
     average_frame = None
     update_average_frame = False
 
-    hazmat_ds = shared_util.DoubleState(hazmat.consts.STATE_FROM_MASTER, hazmat.consts.STATE_FROM_SELF)
+    detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_SERVER, detection.consts.STATE_FROM_SELF)
     server_ds = shared_util.DoubleState(server.consts.STATE_FROM_MASTER, server.consts.STATE_FROM_SELF)
 
     gpu_log_file = None if video_capture_zero else open(master.consts.GPU_LOG_FILENAME, 'rb')
@@ -50,7 +47,7 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
         camera_sses[key] = camera_ss
         frame_read_times[key] = 0
 
-    last_hazmat_time = 0
+    last_detection_time = 0
 
     frame_copy = None
 
@@ -96,78 +93,42 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             frame = frames[base_key]            
             # ---------------------------------------------------------------- #
 
-
             # ---------------------------------------------------------------- #
-            hazmat_ds.update_s2(hazmat_dq)
+            detection_ds.update_s2(detection_dq)
 
-            if hazmat_ds.s2["last_update"] > last_hazmat_time:
-                last_hazmat_time = hazmat_ds.s2["last_update"]
+            if detection_ds.s2["last_update"] > last_detection_time:
+                last_detection_time = detection_ds.s2["last_update"]
 
-                if hazmat_ds.s2["hazmat_frame"] is not None:
-                    hazmat_frame = hazmat_ds.s2["hazmat_frame"]
+                if detection_ds.s2["frame"] is not None:
+                    detection_frame = detection_ds.s2["frame"]
                 else:
-                    hazmat_frame = np.zeros_like(frame)
+                    detection_frame = np.zeros_like(frame)
 
-                server_ds.s1["frames"]["hazmat"] = base64.b64encode(cv2.imencode(".jpg", hazmat_frame)[1]).decode()
+                server_ds.s1["frames"]["detection"] = base64.b64encode(cv2.imencode(".jpg", detection_frame)[1]).decode()
             # ---------------------------------------------------------------- #
 
+            # ---------------------------------------------------------------- #
+            detection_ds.s1["run"] = server_ds.s2["run"]
+            detection_ds.s1["clear"] = server_ds.s2["clear"]
+
+            detection_ds.s1["hazmat_levenshtein_thresh"] = server_ds.s2["hazmat_levenshtein_thresh"]
+            detection_ds.s1["hazmat_angle_change"] = server_ds.s2["hazmat_angle_change"]
+
+            detection_ds.s1["motion_min_area"] = server_ds.s2["motion_min_area"]
+            detection_ds.s1["motion_threshold"] = server_ds.s2["motion_threshold"]
+            detection_ds.s1["motion_new_frame_weight"] = server_ds.s2["motion_new_frame_weight"]
+
+            detection_ds.s1["frame"] = frame_copy
+            detection_ds.s1["average_frame"] = average_frame.copy()
+            detection_ds.put_s1(detection_dq)
+            # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
-            if server_ds.s2["run"]["qr"]:
-                start = time.time()
-
-                qr_found_this_frame = master.qr_detect.qr_detect_and_draw(frame)
-                if len(qr_found_this_frame) > 0:
-                    previous_qr_count = len(all_qr_found)
-                    for qr in qr_found_this_frame:
-                        all_qr_found.append(qr.strip())
-
-                    all_qr_found = list(set(all_qr_found))
-                    all_qr_found.sort()
-
-                    if len(all_qr_found) > previous_qr_count:
-                        print(qr_found_this_frame)
-                        print(all_qr_found)
-
-                server_ds.s1["timebars"]["qr"] = time.time() - start
-            else:
-                server_ds.s1["timebars"]["qr"] = -1
-
-            if server_ds.s2["run"]["md"]:
-                start = time.time()
-                motion_min_area = server_ds.s2["motion_min_area"]
-                motion_threshold = server_ds.s2["motion_threshold"]
-                master.motion_detect.motion_detect_and_draw(frame_copy, average_frame, frame, motion_min_area, motion_threshold)
-                server_ds.s1["timebars"]["motion"] = time.time() - start
-            else:
-                server_ds.s1["timebars"]["motion"] = -1
-
-            # must be updated after possible motion detection
             if update_average_frame:
                 update_average_frame = False
                 motion_new_frame_weight = server_ds.s2["motion_new_frame_weight"]
                 cv2.accumulateWeighted(frame_copy.astype("float"), average_frame, motion_new_frame_weight)
             # ---------------------------------------------------------------- #
-
-
-            # ---------------------------------------------------------------- #
-            if server_ds.s2["clear"]["qr"] > last_clear_qr:
-                last_clear_qr = server_ds.s2["clear"]["qr"]
-                all_qr_found = []
-            # ---------------------------------------------------------------- #
-                
-
-            # ---------------------------------------------------------------- #
-            hazmat_ds.s1["run_hazmat"] = server_ds.s2["run"]["hazmat"]
-            hazmat_ds.s1["clear"] = server_ds.s2["clear"]["hazmat"]
-
-            hazmat_ds.s1["hazmat_levenshtein_thresh"] = server_ds.s2["hazmat_levenshtein_thresh"]
-            hazmat_ds.s1["hazmat_angle_change"] = server_ds.s2["hazmat_angle_change"]
-
-            hazmat_ds.s1["frame"] = frame_copy
-            hazmat_ds.put_s1(hazmat_dq)
-            # ---------------------------------------------------------------- #
-
 
             # -----------------------------------------------------------------#
             if video_capture_zero:
@@ -179,22 +140,20 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
                 server_ds.s1["frames"]["webcam1"] = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode()
             # ---------------------------------------------------------------- #
 
-
             # ---------------------------------------------------------------- #
-            server_ds.s1["hazmats_found"] = hazmat_ds.s2["hazmats_found"]
-            server_ds.s1["angle"] = hazmat_ds.s2["angle"]
-            server_ds.s1["qr_found"] = all_qr_found
+            server_ds.s1["hazmats_found"] = detection_ds.s2["found"]["hazmat"]
+            server_ds.s1["qr_found"]      = detection_ds.s2["found"]["qr"]
 
-            server_ds.s1["timebars"]["hazmat"] = time.time() - hazmat_ds.s2["last_update"]
+            server_ds.s1["angle"] = detection_ds.s2["angle"]
 
-            server_ds.s1["timebars"]["hazmat"] = time.time() - hazmat_ds.s2["last_update"]
+            server_ds.s1["timebars"]["hazmat"] = time.time() - detection_ds.s2["last_update"]
 
             server_ds.s1["time"] = frame_read_times[base_key]
 
             if video_capture_zero:
                 fpses = [
                     camera_sses[base_key].s["fps"],
-                    hazmat_ds.s2["hazmat_fps"],
+                    detection_ds.s2["fps"],
                     camera_sses[base_key].s["fps"],
                     camera_sses[base_key].s["fps"],
                     fps_controller.fps(),
@@ -204,7 +163,7 @@ def thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero):
             else:
                 fpses = [
                     camera_sses["webcam1"].s["fps"],
-                    hazmat_ds.s2["hazmat_fps"],
+                    detection_ds.s2["fps"],
                     camera_sses["webcam2"].s["fps"],
                     camera_sses["ir"].s["fps"],
                     fps_controller.fps(),

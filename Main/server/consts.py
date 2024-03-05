@@ -1,7 +1,7 @@
 STATE_FROM_MASTER = {
     "frames": {
 		"webcam1": "",
-		"hazmat": "",
+		"detection": "",
 		"webcam2": "",
 		"ir": "",
     },

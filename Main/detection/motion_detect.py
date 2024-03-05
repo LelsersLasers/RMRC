@@ -7,9 +7,9 @@ def motion_detect_and_draw(frame_copy, avg, frame_dst, min_area, threshold_lower
 
     for cnt in contours:
         if cv2.contourArea(cnt) >= min_area:
-            cv2.drawContours(frame_dst, [cnt], -1, (255, 0, 0), 3)
+            cv2.drawContours(frame_dst, [cnt], -1, (255, 0, 0), 2)
             x, y, w, h = cv2.boundingRect(cnt)
-            cv2.rectangle(frame_dst, (x, y), (x + w, y + h), (0, 225, 0), 4)
+            cv2.rectangle(frame_dst, (x, y), (x + w, y + h), (0, 225, 0), 3)
 
 
 def motion_detect(frame, avg, threshold_lower):
