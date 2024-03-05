@@ -434,7 +434,7 @@ input[type="range"] {
 
         let run_hazmat = false;
         let run_qr = false;
-        let run_md = false;
+        let run_motion = false;
         let view_mode = 0;
 
         const POWER_STATE_STEP = 20;
@@ -527,7 +527,7 @@ input[type="range"] {
                 powerSlider();
                 fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
                 fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
-                fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
+                fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
 
                 fetchAndInfo(FLASK_SERVER + "invert/" + invert);
 
@@ -805,7 +805,15 @@ input[type="range"] {
 
                     run_hazmat = false;
                     run_qr = false;
-                    run_md = false;
+                    run_motion = false;
+
+                    const timebar_ids = ["hazmat", "qr", "motion"];
+                    for (let i = 0; i < timebar_ids.length; i++) {
+                        const timebar_id = timebar_ids[i];
+                        const timebar_ele = document.getElementById(timebar_id + "-timebar");
+                        timebar_ele.classList.remove("timebar-active");
+                        timebar_ele.classList.add("timebar-idle");
+                    }
 
                     keys = {};
                     display_keys();
@@ -971,11 +979,11 @@ input[type="range"] {
                     timebar_ele.classList.add("timebar-idle");
                 }
             } else if (key == "m") {
-                run_md = !run_md;
-                fetchAndInfo(FLASK_SERVER + "run/md/" + run_md);
+                run_motion = !run_motion;
+                fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
 
                 const timebar_ele = document.getElementById("motion-timebar");
-                if (run_md) {
+                if (run_motion) {
                     timebar_ele.classList.remove("timebar-idle");
                     timebar_ele.classList.add("timebar-active");
                 } else {

@@ -11,7 +11,7 @@ STATE_FROM_SERVER = {
     "run": {
         "hazmat": False,
         "qr": False,
-        "md": False,
+        "motion": False,
     },
     "clear": { # increment to clear all found labels
         "hazmat": 0,
@@ -35,7 +35,7 @@ STATE_FROM_SELF = {
     "last_update": time.time(),
     "timebars": {
         "qr": -1,
-        "md": -1,
+        "motion": -1,
     },
     "angle": 0,
 }

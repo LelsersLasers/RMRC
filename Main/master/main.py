@@ -134,6 +134,9 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
             server_ds.s1["angle"] = detection_ds.s2["angle"]
 
             server_ds.s1["timebars"]["hazmat"] = time.time() - detection_ds.s2["last_update"]
+            server_ds.s1["timebars"]["qr"] = detection_ds.s2["timebars"]["qr"]
+            server_ds.s1["timebars"]["motion"] = detection_ds.s2["timebars"]["motion"]
+            
 
             server_ds.s1["time"] = frame_read_times[base_key]
 

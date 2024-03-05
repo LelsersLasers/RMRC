@@ -29,7 +29,7 @@ STATE_FROM_SELF = {
     "run": {
         "hazmat": False,
         "qr": False,
-        "md": False,
+        "motion": False,
     },
     "clear": {
         "hazmat": 0,

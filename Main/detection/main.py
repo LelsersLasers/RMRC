@@ -119,7 +119,7 @@ def thread(detection_dq):
             # ---------------------------------------------------------------- #
             
             # ---------------------------------------------------------------- #
-            if detection_ds.s1["run"]["md"]:
+            if detection_ds.s1["run"]["motion"]:
                 start = time.time()
 
                 motion_min_area = detection_ds.s1["motion_min_area"]
