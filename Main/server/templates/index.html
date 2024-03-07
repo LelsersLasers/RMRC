@@ -720,15 +720,6 @@ input[type="range"] {
                             const frame_ele = document.getElementById(frame_id);
                             frame_ele.src = "data:image/jpeg;base64," + frame;
                         }
-
-                        if (invert) {
-                            const webcam1_ele = document.getElementById("webcam1");
-                            const webcam2_ele = document.getElementById("webcam2");
-
-                            const temp = webcam1_ele.className;
-                            webcam1_ele.className = webcam2_ele.className;
-                            webcam2_ele.className = temp;
-                        }
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
@@ -835,6 +826,7 @@ input[type="range"] {
             invert = value;
             fetchAndInfo(FLASK_SERVER + "invert/" + invert);
             calculate_power();
+            calculate_grid();
         }
         
         function setPower(value) {	
@@ -934,6 +926,40 @@ input[type="range"] {
             fetchAndInfo(FLASK_SERVER + path);
         }
 
+        function calculate_grid() {
+            const ids = ["webcam1", "detection", "webcam2", "ir"];
+            const eles = ids.map(id => document.getElementById(id));
+
+            if (view_mode == 0) {
+                for (let i = 0; i < eles.length; i++) {
+                    const ele = eles[i];
+                    const css_class = ids[i];
+                    ele.className = css_class;
+                }
+            } else {
+                const zoom_on = view_mode - 1;
+                let slot_count = 1;
+                for (let i = 0; i < eles.length; i++) {
+                    const ele = eles[i];
+                    if (i == zoom_on) {
+                        ele.className = super_zoom ? "super" : "zoom";
+                    } else {
+                        ele.className = super_zoom ? "none": "slot" + slot_count;
+                        slot_count += 1;
+                    }
+                }
+            }
+
+            if (invert) {
+                const webcam1_ele = document.getElementById("webcam1");
+                const webcam2_ele = document.getElementById("webcam2");
+
+                const temp = webcam1_ele.className;
+                webcam1_ele.className = webcam2_ele.className;
+                webcam2_ele.className = temp;
+            }
+        }
+
         function keydown(e) {
             const key = e.key.toLowerCase();
             keys[key] = true;
@@ -1002,32 +1028,13 @@ input[type="range"] {
                 const new_view_mode = parseInt(key);
                 if (new_view_mode == 0) {
                     super_zoom = false;
-
-                    for (let i = 0; i < eles.length; i++) {
-                        const ele = eles[i];
-                        const css_class = ids[i];
-                        ele.className = css_class;
-                    }
+                } else if (view_mode == new_view_mode) {
+                    super_zoom = !super_zoom;
                 } else {
-                    if (view_mode == new_view_mode) {
-                        super_zoom = !super_zoom;
-                    } else {
-                        super_zoom = false;
-                    }
-
-                    const zoom_on = new_view_mode - 1;
-                    let slot_count = 1;
-                    for (let i = 0; i < eles.length; i++) {
-                        const ele = eles[i];
-                        if (i == zoom_on) {
-                            ele.className = super_zoom ? "super" : "zoom";
-                        } else {
-                            ele.className = super_zoom ? "none": "slot" + slot_count;
-                            slot_count += 1;
-                        }
-                    }
+                    super_zoom = false;
                 }
                 view_mode = new_view_mode;
+                calculate_grid();
             } else if (key == "c") {
                 fetchAndInfo(FLASK_SERVER + "clear/hazmat");
             } else if (key == "x") {
@@ -1042,6 +1049,7 @@ input[type="range"] {
                 ele.checked = invert;
                 fetchAndInfo(FLASK_SERVER + "invert/" + invert);
                 calculate_power();
+                calculate_grid();
             }
 
             display_keys();
