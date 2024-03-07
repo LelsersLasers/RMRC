@@ -104,7 +104,7 @@ def thread(detection_dq):
                 if len(qr_found_this_frame) > 0:
                     previous_qr_count = len(detection_ds.s2["found"]["qr"])
                     for qr in qr_found_this_frame:
-                        detection_ds.s2["found"]["qr"].s2["found"]["qr"].append(qr.strip())
+                        detection_ds.s2["found"]["qr"].append(qr.strip())
 
                     detection_ds.s2["found"]["qr"] = list(set(detection_ds.s2["found"]["qr"]))
                     detection_ds.s2["found"]["qr"].sort()
