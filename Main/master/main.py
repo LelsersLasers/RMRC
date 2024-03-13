@@ -60,6 +60,7 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
             server_ds.update_s2(server_dq)
 
             base_key = None if video_capture_zero else ("webcam1" if not server_ds.s2["invert"] else "webcam2")
+            alt_key  = None if video_capture_zero else ("webcam2" if not server_ds.s2["invert"] else "webcam1")
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
@@ -76,7 +77,7 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
                 if camera_ss.s["time"] > frame_read_times[key]:
                     frame_read_times[key] = camera_ss.s["time"]
 
-                    if key == base_key and frames[key] is not None:
+                    if key == base_key:
                         server_ds.s1["frames"]["webcam1"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
 
                         if average_frame is None or last_frame is None:
@@ -86,8 +87,9 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
                             motion_new_frame_weight = server_ds.s2["motion_new_frame_weight"]
                             cv2.accumulateWeighted(last_frame.astype("float"), average_frame, motion_new_frame_weight)
                         last_frame = frames[key]
-
-                    elif key != base_key:
+                    elif key == alt_key:
+                        server_ds.s1["frames"]["webcam2"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
+                    else:
                         server_ds.s1["frames"][key] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
 
             frame = frames[base_key]            
