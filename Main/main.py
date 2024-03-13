@@ -4,8 +4,8 @@ import traceback
 
 import util
 
-import hazmat.consts
-import hazmat.main
+import detection.consts
+import detection.main
 
 import motors.consts
 import motors.main
@@ -42,8 +42,8 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    hazmat_dq = util.DoubleQueue()
-    hazmat_thread = util.create_thread(hazmat.main.thread, (hazmat_dq,), "hazmat")
+    detection_dq = util.DoubleQueue()
+    detection_thread = util.create_thread(detection.main.thread, (detection_dq,), "detection")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     print("\nStarting master thread...\n")
 
     try:
-        master.main.thread(hazmat_dq, server_dq, camera_sqs, video_capture_zero)
+        master.main.thread(detection_dq, server_dq, camera_sqs, video_capture_zero)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         camera_thread = camera_threads[key]
         util.close_thread(camera_thread)
 
-    util.close_thread(hazmat_thread)
+    util.close_thread(detection_thread)
 
     util.close_thread(server_thread)
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("Closing queues...")
 
-    hazmat_dq.close()
+    detection_dq.close()
     server_dq.close()
     server_motor_dq.close()
 

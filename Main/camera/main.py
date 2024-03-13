@@ -25,12 +25,13 @@ def thread(camera_sq, key):
 
     try:
         while not graceful_killer.kill_now:
-            camera_ss.update_s(camera_sq)
-
             ret, frame = cap.read()
             if not ret or frame is None:
                 print(f"Camera {key} read failed.")
                 break
+
+            if key is None:
+                frame = cv2.resize(frame, camera.consts.CAMERA_SIZE)
 
             camera_ss.s["time"] = time.time()
             camera_ss.s["frame"] = frame

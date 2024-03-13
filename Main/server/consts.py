@@ -1,7 +1,11 @@
 STATE_FROM_MASTER = {
-    "frame": "",
-    "w": 1,
-    "h": 1,
+    "frames": {
+		"webcam1": "",
+		"detection": "",
+		"webcam2": "",
+		"ir": "",
+    },
+	
     "hazmats_found": [],
     "qr_found": [],
 
@@ -12,7 +16,7 @@ STATE_FROM_MASTER = {
     "ram": 0,
     "cpu": 0,
     "gpu": -1,
-    "update_combined_ratio": 0,
+    "bined_ratio": 0,
 
     "angle": 0,
     "timebars": {
@@ -25,16 +29,13 @@ STATE_FROM_SELF = {
     "run": {
         "hazmat": False,
         "qr": False,
-        "md": False,
+        "motion": False,
     },
     "clear": {
         "hazmat": 0,
         "qr": 0,
     },
-    "view_mode": {
-        "value": 0,
-        "count": 0,
-    },
+    "invert": False,
     "motion_min_area": 500,
     "motion_threshold": 65,
     "motion_new_frame_weight": 0.4,

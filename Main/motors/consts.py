@@ -1,9 +1,6 @@
 import time
 
-MAX_POWER_START = 330
-MOTOR_MIN_WRITES = 1
 MAX_WRITES = 3
-
 MOTOR_SHUTOFF_TIME = 1.0
 
 CLOSE_WAIT_TIME = 0.25
@@ -17,10 +14,10 @@ STATE_FROM_SERVER = {
     "count": 0,
     "last_get": time.time(),
     "velocity_limit": {
-        "value": MAX_POWER_START,
+        "value": 330,
         "count": 0,
     },
-    "motor_writes": MOTOR_MIN_WRITES,
+    "motor_writes": 1,
     "write_every_frame": False,
 }
 STATE_FROM_SELF = {
