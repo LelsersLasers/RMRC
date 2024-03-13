@@ -61,7 +61,7 @@ class DynamixelController:
             3: 0,
             4: 0,
         }
-        self.min_writes = motors.consts.MOTOR_MIN_WRITES
+        self.min_writes = motors.consts.STATE_FROM_SERVER["motor_writes"]
 
     def reboot_all_motors(self):
         for side_ids in DYNAMIXEL_IDS.values():
