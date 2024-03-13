@@ -949,15 +949,6 @@ input[type="range"] {
                     }
                 }
             }
-
-            if (invert) {
-                const webcam1_ele = document.getElementById("webcam1");
-                const webcam2_ele = document.getElementById("webcam2");
-
-                const temp = webcam1_ele.className;
-                webcam1_ele.className = webcam2_ele.className;
-                webcam2_ele.className = temp;
-            }
         }
 
         function keydown(e) {
