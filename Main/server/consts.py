@@ -22,9 +22,9 @@ STATE_FROM_MASTER = {
     },
 
     "temps": {
-        "cpu": 0,
-        "gpu": 0,
-        "aux": 0,
+        "cpu": -1,
+        "gpu": -1,
+        "aux": -1,
     },
 
     "angle": 0,
