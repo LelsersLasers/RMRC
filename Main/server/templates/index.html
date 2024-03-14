@@ -317,13 +317,13 @@ input[type="range"] {
 
             <h4>Host stats</h4>
             <div class="bar" id="cpubar">
-                <span id="stats-cpu">10% (cpu)</span>
+                <span id="stats-cpu">10% (0) (cpu)</span>
             </div>
             <div class="bar" id="gpubar">
                 <span id="stats-gpu">10% (gpu)</span>
             </div>
             <div class="bar" id="rambar">
-                <span id="stats-ram">20% (ram)</span>
+                <span id="stats-ram">20% (0%) (ram)</span>
             </div>
 
             <h4>Master stats</h4>
@@ -676,9 +676,18 @@ input[type="range"] {
 
                         for (let i = 0; i < stats_ids.length; i++) {
                             const stats_id = stats_ids[i];
-                            const stat = data[stats_id];
+                            const stat = data["stats"][stats_id];
                             const stat_ele = document.getElementById("stats-" + stats_id);
-                            stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
+
+                            if (stats_id == "cpu") {
+                                const cpu_freq = data["stats"]["cpu_freq"];
+                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${cpu_freq.toFixed(0)}) (${stats_id})`;
+                            } else if (stats_id == "ram") {
+                                const swap = data["stats"]["swap"];
+                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${swap.toFixed(0)}%) (${stats_id})`;
+                            } else {
+                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
+                            }
 
                             const statbar = document.getElementById(stats_id + "bar");
                             statbar.style.width = stat + "%";

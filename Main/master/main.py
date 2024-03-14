@@ -170,8 +170,10 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
                 ]
             server_ds.s1["fpses"] = fpses
 
-            server_ds.s1["ram"] = psutil.virtual_memory().percent
-            server_ds.s1["cpu"] = psutil.cpu_percent()
+            server_ds.s1["stats"]["ram"] = psutil.virtual_memory().percent
+            server_ds.s1["stats"]["swap"] = psutil.swap_memory().percent
+            server_ds.s1["stats"]["cpu"] = psutil.cpu_percent()
+            server_ds.s1["stats"]["cpu_freq"] = psutil.cpu_freq().current
 
             if gpu_log_file is not None:
                 last_line = master.util.read_last_line(gpu_log_file)
@@ -179,7 +181,7 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
                 for i, peice in enumerate(peices):
                     if peice == "GR3D_FREQ":
                         section = peices[i + 1]
-                        server_ds.s1["gpu"] = float(section.split("%")[0])    
+                        server_ds.s1["stats"]["gpu"] = float(section.split("%")[0])    
                         break        
 
             server_ds.put_s1(server_dq)
