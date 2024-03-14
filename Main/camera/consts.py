@@ -22,6 +22,6 @@ CAMERA_NONE_GREY = 50
 
 STATE_FROM_SELF = {
     "frame": None,
-    "fps": 20,
+    "fps": 30,
     "time": time.time(),
 }
