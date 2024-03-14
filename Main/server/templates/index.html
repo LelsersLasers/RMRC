@@ -151,9 +151,10 @@ span {
 #backendbar  { background-color: #BF616A; }
 #frontendbar { background-color: #B48EAD; }
 
-#cpubar { background-color: #D08770; }
-#gpubar { background-color: #D08770; }
-#rambar { background-color: #EBCB8B; }
+#cpubar      { background-color: #5E81AC; }
+#cpu_freqbar { background-color: #81A1C1; }
+#gpubar      { background-color: #88C0D0; }
+#rambar      { background-color: #8FBCBB; }
 
 .timebar-idle	{ background-color: #5E81AC; }
 .timebar-active { background-color: #A3BE8C; }
@@ -324,13 +325,16 @@ input[type="range"] {
 
             <h4>Host stats</h4>
             <div class="bar" id="cpubar">
-                <span id="stats-cpu">10% (0) (cpu)</span>
+                <span id="stats-cpu">10% (cpu)</span>
+            </div>
+            <div class="bar" id="cpu_freqbar">
+                <span id="stats-cpu_freq">1.00 (cpu_freq)</span>
             </div>
             <div class="bar" id="gpubar">
                 <span id="stats-gpu">10% (gpu)</span>
             </div>
             <div class="bar" id="rambar">
-                <span id="stats-ram">20% (0%) (ram)</span>
+                <span id="stats-ram">20.0% (0.0%) (ram/swap)</span>
             </div>
 
             <h4>Master stats</h4>
@@ -699,25 +703,31 @@ input[type="range"] {
                         // -------------------------------------------------- //
                         
                         // -------------------------------------------------- //
-                        const stats_ids = ["cpu", "gpu", "ram"];
+                        const stats_ids = ["cpu", "cpu_freq", "gpu", "ram"];
 
                         for (let i = 0; i < stats_ids.length; i++) {
                             const stats_id = stats_ids[i];
                             const stat = data["stats"][stats_id];
                             const stat_ele = document.getElementById("stats-" + stats_id);
 
-                            if (stats_id == "cpu") {
-                                const cpu_freq = data["stats"]["cpu_freq"];
-                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${cpu_freq.toFixed(0)}) (${stats_id})`;
-                            } else if (stats_id == "ram") {
+
+                            if (stats_id == "ram") {
                                 const swap = data["stats"]["swap"];
-                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${swap.toFixed(0)}%) (${stats_id})`;
+                                stat_ele.innerHTML = `${stat.toFixed(1)}% (${swap.toFixed(1)}%) (ram/swap)`;
+                            } else if (stats_id == "cpu_freq") {
+                                const ghz = stat["current"] / 1000;
+                                stat_ele.innerHTML = `${ghz.toFixed(2)} GHz (${stats_id})`;
                             } else {
                                 stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
                             }
 
                             const statbar = document.getElementById(stats_id + "bar");
-                            statbar.style.width = stat + "%";
+                            if (stats_id == "cpu_freq") {
+                                const ratio = (stat["current"] - stat["min"]) / (stat["max"] - stat["min"]);
+                                statbar.style.width = ratio * 100 + "%";
+                            } else {
+                                statbar.style.width = stat + "%";
+                            }
                         }
                         // -------------------------------------------------- //
 

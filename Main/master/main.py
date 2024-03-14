@@ -183,7 +183,11 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
             server_ds.s1["stats"]["ram"] = psutil.virtual_memory().percent
             server_ds.s1["stats"]["swap"] = psutil.swap_memory().percent
             server_ds.s1["stats"]["cpu"] = psutil.cpu_percent()
-            server_ds.s1["stats"]["cpu_freq"] = psutil.cpu_freq().current
+
+            cpu_freq = psutil.cpu_freq()
+            server_ds.s1["stats"]["cpu_freq"]["current"] = cpu_freq.current
+            server_ds.s1["stats"]["cpu_freq"]["min"]     = cpu_freq.min
+            server_ds.s1["stats"]["cpu_freq"]["max"]     = cpu_freq.max
 
             if gpu_log_file is not None:
                 pieces_needed = 4
