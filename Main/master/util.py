@@ -13,3 +13,8 @@ def read_last_line(f):
         
     last_line = f.readline().decode()
     return last_line
+
+def pretty_print_dict(d):
+    import pprint
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(d)

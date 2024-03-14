@@ -31,6 +31,17 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     print("Press 0 to show camera grid.")
     print("Press 5 to toggle sidebar.\n")
 
+    print("\npsutil info:")
+    master.util.pretty_print_dict(psutil.cpu_count())
+    master.util.pretty_print_dict(psutil.cpu_freq())
+    master.util.pretty_print_dict(psutil.virtual_memory())
+    master.util.pretty_print_dict(psutil.swap_memory())
+    master.util.pretty_print_dict(psutil.net_if_stats())
+    master.util.pretty_print_dict(psutil.sensors_temperatures())
+    master.util.pretty_print_dict(psutil.sensors_fans())
+    master.util.pretty_print_dict(psutil.sensors_battery())
+    print("\n")
+
 
     average_frame = None
     last_frame = None
