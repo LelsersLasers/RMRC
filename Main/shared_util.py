@@ -4,15 +4,30 @@ import multiprocessing
 
 # ---------------------------------------------------------------------------- #
 class GracefulKiller:
-    # "captures" SIGINT signal to allow for graceful exit
+    # "captures" SIGINT signals and 1 SIGTERM signal to allow for graceful exit
     def __init__(self):
         # SIGINT = Ctrl+C
-        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGINT, self.exit_gracefully_sigint)
+        # SIGTERM = kill
+        signal.signal(signal.SIGTERM, self.exit_gracefully_sigterm)
+
         self.kill_now = False
+        self.term_tried = False
     
-    def exit_gracefully(self, *args):
-        print(f"GracefulKiller: {multiprocessing.current_process().name}")
+    def exit_gracefully_sigint(self, *args):
         self.kill_now = True
+        print(f"GracefulKiller: SIGINT {multiprocessing.current_process().name}")
+
+    def exit_gracefully_sigterm(self, *args):
+        # "capture" the first SIGTERM and send SIGALRM to self after
+        self.kill_now = True
+        if not self.term_tried:
+            print(f"GracefulKiller: SIGTERM {multiprocessing.current_process().name}")
+            self.term_tried = True
+        else:
+            print(f"GracefulKiller: SIGTERM -> SIGALRM {multiprocessing.current_process().name}")
+            # send SIGALRM to self
+            signal.alarm(1)
 # ---------------------------------------------------------------------------- #
 
 
