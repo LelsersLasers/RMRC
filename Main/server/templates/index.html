@@ -158,6 +158,13 @@ span {
 .timebar-idle	{ background-color: #5E81AC; }
 .timebar-active { background-color: #A3BE8C; }
 
+.temp-cold { background-color: #B48EAD; }
+.temp-cool { background-color: #5E81AC; }
+.temp-mid  { background-color: #A3BE8C; }
+.temp-warm { background-color: #EBCB8B; }
+.temp-hot  { background-color: #D08770; }
+.temp-boil { background-color: #BF616A; }
+
 #updateratiobar { background-color: #B48EAD; }
 
 #anglebar { background-color: #A3BE8C; }
@@ -337,6 +344,17 @@ input[type="range"] {
                 <span id="motion-time">0 MS (motion)</span>
             </div>
 
+            <h4>Temperatues</h4>
+            <div class="bar" id="temp-cpu-bar">
+                <span id="temp-cpu">0 °C (cpu)</span>
+            </div>
+            <div class="bar" id="temp-gpu-bar">
+                <span id="temp-gpu">°C (gpu)</span>
+            </div>
+            <div class="bar" id="temp-aux-bar">
+                <span id="aux-gpu">°C (aux)</span>
+            </div>
+
             <h4>Detected Hazmat Labels:</h4>
             <div class="bar" id="anglebar">
                 <span id="angle">0°</span>
@@ -472,6 +490,15 @@ input[type="range"] {
             "hazmat": 1000,
             "qr": 50,
             "motion": 50,
+        };
+
+        const TEMP_CUTOFFS = {
+            "cold": 0,
+            "cool": 35,
+            "mid": 50,
+            "warm": 80,
+            "hot": 93,
+            "boil": 105,
         };
 
         let show_sidebar = true;
@@ -709,6 +736,25 @@ input[type="range"] {
                             const ratio = time_value / TIME_SCALES[time_id];
                             const width = time > 0 ? (ratio * 100) : 100;
                             timebar.style.width = width + "%";
+                        }
+                        // -------------------------------------------------- //
+
+                        // -------------------------------------------------- //
+                        const temp_ids = ["cpu", "gpu", "aux"];
+
+                        for (let i = 0; i < temp_ids.length; i++) {
+                            const temp_id = temp_ids[i];
+                            const temp = data["temps"][temp_id];
+                            const temp_ele = document.getElementById("temp-" + stats_id);
+
+                            temp_ele.innerHTML = `${temp.toFixed(0)}% (${temp_id})`;
+
+                            const temp_bar = document.getElementById(stats_id + "bar");
+                            temp_bar.style.width = (temp / 100) + "%";
+
+                            const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
+                            temp_bar.classList.remove("temp-cold", "temp-cool", "temp-mid", "temp-warm", "temp-hot", "temp-boil");
+                            temp_bar.classList.add("temp-" + temp_level);
                         }
                         // -------------------------------------------------- //
 

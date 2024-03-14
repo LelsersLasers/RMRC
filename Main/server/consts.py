@@ -21,6 +21,12 @@ STATE_FROM_MASTER = {
         "gpu": -1,
     },
 
+    "temps": {
+        "cpu": 0,
+        "gpu": 0,
+        "aux": 0,
+    },
+
     "angle": 0,
     "timebars": {
         "hazmat": 0,
