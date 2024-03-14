@@ -17,7 +17,7 @@ import camera.consts
 
 def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     print("\nControls:")
-    print("Hold 'wasd' to move the robot.")
+    print("Hold 'wasd' or arrow keys to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")
     print("Press 'h' to toggle running hazmat detection.")
     print("Press 'r' to toggle running qr detection.")

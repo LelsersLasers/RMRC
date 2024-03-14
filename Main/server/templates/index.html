@@ -371,7 +371,7 @@ input[type="range"] {
 
             <h4>Controls</h4>
             <p>
-                Hold <kbd>wasd</kbd> to move the robot.<br />
+                Hold <kbd>wasd</kbd> or arrow keys to move the robot.<br />
                 Hold <kbd>z</kbd> to set all motor speeds to 0.<br />
                 Press <kbd>h</kbd> to toggle running hazmat detection.<br />
                 Press <kbd>r</kbd> to toggle running QR detection.<br />
@@ -959,10 +959,10 @@ input[type="range"] {
 
             const invert_mod = invert ? -1 : 1;
 
-            if (keys['w'])	y_input += 1 * invert_mod;
-            if (keys['s'])	y_input -= 1 * invert_mod;
-            if (keys['a'])	x_input -= 1 * invert_mod;
-            if (keys['d'])	x_input += 1 * invert_mod;
+            if (keys['w'] || keys['arrowup'])	 y_input += 1 * invert_mod;
+            if (keys['s'] || keys['arrowdown'])	 y_input -= 1 * invert_mod;
+            if (keys['a'] || keys['arrowleft'])	 x_input -= 1 * invert_mod;
+            if (keys['d'] || keys['arrowright']) x_input += 1 * invert_mod;
 
             function match_x(x) { // in terms of left side
                 if (x < 0)		return -1;
