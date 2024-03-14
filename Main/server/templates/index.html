@@ -757,7 +757,7 @@ input[type="range"] {
                             const temp = data["temps"][temp_id];
                             const temp_ele = document.getElementById("temp-" + temp_id);
 
-                            temp_ele.innerHTML = `${temp} °C (${temp_id})`;
+                            temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
 
                             const temp_bar = document.getElementById("temp-" + temp_id + "-bar");
                             temp_bar.style.width = (temp / 100) + "%";
