@@ -52,9 +52,13 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
+    deltas = []
+
     try:
         while not graceful_killer.kill_now:
-            fps_controller.update()
+            delta = fps_controller.update()
+            deltas.append(delta)
+            deltas = deltas[-master.consts.DELTAS_TO_KEEP:]
 
             # ---------------------------------------------------------------- #
             server_ds.update_s2(server_dq)
@@ -179,6 +183,12 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
                         break        
 
             server_ds.put_s1(server_dq)
+
+            avg_delta = sum(deltas) / len(deltas)
+            target_delta = 1 / master.consts.FPS
+            sleep_target = target_delta - avg_delta
+            if sleep_target > 0:
+                time.sleep(sleep_target)
             # ---------------------------------------------------------------- #
     finally:
         if gpu_log_file is not None:
