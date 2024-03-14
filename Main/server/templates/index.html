@@ -497,9 +497,9 @@ input[type="range"] {
         };
 
         const TEMP_CUTOFFS = {
-            "cold": 25,
-            "cool": 45,
-            "mid": 65,
+            "cold": 30,
+            "cool": 50,
+            "mid": 70,
             "warm": 88,
             "hot": 94,
             "boil": 105,
@@ -760,7 +760,7 @@ input[type="range"] {
                             temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
 
                             const temp_bar = document.getElementById("temp-" + temp_id + "-bar");
-                            temp_bar.style.width = (temp / 100) + "%";
+                            temp_bar.style.width = temp + "%";
 
                             const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
                             temp_bar.classList.remove("temp-cold", "temp-cool", "temp-mid", "temp-warm", "temp-hot", "temp-boil");
