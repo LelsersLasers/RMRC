@@ -349,10 +349,10 @@ input[type="range"] {
                 <span id="temp-cpu">0 °C (cpu)</span>
             </div>
             <div class="bar" id="temp-gpu-bar">
-                <span id="temp-gpu">°C (gpu)</span>
+                <span id="temp-gpu">0 °C (gpu)</span>
             </div>
             <div class="bar" id="temp-aux-bar">
-                <span id="aux-gpu">°C (aux)</span>
+                <span id="temp-aux">0 °C (aux)</span>
             </div>
 
             <h4>Detected Hazmat Labels:</h4>
@@ -745,11 +745,11 @@ input[type="range"] {
                         for (let i = 0; i < temp_ids.length; i++) {
                             const temp_id = temp_ids[i];
                             const temp = data["temps"][temp_id];
-                            const temp_ele = document.getElementById("temp-" + stats_id);
+                            const temp_ele = document.getElementById("temp-" + temp_id);
 
-                            temp_ele.innerHTML = `${temp}% (${temp_id})`;
+                            temp_ele.innerHTML = `${temp} °C (${temp_id})`;
 
-                            const temp_bar = document.getElementById(stats_id + "bar");
+                            const temp_bar = document.getElementById("temp-" + temp_id + "-bar");
                             temp_bar.style.width = (temp / 100) + "%";
 
                             const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
