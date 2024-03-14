@@ -176,13 +176,24 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
             server_ds.s1["stats"]["cpu_freq"] = psutil.cpu_freq().current
 
             if gpu_log_file is not None:
+                pieces_needed = 4
                 last_line = master.util.read_last_line(gpu_log_file)
-                peices = last_line.split()
-                for i, peice in enumerate(peices):
-                    if peice == "GR3D_FREQ":
-                        section = peices[i + 1]
-                        server_ds.s1["stats"]["gpu"] = float(section.split("%")[0])    
-                        break        
+                pieces = last_line.split()
+                for i, piece in enumerate(pieces):
+                    if piece == "GR3D_FREQ":
+                        section = pieces[i + 1]
+                        server_ds.s1["stats"]["gpu"] = float(section.split("%")[0])
+                        pieces_needed -= 1
+                    elif piece.startswith("CPU@"):
+                        server_ds.s1["temps"]["cpu"] = float(piece.split("@")[1].split("C")[0])
+                        pieces_needed -= 1
+                    elif piece.startswith("GPU@"):
+                        server_ds.s1["temps"]["gpu"] = float(piece.split("@")[1].split("C")[0])
+                        pieces_needed -= 1
+                    elif piece.startswith("AUX@"):
+                        server_ds.s1["temps"]["aux"] = float(piece.split("@")[1].split("C")[0])
+                        pieces_needed -= 1
+                    if pieces_needed == 0: break
 
             server_ds.put_s1(server_dq)
 
