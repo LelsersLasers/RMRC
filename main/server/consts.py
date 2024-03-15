@@ -27,7 +27,7 @@ STATE_FROM_MASTER = {
     },
 
     "angle": 0,
-    "timebars": {
+    "time_bars": {
         "hazmat": 0,
         "qr": 0,
         "motion": 0,

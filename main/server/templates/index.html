@@ -151,12 +151,12 @@ span {
 #fps-backend-bar  { background-color: #BF616A; }
 #fps-frontend-bar { background-color: #B48EAD; }
 
-#cpubar { background-color: #5E81AC; }
-#gpubar { background-color: #88C0D0; }
-#rambar { background-color: #8FBCBB; }
+#stats-cpu-bar { background-color: #5E81AC; }
+#stats-gpu-bar { background-color: #88C0D0; }
+#stats-ram-bar { background-color: #8FBCBB; }
 
-.timebar-idle	{ background-color: #5E81AC; }
-.timebar-active { background-color: #A3BE8C; }
+.time-bar-idle	{ background-color: #5E81AC; }
+.time-bar-active { background-color: #A3BE8C; }
 
 .temp-cold { background-color: #B48EAD; }
 .temp-cool { background-color: #5E81AC; }
@@ -165,9 +165,7 @@ span {
 .temp-hot  { background-color: #D08770; }
 .temp-boil { background-color: #BF616A; }
 
-#updateratiobar { background-color: #B48EAD; }
-
-#anglebar { background-color: #A3BE8C; }
+#angle-bar { background-color: #A3BE8C; }
 
 kbd {
     background-color: #4C566A;
@@ -334,13 +332,13 @@ input[type="range"] {
             </div>
 
             <h4>Master stats</h4>
-            <div class="bar timebar-idle" id="time-hazmat-bar">
+            <div class="bar time-bar-idle" id="time-hazmat-bar">
                 <span id="time-hazmat">0 MS (hazmat)</span>
             </div>
-            <div class="bar timebar-idle" id="time-qr-bar">
+            <div class="bar time-bar-idle" id="time-qr-bar">
                 <span id="time-qr">0 MS (qr)</span>
             </div>
-            <div class="bar timebar-idle" id="time-motion-bar">
+            <div class="bar time-bar-idle" id="time-motion-bar">
                 <span id="time-motion">0 MS (motion)</span>
             </div>
 
@@ -639,9 +637,9 @@ input[type="range"] {
                             const fps_ele = document.getElementById(ele_id);
                             fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
 
-                            const fpsbar = document.getElementById(ele_id + "-bar");
+                            const fps_bar = document.getElementById(ele_id + "-bar");
                             const ratio = Math.min(fps / max_ratio_fps, 1.0);
-                            fpsbar.style.width = ratio * 100 + "%";
+                            fps_bar.style.width = ratio * 100 + "%";
                         }
                         // -------------------------------------------------- //
 
@@ -710,8 +708,8 @@ input[type="range"] {
                                 stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
                             }
 
-                            const statbar = document.getElementById(ele_id + "-bar");
-                            statbar.style.width = stat + "%";
+                            const stat_bar = document.getElementById(ele_id + "-bar");
+                            stat_bar.style.width = stat + "%";
                         }
                         // -------------------------------------------------- //
 
@@ -720,7 +718,7 @@ input[type="range"] {
 
                         for (let i = 0; i < time_ids.length; i++) {
                             const time_id = time_ids[i];
-                            const time = data["timebars"][time_id];
+                            const time = data["time_bars"][time_id];
                             const time_value = time > 0 ? time * 1000 : -1;
 
                             const ele_id = "time-" + time_id;
@@ -728,10 +726,10 @@ input[type="range"] {
                             const time_ele = document.getElementById(ele_id);
                             time_ele.innerHTML = `${time_value.toFixed(0)} MS (${time_id})`;
 
-                            const timebar = document.getElementById(ele_id + "-bar");
+                            const time_bar = document.getElementById(ele_id + "-bar");
                             const ratio = time_value / TIME_SCALES[time_id];
                             const width = time > 0 ? (ratio * 100) : 100;
-                            timebar.style.width = width + "%";
+                            time_bar.style.width = width + "%";
                         }
                         // -------------------------------------------------- //
 
@@ -761,8 +759,8 @@ input[type="range"] {
                         const angle_ele = document.getElementById("angle");
                         angle_ele.innerHTML = `${angle.toFixed(0)}°`;
 
-                        const anglebar = document.getElementById("angle-bar");
-                        anglebar.style.width = (angle / 360) * 100 + "%";
+                        const angle_bar = document.getElementById("angle-bar");
+                        angle_bar.style.width = (angle / 360) * 100 + "%";
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
@@ -856,12 +854,12 @@ input[type="range"] {
                     run_qr = false;
                     run_motion = false;
 
-                    const timebar_ids = ["hazmat", "qr", "motion"];
-                    for (let i = 0; i < timebar_ids.length; i++) {
-                        const timebar_id = timebar_ids[i];
-                        const timebar_ele = document.getElementById(timebar_id + "-timebar");
-                        timebar_ele.classList.remove("timebar-active");
-                        timebar_ele.classList.add("timebar-idle");
+                    const time_bar_ids = ["hazmat", "qr", "motion"];
+                    for (let i = 0; i < time_bar_ids.length; i++) {
+                        const time_bar_id = time_bar_ids[i];
+                        const time_bar_ele = document.getElementById("time-" + time_bar_id + "-bar");
+                        time_bar_ele.classList.remove("time-bar-active");
+                        time_bar_ele.classList.add("time-bar-idle");
                     }
 
                     keys = {};
@@ -1033,37 +1031,37 @@ input[type="range"] {
                 run_hazmat = !run_hazmat;
                 fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
 
-                const timebar_ele = document.getElementById("hazmat-timebar");
+                const time_bar_ele = document.getElementById("time-hazmat-bar");
                 if (run_hazmat) {
-                    timebar_ele.classList.remove("timebar-idle");
-                    timebar_ele.classList.add("timebar-active");
+                    time_bar_ele.classList.remove("time-bar-idle");
+                    time_bar_ele.classList.add("time-bar-active");
                 } else {
-                    timebar_ele.classList.remove("timebar-active");
-                    timebar_ele.classList.add("timebar-idle");
+                    time_bar_ele.classList.remove("time-bar-active");
+                    time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "r") {
                 run_qr = !run_qr;
                 fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
 
-                const timebar_ele = document.getElementById("qr-timebar");
+                const time_bar_ele = document.getElementById("time-qr-bar");
                 if (run_qr) {
-                    timebar_ele.classList.remove("timebar-idle");
-                    timebar_ele.classList.add("timebar-active");
+                    time_bar_ele.classList.remove("time-bar-idle");
+                    time_bar_ele.classList.add("time-bar-active");
                 } else {
-                    timebar_ele.classList.remove("timebar-active");
-                    timebar_ele.classList.add("timebar-idle");
+                    time_bar_ele.classList.remove("time-bar-active");
+                    time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "m") {
                 run_motion = !run_motion;
                 fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
 
-                const timebar_ele = document.getElementById("motion-timebar");
+                const time_bar_ele = document.getElementById("time-motion-bar");
                 if (run_motion) {
-                    timebar_ele.classList.remove("timebar-idle");
-                    timebar_ele.classList.add("timebar-active");
+                    time_bar_ele.classList.remove("time-bar-idle");
+                    time_bar_ele.classList.add("time-bar-active");
                 } else {
-                    timebar_ele.classList.remove("timebar-active");
-                    timebar_ele.classList.add("timebar-idle");
+                    time_bar_ele.classList.remove("time-bar-active");
+                    time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
                 const ids = ["webcam1", "detection", "webcam2", "ir"];
