@@ -688,17 +688,10 @@ input[type="range"] {
                             target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
                             current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
 
-                            if (target < 0) {
-                                target_ele.classList.add("backward-light");
-                            } else {
-                                target_ele.classList.add("forward-light");
-                            }
-
-                            if (current < 0) {
-                                current_ele.classList.add("backward-dark");
-                            } else {
-                                current_ele.classList.add("forward-dark");
-                            }
+                            if (target < 0)  { target_ele.classList.add("backward-light"); }
+                            else             { target_ele.classList.add("forward-light");  }
+                            if (current < 0) { current_ele.classList.add("backward-light"); }
+                            else             { current_ele.classList.add("forward-light");  }
                         }
                         // -------------------------------------------------- //
                         
