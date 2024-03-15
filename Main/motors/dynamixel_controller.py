@@ -63,11 +63,6 @@ class DynamixelController:
         }
         self.min_writes = motors.consts.STATE_FROM_SERVER["motor_writes"]
 
-    def reboot_all_motors(self):
-        for side_ids in DYNAMIXEL_IDS.values():
-            for id in side_ids:
-                self.packet_handler.reboot(self.port_handler, id)
-
     def close(self):
         self.update_speeds({
             "left": 0,
@@ -122,17 +117,11 @@ class DynamixelController:
 
 
     def update_status_and_check_errors(self):
-        error_codes = {} # error_codes[id] = error_code
-        any_errors = []
-
         for side, side_ids in DYNAMIXEL_IDS.items():
             orientation = ORIENTATIONS[side]
             self.statuses[side] = 0
 
             for id in side_ids:
-                # dxl_present_velocity = self.packet_handler.read4ByteTx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
-                # error_code = self.packet_handler.read1ByteTx(self.port_handler, id, ADDR_ERROR_CODE)
-
                 dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
                 error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
                 
@@ -141,14 +130,10 @@ class DynamixelController:
                     dxl_present_velocity = dxl_present_velocity - 4294967296
                 # if dxl_present_current > 0x7fff:
                 # 	dxl_present_current = dxl_present_current - 65536
-
-                error_codes[id] = error_code
-                any_errors.append(error_code > 0)
-                
+                    
                 self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
-
-        if any(any_errors):
-            for id, error_code in error_codes.items():
+                    
                 if error_code > 0:
-                    print(f"error_code {id} {error_code}")
-            self.reboot_all_motors()
+                    print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
+                    print(f"rebooting {id}")
+                    self.packet_handler.reboot(self.port_handler, id)
