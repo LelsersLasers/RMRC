@@ -28,9 +28,9 @@ def thread(camera_sq, key):
             ret, frame = cap.read()
             if not ret or frame is None:
                 print(f"Camera {key} read failed.")
-                break
+                time.sleep(camera.consts.CAMERA_WAIT_AFTER_FAIL)
 
-            if key is None:
+            if key is None and frame is not None:
                 frame = cv2.resize(frame, camera.consts.CAMERA_SIZE)
 
             camera_ss.s["time"] = time.time()

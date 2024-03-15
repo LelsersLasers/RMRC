@@ -75,10 +75,13 @@ def close_thread(t):
     t.join(2.5)
     print(f"2) {thread_str(t)}")
 
-    if t.is_alive():
-        t.terminate()
-        t.join(2.5)
-        print(f"3) {thread_str(t)}")
+    for i in range(2):
+        if t.is_alive():
+            t.terminate()
+            t.join(2.5)
+            print(f"{3 + i}) {thread_str(t)}")
+        else:
+            break
 
     try:
         # multiprocessing.Process.close() was added in Python 3.7

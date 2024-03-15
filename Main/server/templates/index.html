@@ -151,12 +151,20 @@ span {
 #backendbar  { background-color: #BF616A; }
 #frontendbar { background-color: #B48EAD; }
 
-#cpubar { background-color: #D08770; }
-#gpubar { background-color: #D08770; }
-#rambar { background-color: #EBCB8B; }
+#cpubar      { background-color: #5E81AC; }
+#cpu_freqbar { background-color: #81A1C1; }
+#gpubar      { background-color: #88C0D0; }
+#rambar      { background-color: #8FBCBB; }
 
 .timebar-idle	{ background-color: #5E81AC; }
 .timebar-active { background-color: #A3BE8C; }
+
+.temp-cold { background-color: #B48EAD; }
+.temp-cool { background-color: #5E81AC; }
+.temp-mid  { background-color: #A3BE8C; }
+.temp-warm { background-color: #EBCB8B; }
+.temp-hot  { background-color: #D08770; }
+.temp-boil { background-color: #BF616A; }
 
 #updateratiobar { background-color: #B48EAD; }
 
@@ -319,11 +327,14 @@ input[type="range"] {
             <div class="bar" id="cpubar">
                 <span id="stats-cpu">10% (cpu)</span>
             </div>
+            <div class="bar" id="cpu_freqbar">
+                <span id="stats-cpu_freq">1.00 (cpu_freq)</span>
+            </div>
             <div class="bar" id="gpubar">
                 <span id="stats-gpu">10% (gpu)</span>
             </div>
             <div class="bar" id="rambar">
-                <span id="stats-ram">20% (ram)</span>
+                <span id="stats-ram">20.0% (0.0%) (ram/swap)</span>
             </div>
 
             <h4>Master stats</h4>
@@ -335,6 +346,17 @@ input[type="range"] {
             </div>
             <div class="bar timebar-idle" id="motion-timebar">
                 <span id="motion-time">0 MS (motion)</span>
+            </div>
+
+            <h4>Temperatues</h4>
+            <div class="bar" id="temp-cpu-bar">
+                <span id="temp-cpu">0 °C (cpu)</span>
+            </div>
+            <div class="bar" id="temp-gpu-bar">
+                <span id="temp-gpu">0 °C (gpu)</span>
+            </div>
+            <div class="bar" id="temp-aux-bar">
+                <span id="temp-aux">0 °C (aux)</span>
             </div>
 
             <h4>Detected Hazmat Labels:</h4>
@@ -349,7 +371,7 @@ input[type="range"] {
 
             <h4>Controls</h4>
             <p>
-                Hold <kbd>wasd</kbd> to move the robot.<br />
+                Hold <kbd>wasd</kbd> or arrow keys to move the robot.<br />
                 Hold <kbd>z</kbd> to set all motor speeds to 0.<br />
                 Press <kbd>h</kbd> to toggle running hazmat detection.<br />
                 Press <kbd>r</kbd> to toggle running QR detection.<br />
@@ -423,7 +445,7 @@ input[type="range"] {
     <script>
         const current_url = window.location.href;
         const FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
-        const FRONT_END_FPS = 20;
+        const FRONT_END_FPS = 30;
 
         const GRID_FRAME_RATIO = 4 / 3;
         const ZOOM_FRAME_RATIO = 1;
@@ -472,6 +494,15 @@ input[type="range"] {
             "hazmat": 1000,
             "qr": 50,
             "motion": 50,
+        };
+
+        const TEMP_CUTOFFS = {
+            "cold": 30,
+            "cool": 50,
+            "mid": 70,
+            "warm": 88,
+            "hot": 94,
+            "boil": 105,
         };
 
         let show_sidebar = true;
@@ -672,16 +703,31 @@ input[type="range"] {
                         // -------------------------------------------------- //
                         
                         // -------------------------------------------------- //
-                        const stats_ids = ["cpu", "gpu", "ram"];
+                        const stats_ids = ["cpu", "cpu_freq", "gpu", "ram"];
 
                         for (let i = 0; i < stats_ids.length; i++) {
                             const stats_id = stats_ids[i];
-                            const stat = data[stats_id];
+                            const stat = data["stats"][stats_id];
                             const stat_ele = document.getElementById("stats-" + stats_id);
-                            stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
+
+
+                            if (stats_id == "ram") {
+                                const swap = data["stats"]["swap"];
+                                stat_ele.innerHTML = `${stat.toFixed(1)}% (${swap.toFixed(1)}%) (ram/swap)`;
+                            } else if (stats_id == "cpu_freq") {
+                                const ghz = stat["current"] / 1000;
+                                stat_ele.innerHTML = `${ghz.toFixed(2)} GHz (${stats_id})`;
+                            } else {
+                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
+                            }
 
                             const statbar = document.getElementById(stats_id + "bar");
-                            statbar.style.width = stat + "%";
+                            if (stats_id == "cpu_freq") {
+                                const ratio = (stat["current"] - stat["min"]) / (stat["max"] - stat["min"]);
+                                statbar.style.width = ratio * 100 + "%";
+                            } else {
+                                statbar.style.width = stat + "%";
+                            }
                         }
                         // -------------------------------------------------- //
 
@@ -700,6 +746,25 @@ input[type="range"] {
                             const ratio = time_value / TIME_SCALES[time_id];
                             const width = time > 0 ? (ratio * 100) : 100;
                             timebar.style.width = width + "%";
+                        }
+                        // -------------------------------------------------- //
+
+                        // -------------------------------------------------- //
+                        const temp_ids = ["cpu", "gpu", "aux"];
+
+                        for (let i = 0; i < temp_ids.length; i++) {
+                            const temp_id = temp_ids[i];
+                            const temp = data["temps"][temp_id];
+                            const temp_ele = document.getElementById("temp-" + temp_id);
+
+                            temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
+
+                            const temp_bar = document.getElementById("temp-" + temp_id + "-bar");
+                            temp_bar.style.width = temp + "%";
+
+                            const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
+                            temp_bar.classList.remove("temp-cold", "temp-cool", "temp-mid", "temp-warm", "temp-hot", "temp-boil");
+                            temp_bar.classList.add("temp-" + temp_level);
                         }
                         // -------------------------------------------------- //
 
@@ -894,10 +959,10 @@ input[type="range"] {
 
             const invert_mod = invert ? -1 : 1;
 
-            if (keys['w'])	y_input += 1 * invert_mod;
-            if (keys['s'])	y_input -= 1 * invert_mod;
-            if (keys['a'])	x_input -= 1 * invert_mod;
-            if (keys['d'])	x_input += 1 * invert_mod;
+            if (keys['w'] || keys['arrowup'])	 y_input += 1 * invert_mod;
+            if (keys['s'] || keys['arrowdown'])	 y_input -= 1 * invert_mod;
+            if (keys['a'] || keys['arrowleft'])	 x_input -= 1 * invert_mod;
+            if (keys['d'] || keys['arrowright']) x_input += 1 * invert_mod;
 
             function match_x(x) { // in terms of left side
                 if (x < 0)		return -1;

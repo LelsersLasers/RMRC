@@ -17,7 +17,7 @@ import camera.consts
 
 def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     print("\nControls:")
-    print("Hold 'wasd' to move the robot.")
+    print("Hold 'wasd' or arrow keys to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")
     print("Press 'h' to toggle running hazmat detection.")
     print("Press 'r' to toggle running qr detection.")
@@ -30,6 +30,17 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     print("Press 1-4 again to super zoom on focused feed.")
     print("Press 0 to show camera grid.")
     print("Press 5 to toggle sidebar.\n")
+
+    print("\npsutil info:")
+    master.util.pretty_print_dict(psutil.cpu_count())
+    master.util.pretty_print_dict(psutil.cpu_freq())
+    master.util.pretty_print_dict(psutil.virtual_memory())
+    master.util.pretty_print_dict(psutil.swap_memory())
+    master.util.pretty_print_dict(psutil.net_if_stats())
+    master.util.pretty_print_dict(psutil.sensors_temperatures())
+    master.util.pretty_print_dict(psutil.sensors_fans())
+    master.util.pretty_print_dict(psutil.sensors_battery())
+    print("\n")
 
 
     average_frame = None
@@ -52,8 +63,11 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
+    times = []
+
     try:
         while not graceful_killer.kill_now:
+            start = time.time()
             fps_controller.update()
 
             # ---------------------------------------------------------------- #
@@ -166,19 +180,48 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
                 ]
             server_ds.s1["fpses"] = fpses
 
-            server_ds.s1["ram"] = psutil.virtual_memory().percent
-            server_ds.s1["cpu"] = psutil.cpu_percent()
+            server_ds.s1["stats"]["ram"] = psutil.virtual_memory().percent
+            server_ds.s1["stats"]["swap"] = psutil.swap_memory().percent
+            server_ds.s1["stats"]["cpu"] = psutil.cpu_percent()
+
+            cpu_freq = psutil.cpu_freq()
+            server_ds.s1["stats"]["cpu_freq"]["current"] = cpu_freq.current
+            server_ds.s1["stats"]["cpu_freq"]["min"]     = cpu_freq.min
+            server_ds.s1["stats"]["cpu_freq"]["max"]     = cpu_freq.max
 
             if gpu_log_file is not None:
+                pieces_needed = 4
                 last_line = master.util.read_last_line(gpu_log_file)
-                peices = last_line.split()
-                for i, peice in enumerate(peices):
-                    if peice == "GR3D_FREQ":
-                        section = peices[i + 1]
-                        server_ds.s1["gpu"] = float(section.split("%")[0])    
-                        break        
+                pieces = last_line.split()
+                for i, piece in enumerate(pieces):
+                    if piece == "GR3D_FREQ":
+                        section = pieces[i + 1]
+                        server_ds.s1["stats"]["gpu"] = float(section.split("%")[0])
+                        pieces_needed -= 1
+                    elif piece.startswith("CPU@"):
+                        server_ds.s1["temps"]["cpu"] = float(piece.split("@")[1].split("C")[0])
+                        pieces_needed -= 1
+                    elif piece.startswith("GPU@"):
+                        server_ds.s1["temps"]["gpu"] = float(piece.split("@")[1].split("C")[0])
+                        pieces_needed -= 1
+                    elif piece.startswith("AUX@"):
+                        server_ds.s1["temps"]["aux"] = float(piece.split("@")[1].split("C")[0])
+                        pieces_needed -= 1
+                    if pieces_needed == 0: break
 
             server_ds.put_s1(server_dq)
+
+
+            pass_time = time.time() - start
+            times.append(pass_time)
+            times = times[-master.consts.TIMES_TO_KEEP:]
+            avg_time = sum(times) / len(times)
+
+
+            target_time = 1 / master.consts.FPS
+            sleep_target = target_time - avg_time
+            if sleep_target > 0:
+                time.sleep(sleep_target)
             # ---------------------------------------------------------------- #
     finally:
         if gpu_log_file is not None:

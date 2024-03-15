@@ -13,9 +13,23 @@ STATE_FROM_MASTER = {
     # motor and backend are set in server /get route, rest are sent from master.main.thread
     "fpses": [-1, -1, -1, -1, -1, -1, -1],
     
-    "ram": 0,
-    "cpu": 0,
-    "gpu": -1,
+    "stats": {
+        "ram": 0,
+        "swap": 0,
+        "cpu": 0,
+        "cpu_freq": {
+            "current": 0,
+            "min": 0,
+            "max": 0,
+        },
+        "gpu": -1,
+    },
+
+    "temps": {
+        "cpu": -1,
+        "gpu": -1,
+        "aux": -1,
+    },
 
     "angle": 0,
     "timebars": {
