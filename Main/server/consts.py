@@ -17,11 +17,6 @@ STATE_FROM_MASTER = {
         "ram": 0,
         "swap": 0,
         "cpu": 0,
-        "cpu_freq": {
-            "current": 0,
-            "min": 0,
-            "max": 0,
-        },
         "gpu": -1,
     },
 
