@@ -1,3 +1,4 @@
+import time
 import queue
 import multiprocessing
 
@@ -72,12 +73,14 @@ def close_thread(t):
     print(f"\nClosing {t.name} thread...")
 
     print(f"1) {thread_str(t)}")
+    time.sleep(2.5)
     t.join(2.5)
     print(f"2) {thread_str(t)}")
 
     for i in range(2):
         if t.is_alive():
             t.terminate()
+            time.sleep(2.5)
             t.join(2.5)
             print(f"{3 + i}) {thread_str(t)}")
         else:
