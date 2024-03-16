@@ -1,3 +1,5 @@
+print("STARTING...\n")
+
 import time
 import argparse
 import traceback
