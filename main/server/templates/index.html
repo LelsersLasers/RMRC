@@ -947,8 +947,8 @@ input[type="range"] {
 
             if (keys['w'] || keys['arrowup'])	 y_input += 1 * invert_mod;
             if (keys['s'] || keys['arrowdown'])	 y_input -= 1 * invert_mod;
-            if (keys['a'] || keys['arrowleft'])	 x_input -= 1 * invert_mod;
-            if (keys['d'] || keys['arrowright']) x_input += 1 * invert_mod;
+            if (keys['a'] || keys['arrowleft'])	 x_input -= 1;
+            if (keys['d'] || keys['arrowright']) x_input += 1;
 
             function match_x(x) { // in terms of left side
                 if (x < 0)		return -1;
@@ -967,6 +967,7 @@ input[type="range"] {
             } else {
                 speed_left  = y_input * base_speed;
                 speed_right = y_input * base_speed;
+                x_input *= invert_mod;
 
                 if (x_input < 0)		speed_left  *= diagonal_multiplier;
                 else if (x_input > 0)	speed_right *= diagonal_multiplier;
