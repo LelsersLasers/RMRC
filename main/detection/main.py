@@ -113,9 +113,9 @@ def thread(detection_dq):
                         print(qr_found_this_frame)
                         print(detection_ds.s2["found"]["qr"])
 
-                detection_ds.s2["timebars"]["qr"] = time.time() - start
+                detection_ds.s2["time_bars"]["qr"] = time.time() - start
             else:
-                detection_ds.s2["timebars"]["qr"] = -1
+                detection_ds.s2["time_bars"]["qr"] = -1
             # ---------------------------------------------------------------- #
             
             # ---------------------------------------------------------------- #
@@ -135,9 +135,9 @@ def thread(detection_dq):
                         motion_threshold
                     )
                 
-                detection_ds.s2["timebars"]["motion"] = time.time() - start
+                detection_ds.s2["time_bars"]["motion"] = time.time() - start
             else:
-                detection_ds.s2["timebars"]["motion"] = -1
+                detection_ds.s2["time_bars"]["motion"] = -1
             # ---------------------------------------------------------------- #
         # -------------------------------------------------------------------- #
 

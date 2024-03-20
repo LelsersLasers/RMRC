@@ -132,9 +132,9 @@ span {
     padding-top: 0.1em;
 }
 
-#initalbar  { background-color: #BF616A; }
-#totalbar   { background-color: #BF616A; }
-#pingbar    { background-color: #BF616A; }
+#delay-inital-bar { background-color: #BF616A; }
+#delay-total-bar  { background-color: #BF616A; }
+#delay-ping-bar   { background-color: #BF616A; }
 
 
 .forward-light  { background-color: #bfd1ae; }
@@ -142,21 +142,21 @@ span {
 .backward-light { background-color: #d29097; }
 .backward-dark  { background-color: #BF616A; }
 
-#webcam1bar  { background-color: #5E81AC; }
-#detectionbar{ background-color: #81A1C1; }
-#webcam2bar  { background-color: #88C0D0; }
-#irbar       { background-color: #8FBCBB; }
-#masterbar   { background-color: #A3BE8C; }
-#motorbar    { background-color: #D08770; }
-#backendbar  { background-color: #BF616A; }
-#frontendbar { background-color: #B48EAD; }
+#fps-webcam1-bar  { background-color: #5E81AC; }
+#fps-detection-bar{ background-color: #81A1C1; }
+#fps-webcam2-bar  { background-color: #88C0D0; }
+#fps-ir-bar       { background-color: #8FBCBB; }
+#fps-master-bar   { background-color: #A3BE8C; }
+#fps-motor-bar    { background-color: #D08770; }
+#fps-backend-bar  { background-color: #BF616A; }
+#fps-frontend-bar { background-color: #B48EAD; }
 
-#cpubar      { background-color: #5E81AC; }
-#gpubar      { background-color: #88C0D0; }
-#rambar      { background-color: #8FBCBB; }
+#stats-cpu-bar { background-color: #D08770; }
+#stats-gpu-bar { background-color: #D08770; }
+#stats-ram-bar { background-color: #EBCB8B; }
 
-.timebar-idle	{ background-color: #5E81AC; }
-.timebar-active { background-color: #A3BE8C; }
+.time-bar-idle	{ background-color: #5E81AC; }
+.time-bar-active { background-color: #A3BE8C; }
 
 .temp-cold { background-color: #B48EAD; }
 .temp-cool { background-color: #5E81AC; }
@@ -165,9 +165,7 @@ span {
 .temp-hot  { background-color: #D08770; }
 .temp-boil { background-color: #BF616A; }
 
-#updateratiobar { background-color: #B48EAD; }
-
-#anglebar { background-color: #A3BE8C; }
+#angle-bar { background-color: #A3BE8C; }
 
 kbd {
     background-color: #4C566A;
@@ -260,13 +258,13 @@ input[type="range"] {
             </div>
         <div id="sidebar">
             <h4>Delays</h4>
-            <div class="bar" id="initalbar">
-                <span id="delay-inital">50 MS (inital)</span>
+            <div class="bar" id="delay-inital-bar">
+                <span id="delay-inital">80 MS (inital)</span>
             </div>
-            <div class="bar" id="totalbar">
+            <div class="bar" id="delay-total-bar">
                 <span id="delay-total">100 MS (average)</span>
             </div>
-            <div class="bar" id="pingbar">
+            <div class="bar" id="delay-ping-bar">
                 <span id="delay-ping">20 MS (ping)</span>
             </div>
 
@@ -280,68 +278,68 @@ input[type="range"] {
 
             <br />
             
-            <div class="threebar-base blankbar" id="left-outline">
-                <div class="threebar-base" id="left-outer">
-                    <div class="threebar-base innerbar" id="left-inner">
+            <div class="threebar-base blankbar" id="left-outline-bar">
+                <div class="threebar-base" id="left-outer-bar">
+                    <div class="threebar-base innerbar" id="left-inner-bar">
                         <span class="mono" id="motor-left">   0.00% ~    0.00% (left)</span>
                     </div>
                 </div>
             </div>
 
-            <div class="threebar-base blankbar" id="right-outline">
-                <div class="threebar-base" id="right-outer">
-                    <div class="threebar-base innerbar" id="right-inner">
+            <div class="threebar-base blankbar" id="right-outline-bar">
+                <div class="threebar-base" id="right-outer-bar">
+                    <div class="threebar-base innerbar" id="right-inner-bar">
                         <span class="mono" id="motor-right">   0.00% ~    0.00% (right)</span>
                     </div>
                 </div>
             </div>
 
             <h4>FPS's</h4>
-            <div class="bar" id="webcam1bar">
-                <span id="fps-webcam1">20 FPS (webcam1)</span>
+            <div class="bar" id="fps-webcam1-bar">
+                <span id="fps-webcam1">30 FPS (webcam1)</span>
             </div>
-            <div class="bar" id="detectionbar">
-                <span id="fps-detection">20 FPS (detection)</span>
+            <div class="bar" id="fps-detection-bar">
+                <span id="fps-detection">10 FPS (detection)</span>
             </div>
-            <div class="bar" id="webcam2bar">
-                <span id="fps-webcam2">20 FPS (webcam2)</span>
+            <div class="bar" id="fps-webcam2-bar">
+                <span id="fps-webcam2">30 FPS (webcam2)</span>
             </div>
-            <div class="bar" id="irbar">
-                <span id="fps-ir">20 FPS (ir)</span>
+            <div class="bar" id="fps-ir-bar">
+                <span id="fps-ir">10 FPS (ir)</span>
             </div>
-            <div class="bar" id="masterbar">
-                <span id="fps-master">20 FPS (master)</span>
+            <div class="bar" id="fps-master-bar">
+                <span id="fps-master">200 FPS (master)</span>
             </div>
-            <div class="bar" id="motorbar">
+            <div class="bar" id="fps-motor-bar">
                 <span id="fps-motor">20 FPS (motor)</span>
             </div>
-            <div class="bar" id="backendbar">
-                <span id="fps-backend">20 FPS (backend)</span>
+            <div class="bar" id="fps-backend-bar">
+                <span id="fps-backend">30 FPS (backend)</span>
             </div>
-            <div class="bar" id="frontendbar">
-                <span id="fps-frontend">20 FPS (frontend)</span>
+            <div class="bar" id="fps-frontend-bar">
+                <span id="fps-frontend">30 FPS (frontend)</span>
             </div>
 
             <h4>Host stats</h4>
-            <div class="bar" id="cpubar">
-                <span id="stats-cpu">10% (cpu)</span>
+            <div class="bar" id="stats-cpu-bar">
+                <span id="stats-cpu">40% (cpu)</span>
             </div>
-            <div class="bar" id="gpubar">
-                <span id="stats-gpu">10% (gpu)</span>
+            <div class="bar" id="stats-gpu-bar">
+                <span id="stats-gpu">5% (gpu)</span>
             </div>
-            <div class="bar" id="rambar">
-                <span id="stats-ram">20.0% (0.0%) (ram/swap)</span>
+            <div class="bar" id="stats-ram-bar">
+                <span id="stats-ram">30.0% (0.0%) (ram/swap)</span>
             </div>
 
             <h4>Master stats</h4>
-            <div class="bar timebar-idle" id="hazmat-timebar">
-                <span id="hazmat-time">0 MS (hazmat)</span>
+            <div class="bar time-bar-idle" id="time-hazmat-bar">
+                <span id="time-hazmat">0 MS (hazmat)</span>
             </div>
-            <div class="bar timebar-idle" id="qr-timebar">
-                <span id="qr-time">0 MS (qr)</span>
+            <div class="bar time-bar-idle" id="time-qr-bar">
+                <span id="time-qr">0 MS (qr)</span>
             </div>
-            <div class="bar timebar-idle" id="motion-timebar">
-                <span id="motion-time">0 MS (motion)</span>
+            <div class="bar time-bar-idle" id="time-motion-bar">
+                <span id="time-motion">0 MS (motion)</span>
             </div>
 
             <h4>Temperatues</h4>
@@ -356,13 +354,13 @@ input[type="range"] {
             </div>
 
             <h4>Detected Hazmat Labels:</h4>
-            <div class="bar" id="anglebar">
-                <span id="angle">0°</span>
+            <div class="bar" id="angle-bar">
+                <span id="angle">360°</span>
             </div>
-            <p id="hazmats"></p>
+            <p id="found-hazmat"></p>
 
             <h4>Detected QR Codes:</h4>
-            <p id="qrs"></p>
+            <p id="found-qr"></p>
 
 
             <h4>Controls</h4>
@@ -634,12 +632,14 @@ input[type="range"] {
                         for (let i = 0; i < fps_ids.length; i++) {
                             const fps_id = fps_ids[i];
                             const fps = fps_values[i];
-                            const fps_ele = document.getElementById("fps-" + fps_id);
+                            const ele_id = "fps-" + fps_id;
+
+                            const fps_ele = document.getElementById(ele_id);
                             fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
 
-                            const fpsbar = document.getElementById(fps_id + "bar");
+                            const fps_bar = document.getElementById(ele_id + "-bar");
                             const ratio = Math.min(fps / max_ratio_fps, 1.0);
-                            fpsbar.style.width = ratio * 100 + "%";
+                            fps_bar.style.width = ratio * 100 + "%";
                         }
                         // -------------------------------------------------- //
 
@@ -662,9 +662,9 @@ input[type="range"] {
                             const inner_width = inner_width_raw / outer_width * 100;
 
                             const output_id = invert ? (motors_id == "left" ? "right" : "left") : motors_id;
-                            const outer_ele = document.getElementById(output_id + "-outer");
+                            const outer_ele = document.getElementById(output_id + "-outer-bar");
                             outer_ele.style.width = outer_width + "%";
-                            const inner_ele = document.getElementById(output_id + "-inner");
+                            const inner_ele = document.getElementById(output_id + "-inner-bar");
                             inner_ele.style.width = inner_width + "%";
 
                             const motor_ele = document.getElementById("motor-" + output_id);
@@ -697,7 +697,9 @@ input[type="range"] {
                         for (let i = 0; i < stats_ids.length; i++) {
                             const stats_id = stats_ids[i];
                             const stat = data["stats"][stats_id];
-                            const stat_ele = document.getElementById("stats-" + stats_id);
+
+                            const ele_id = "stats-" + stats_id;
+                            const stat_ele = document.getElementById(ele_id);
 
                             if (stats_id == "ram") {
                                 const swap = data["stats"]["swap"];
@@ -706,8 +708,8 @@ input[type="range"] {
                                 stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
                             }
 
-                            const statbar = document.getElementById(stats_id + "bar");
-                            statbar.style.width = stat + "%";
+                            const stat_bar = document.getElementById(ele_id + "-bar");
+                            stat_bar.style.width = stat + "%";
                         }
                         // -------------------------------------------------- //
 
@@ -716,16 +718,18 @@ input[type="range"] {
 
                         for (let i = 0; i < time_ids.length; i++) {
                             const time_id = time_ids[i];
-                            const time = data["timebars"][time_id];
+                            const time = data["time_bars"][time_id];
                             const time_value = time > 0 ? time * 1000 : -1;
 
-                            const time_ele = document.getElementById(time_id + "-time");
+                            const ele_id = "time-" + time_id;
+
+                            const time_ele = document.getElementById(ele_id);
                             time_ele.innerHTML = `${time_value.toFixed(0)} MS (${time_id})`;
 
-                            const timebar = document.getElementById(time_id + "-timebar");
+                            const time_bar = document.getElementById(ele_id + "-bar");
                             const ratio = time_value / TIME_SCALES[time_id];
                             const width = time > 0 ? (ratio * 100) : 100;
-                            timebar.style.width = width + "%";
+                            time_bar.style.width = width + "%";
                         }
                         // -------------------------------------------------- //
 
@@ -735,11 +739,13 @@ input[type="range"] {
                         for (let i = 0; i < temp_ids.length; i++) {
                             const temp_id = temp_ids[i];
                             const temp = data["temps"][temp_id];
-                            const temp_ele = document.getElementById("temp-" + temp_id);
+
+                            const ele_id = "temp-" + temp_id;
+                            const temp_ele = document.getElementById(ele_id);
 
                             temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
 
-                            const temp_bar = document.getElementById("temp-" + temp_id + "-bar");
+                            const temp_bar = document.getElementById(ele_id + "-bar");
                             temp_bar.style.width = temp + "%";
 
                             const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
@@ -753,8 +759,8 @@ input[type="range"] {
                         const angle_ele = document.getElementById("angle");
                         angle_ele.innerHTML = `${angle.toFixed(0)}°`;
 
-                        const anglebar = document.getElementById("anglebar");
-                        anglebar.style.width = (angle / 360) * 100 + "%";
+                        const angle_bar = document.getElementById("angle-bar");
+                        angle_bar.style.width = (angle / 360) * 100 + "%";
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
@@ -768,11 +774,11 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
-                        const hazmats_ele = document.getElementById("hazmats");
+                        const hazmats_ele = document.getElementById("found-hazmat");
                         const hazmats = [...new Set(data["hazmats_found"])];
                         hazmats_ele.innerHTML = hazmats.sort().join("<br />");
 
-                        const qrs_ele = document.getElementById("qrs");
+                        const qrs_ele = document.getElementById("found-qr");
                         const qrs = [...new Set(data["qr_found"])];
                         qrs_ele.innerHTML = qrs.sort().join("<br />");
                         // -------------------------------------------------- //
@@ -820,18 +826,18 @@ input[type="range"] {
 
                             const delay_inital_ele = document.getElementById("delay-inital");
                             delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
-                            const delaybar_inital = document.getElementById("initalbar");
+                            const delaybar_inital = document.getElementById("delay-inital-bar");
                             delaybar_inital.style.width = (inital_delay / max_ratio_delay) * 100 + "%";
                         }
 
                         const delay_total_ele = document.getElementById("delay-total");
                         delay_total_ele.innerHTML = average_delay + " MS (average)";
-                        const delaybar_total = document.getElementById("totalbar");
+                        const delaybar_total = document.getElementById("delay-total-bar");
                         delaybar_total.style.width = (average_delay / max_ratio_delay) * 100 + "%";
 
                         const delay_ping_ele = document.getElementById("delay-ping")
                         delay_ping_ele.innerHTML = ping_delay + " MS (ping)";
-                        const delaybar_ping = document.getElementById("pingbar");
+                        const delaybar_ping = document.getElementById("delay-ping-bar");
                         delaybar_ping.style.width = (ping_delay / max_ratio_delay) * 100 + "%";
                         // -------------------------------------------------- //
                     } catch (e) {
@@ -848,12 +854,12 @@ input[type="range"] {
                     run_qr = false;
                     run_motion = false;
 
-                    const timebar_ids = ["hazmat", "qr", "motion"];
-                    for (let i = 0; i < timebar_ids.length; i++) {
-                        const timebar_id = timebar_ids[i];
-                        const timebar_ele = document.getElementById(timebar_id + "-timebar");
-                        timebar_ele.classList.remove("timebar-active");
-                        timebar_ele.classList.add("timebar-idle");
+                    const time_bar_ids = ["hazmat", "qr", "motion"];
+                    for (let i = 0; i < time_bar_ids.length; i++) {
+                        const time_bar_id = time_bar_ids[i];
+                        const time_bar_ele = document.getElementById("time-" + time_bar_id + "-bar");
+                        time_bar_ele.classList.remove("time-bar-active");
+                        time_bar_ele.classList.add("time-bar-idle");
                     }
 
                     keys = {};
@@ -1025,37 +1031,37 @@ input[type="range"] {
                 run_hazmat = !run_hazmat;
                 fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
 
-                const timebar_ele = document.getElementById("hazmat-timebar");
+                const time_bar_ele = document.getElementById("time-hazmat-bar");
                 if (run_hazmat) {
-                    timebar_ele.classList.remove("timebar-idle");
-                    timebar_ele.classList.add("timebar-active");
+                    time_bar_ele.classList.remove("time-bar-idle");
+                    time_bar_ele.classList.add("time-bar-active");
                 } else {
-                    timebar_ele.classList.remove("timebar-active");
-                    timebar_ele.classList.add("timebar-idle");
+                    time_bar_ele.classList.remove("time-bar-active");
+                    time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "r") {
                 run_qr = !run_qr;
                 fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
 
-                const timebar_ele = document.getElementById("qr-timebar");
+                const time_bar_ele = document.getElementById("time-qr-bar");
                 if (run_qr) {
-                    timebar_ele.classList.remove("timebar-idle");
-                    timebar_ele.classList.add("timebar-active");
+                    time_bar_ele.classList.remove("time-bar-idle");
+                    time_bar_ele.classList.add("time-bar-active");
                 } else {
-                    timebar_ele.classList.remove("timebar-active");
-                    timebar_ele.classList.add("timebar-idle");
+                    time_bar_ele.classList.remove("time-bar-active");
+                    time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "m") {
                 run_motion = !run_motion;
                 fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
 
-                const timebar_ele = document.getElementById("motion-timebar");
+                const time_bar_ele = document.getElementById("time-motion-bar");
                 if (run_motion) {
-                    timebar_ele.classList.remove("timebar-idle");
-                    timebar_ele.classList.add("timebar-active");
+                    time_bar_ele.classList.remove("time-bar-idle");
+                    time_bar_ele.classList.add("time-bar-active");
                 } else {
-                    timebar_ele.classList.remove("timebar-active");
-                    timebar_ele.classList.add("timebar-idle");
+                    time_bar_ele.classList.remove("time-bar-active");
+                    time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
                 const ids = ["webcam1", "detection", "webcam2", "ir"];

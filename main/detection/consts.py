@@ -33,7 +33,7 @@ STATE_FROM_SELF = {
         "qr": [],
     },
     "last_update": time.time(),
-    "timebars": {
+    "time_bars": {
         "qr": -1,
         "motion": -1,
     },
