@@ -139,3 +139,4 @@ class DynamixelController:
                     print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
                     print(f"rebooting {id}")
                     self.packet_handler.reboot(self.port_handler, id)
+            print(f"{side} \t{self.statuses[side]}")
