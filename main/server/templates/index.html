@@ -654,6 +654,8 @@ input[type="range"] {
                             const target  = motors["target"][motors_id]  * 100 * invert_mod;
                             const current = motors["current"][motors_id] * 100 * invert_mod;
 
+                            console.log(current, motors["current"][motors_id], motors);
+
                             const current_abs = Math.abs(current);
                             const target_abs  = Math.abs(target);
 
