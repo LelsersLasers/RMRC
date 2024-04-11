@@ -107,6 +107,7 @@ def thread(server_dq, server_motor_dq):
 
         # combine main info with motor info
         server_ds.s1.update(server_motor_ds.s2)
+        print(f'left: {server_motor_ds.s1["motors"]["current"]["left"]}')
         server_ds.s1["fpses"][-2] = server_motor_ds.s2["motor_fps"]
 
         fps_controller.update()
