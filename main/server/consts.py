@@ -49,4 +49,5 @@ STATE_FROM_SELF = {
     "motion_new_frame_weight": 0.4,
     "hazmat_levenshtein_thresh": 0.4,
     "hazmat_angle_change": 90,
+	"master_fps": 200,
 }

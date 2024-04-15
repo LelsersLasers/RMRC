@@ -1,4 +1,3 @@
 GPU_LOG_FILENAME = "tegrastats.log"
 
-FPS = 200
 TIMES_TO_KEEP = 10

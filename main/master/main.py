@@ -213,7 +213,7 @@ def thread(detection_dq, server_dq, camera_sqs, video_capture_zero):
             avg_time = sum(times) / len(times)
 
 
-            target_time = 1 / master.consts.FPS
+            target_time = 1 / server_ds.s2["master_fps"]
             sleep_target = target_time - avg_time
             if sleep_target > 0:
                 time.sleep(sleep_target)
