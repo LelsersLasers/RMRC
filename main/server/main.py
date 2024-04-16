@@ -116,7 +116,7 @@ def thread(server_dq, server_motor_dq):
 
         js_response_dict = server_ds.s1.copy()
         js_response_dict["motors"] = server_motor_ds.s2["motors"].copy()
-        print("B", js_response_dict["motors"]["current"]["left"])
+        print("B", js_response_dict["motors"]["current"]["right"])
 
         return create_response(js_response_dict)
 
