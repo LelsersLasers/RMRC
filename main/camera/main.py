@@ -33,7 +33,8 @@ def thread(camera_sq, key):
                 time.sleep(camera.consts.CAMERA_WAIT_AFTER_FAIL)
 
             if last_frame is not None and (frame == last_frame).all():
-                raise RuntimeError(f"Camera {key} frame is the same as the last one.")
+                # raise RuntimeError(f"Camera {key} frame is the same as the last one.")
+                print(f"Camera {key} frame is the same as the last one.")
             
             last_frame = frame
 
