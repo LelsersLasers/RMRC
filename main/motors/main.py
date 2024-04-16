@@ -59,7 +59,6 @@ def thread(server_motor_dq, video_capture_zero):
 
                 server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
-                print(f'A: Current speeds: {server_motor_ds.s2["motors"]["current"]}')
             else:
                 server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
@@ -73,7 +72,6 @@ def thread(server_motor_dq, video_capture_zero):
 
                 time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
 
-            print(f'B: Current speeds: {server_motor_ds.s2["motors"]["current"]}')
             server_motor_ds.put_s2(server_motor_dq)
     finally:
         if not video_capture_zero:

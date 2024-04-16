@@ -117,7 +117,6 @@ class DynamixelController:
 
 
     def update_status_and_check_errors(self):
-        print("")
         for side, side_ids in DYNAMIXEL_IDS.items():
             orientation = ORIENTATIONS[side]
             self.statuses[side] = 0
@@ -132,11 +131,9 @@ class DynamixelController:
                 # if dxl_present_current > 0x7fff:
                 # 	dxl_present_current = dxl_present_current - 65536
                 
-                print(f"{side} \t{id} \t{error_code} \t{dxl_present_velocity}")
                 self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
                     
                 if error_code > 0:
                     print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
                     print(f"rebooting {id}")
                     self.packet_handler.reboot(self.port_handler, id)
-            print(f"{side} \t{self.statuses[side]}")
