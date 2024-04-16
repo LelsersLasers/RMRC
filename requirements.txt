@@ -1,0 +1,13 @@
+numpy
+easyocr
+pyzbar
+scipy
+base64
+psutil
+os
+dynamixel_sdk
+flask
+logging
+signal
+multiprocessing
+queue
