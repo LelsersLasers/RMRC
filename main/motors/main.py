@@ -59,6 +59,7 @@ def thread(server_motor_dq, video_capture_zero):
 
                 server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
+                print("A", server_motor_ds.s2["motors"]["current"]["left"])
             else:
                 server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
