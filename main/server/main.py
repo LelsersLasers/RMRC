@@ -101,7 +101,7 @@ def thread(server_dq, server_motor_dq):
     def get():
         server_ds.update_s1(server_dq)
         server_motor_ds.update_s2(server_motor_dq)
-        print("B", server_motor_ds.s2["motors"]["current"]["left"])
+        print(server_motor_ds.s2["motors"]["current"]["left"])
 
         server_motor_ds.s1["last_get"] = time.time()
         server_motor_ds.put_s1(server_motor_dq)
