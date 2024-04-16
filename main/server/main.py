@@ -101,14 +101,14 @@ def thread(server_dq, server_motor_dq):
     def get():
         server_ds.update_s1(server_dq)
         server_motor_ds.update_s2(server_motor_dq)
-        print(server_motor_ds.s2["motors"]["current"]["left"])
+        print("B", server_motor_ds.s2["motors"]["current"]["left"])
 
         server_motor_ds.s1["last_get"] = time.time()
         server_motor_ds.put_s1(server_motor_dq)
 
         # combine main info with motor info
         server_ds.s1.update(server_motor_ds.s2)
-        # print(server_ds.s1["motors"]["current"]["left"])
+        print("C", server_ds.s1["motors"]["current"]["left"])
         server_ds.s1["fpses"][-2] = server_motor_ds.s2["motor_fps"]
 
         fps_controller.update()

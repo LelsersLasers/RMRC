@@ -27,7 +27,7 @@ STATE_FROM_SELF = {
             "right": 0,
         },
         "current": {
-            "left": 0,
+            "left": -1,
             "right": 0,
         }
     },

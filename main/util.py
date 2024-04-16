@@ -44,20 +44,15 @@ class SingleQueue:
         self.q.cancel_join_thread()
 
 
-import multiprocessing
 def last_from_queue(q, last_value):
     value = last_value
-    test = False
 
     while True:
         try:
             value = q.get_nowait()
-            test = True
         except queue.Empty:
             break
 
-    if not test:
-        print(multiprocessing.current_process().name, "\tlast_from_queue: No new value")
     return value
 # ---------------------------------------------------------------------------- #
 

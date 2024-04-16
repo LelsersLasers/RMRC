@@ -73,6 +73,7 @@ def thread(server_motor_dq, video_capture_zero):
                 time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
 
             server_motor_ds.put_s2(server_motor_dq)
+            print("A", server_motor_ds.s2["motors"]["current"]["left"])
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
