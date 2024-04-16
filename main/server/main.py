@@ -108,13 +108,17 @@ def thread(server_dq, server_motor_dq):
 
         # combine main info with motor info
         server_ds.s1.update(server_motor_ds.s2)
-        print("C", server_ds.s1["motors"]["current"]["left"])
+        # print("C", server_ds.s1["motors"]["current"]["left"])
         server_ds.s1["fpses"][-2] = server_motor_ds.s2["motor_fps"]
 
         fps_controller.update()
         server_ds.s1["fpses"][-1] = fps_controller.fps()
 
-        return create_response(server_ds.s1)
+        js_response_dict = server_ds.s1.copy()
+        js_response_dict["motors"] = server_motor_ds.s2["motors"].copy()
+        print("B", js_response_dict["motors"]["current"]["left"])
+
+        return create_response(js_response_dict)
 
 
     app.run(debug=False, port=5000, host="0.0.0.0", threaded=False, processes=1)
