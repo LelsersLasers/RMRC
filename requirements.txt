@@ -1,7 +1,9 @@
-numpy
+pillow==9.1
+onnx
+numpy==1.21.1
 easyocr
 pyzbar
-scipy
+scipy==1.8
 psutil
 dynamixel_sdk
 flask
