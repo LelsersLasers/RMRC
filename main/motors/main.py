@@ -74,11 +74,12 @@ def thread(server_motor_dq, video_capture_zero):
 
                 time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
 
-            pickled_server_motor_ds_s2 = pickle.dumps(server_motor_ds.s2)
+            # pickled_server_motor_ds_s2 = pickle.dumps(server_motor_ds.s2)
+            pickled_server_motor_ds_s2 = server_motor_ds.s2
             server_motor_dq.put_q2(pickled_server_motor_ds_s2)
             # server_motor_ds.put_s2(server_motor_dq)
             print("A", server_motor_ds.s2["motors"]["current"]["left"])
-            print("B", pickle.loads(pickled_server_motor_ds_s2)["motors"]["current"]["left"])
+            # print("B", pickle.loads(pickled_server_motor_ds_s2)["motors"]["current"]["left"])
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
