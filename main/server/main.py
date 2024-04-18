@@ -104,11 +104,8 @@ def thread(server_dq, server_motor_dq):
         server_ds.update_s1(server_dq)
         server_motor_ds.update_s2(server_motor_dq)
         
-        # unpickled_server_motor_ds_s2 = pickle.loads(server_motor_ds.s2)
-
-        unpickled_server_motor_ds_s2 = server_motor_ds.s2
-
-        print("C", unpickled_server_motor_ds_s2["motors"]["current"]["left"])
+        unpickled_server_motor_ds_s2 = pickle.loads(server_motor_ds.s2)
+        # print("B", unpickled_server_motor_ds_s2["motors"]["current"]["left"])
 
         server_motor_ds.s1["last_get"] = time.time()
         server_motor_ds.put_s1(server_motor_dq)
