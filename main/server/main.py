@@ -104,15 +104,14 @@ def thread(server_dq, server_motor_dq):
         server_ds.update_s1(server_dq)
         server_motor_ds.update_s2(server_motor_dq)
         
+        # Note: a pickled dict is directly put into q2 instead of the original dict
         unpickled_server_motor_ds_s2 = pickle.loads(server_motor_ds.s2)
-        # print("B", unpickled_server_motor_ds_s2["motors"]["current"]["left"])
 
         server_motor_ds.s1["last_get"] = time.time()
         server_motor_ds.put_s1(server_motor_dq)
 
         # combine main info with motor info
         server_ds.s1.update(unpickled_server_motor_ds_s2)
-        # print("C", server_ds.s1["motors"]["current"]["left"])
         server_ds.s1["fpses"][-2] = unpickled_server_motor_ds_s2["motor_fps"]
 
         fps_controller.update()
