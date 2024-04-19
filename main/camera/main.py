@@ -23,12 +23,19 @@ def thread(camera_sq, key):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
+    last_frame = None
+
     try:
         while not graceful_killer.kill_now:
             ret, frame = cap.read()
             if not ret or frame is None:
                 print(f"Camera {key} read failed.")
                 time.sleep(camera.consts.CAMERA_WAIT_AFTER_FAIL)
+
+            if last_frame is not None and (frame == last_frame).all():
+                continue
+            
+            last_frame = frame
 
             if key is None and frame is not None:
                 frame = cv2.resize(frame, camera.consts.CAMERA_SIZE)

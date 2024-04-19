@@ -130,7 +130,7 @@ class DynamixelController:
                     dxl_present_velocity = dxl_present_velocity - 4294967296
                 # if dxl_present_current > 0x7fff:
                 # 	dxl_present_current = dxl_present_current - 65536
-                    
+                
                 self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
                     
                 if error_code > 0:

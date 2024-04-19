@@ -5,6 +5,8 @@ import shared_util
 import motors.consts
 import motors.dynamixel_controller
 
+import pickle
+
 
 def thread(server_motor_dq, video_capture_zero):
     server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
@@ -72,7 +74,10 @@ def thread(server_motor_dq, video_capture_zero):
 
                 time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
 
-            server_motor_ds.put_s2(server_motor_dq)
+            # Note: directly putting pickled dict into q2 instead of using server_motor_ds.put_s2
+            # Solves issue of left motor value being interpreted as 0 in the server thread
+            pickled_server_motor_ds_s2 = pickle.dumps(server_motor_ds.s2)
+            server_motor_dq.put_q2(pickled_server_motor_ds_s2)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")

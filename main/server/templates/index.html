@@ -428,6 +428,12 @@ input[type="range"] {
             <output id="hazmat_angle_change-output">90</output>
             <input type="range" id="hazmat_angle_change" name="hazmat_angle_change" min="0" max="360" step="1" value="90" oninput="slider('hazmat_angle_change')" />
 
+            <h5>Master</h5>
+
+            <label for="master_fps">Master FPS</label>
+            <output id="master_fps-output">200</output>
+            <input type="range" id="master_fps" name="master_fps" min="25" max="500" step="1" value="200" oninput="slider('master_fps', true)" />
+
             <h4>Debug Info</h4>
             <p id="calibration"></p>
 
@@ -473,6 +479,7 @@ input[type="range"] {
             "motion_new_frame_weight": 0.4,
             "hazmat_levenshtein_thresh": 0.4,
             "hazmat_angle_change": 90,
+            "master_fps": 200,
         };
         let CONFIG_TYPE = {
             "velocity_limit": "motor",
@@ -482,6 +489,7 @@ input[type="range"] {
             "motion_new_frame_weight": "detection",
             "hazmat_levenshtein_thresh": "detection",
             "hazmat_angle_change": "detection",
+            "master_fps": "master",
         };
 
         const TIME_SCALES = {
@@ -913,7 +921,6 @@ input[type="range"] {
         function slider(key, float = false) {
             const ele = document.getElementById(key);
             const value = float ? parseFloat(ele.value) : parseInt(ele.value);
-            console.log(value);
             const output = document.getElementById(key + "-output");
 
             if (key == "hazmat_angle_change") {
