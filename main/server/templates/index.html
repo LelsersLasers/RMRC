@@ -821,7 +821,6 @@ input[type="range"] {
                         const average_delay = average.toFixed(0);
 
                         const ping = now - start_ms;
-                        console.log(ping);
                         const ping_delay = ping.toFixed(0);
 
                         const max_delay = Math.max(inital_delay, average_delay, ping_delay, DELAY_RATIO_BASE);
