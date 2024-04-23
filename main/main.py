@@ -1,4 +1,9 @@
-print("STARTING...\n")
+
+"""
+Description:
+Author:
+Date:
+"""
 
 import time
 import argparse
@@ -19,6 +24,8 @@ import camera.main
 
 import master.main
 
+print("STARTING camera threads...\n")
+
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -29,6 +36,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
+    # camera singlequeues
     camera_sqs = {}
     camera_threads = {}
 
