@@ -40,6 +40,7 @@ if __name__ == "__main__":
     camera_sqs = {}
     camera_threads = {}
 
+    # what is expected in video_capture_zero, and what is camera.consts.CAP_ARGS.keys()
     cap_arg_keys = [None] if video_capture_zero else camera.consts.CAP_ARGS.keys()
     for key in cap_arg_keys:
         camera_sq = util.SingleQueue()
