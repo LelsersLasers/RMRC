@@ -1,9 +1,5 @@
-
-"""
-Description:
-Author:
-Date:
-"""
+# Print before imports for instant feedback
+print("STARTING...\n")
 
 import time
 import argparse
@@ -24,8 +20,6 @@ import camera.main
 
 import master.main
 
-print("STARTING camera threads...\n")
-
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -36,11 +30,9 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    # camera singlequeues
     camera_sqs = {}
     camera_threads = {}
 
-    # what is expected in video_capture_zero, and what is camera.consts.CAP_ARGS.keys()
     cap_arg_keys = [None] if video_capture_zero else camera.consts.CAP_ARGS.keys()
     for key in cap_arg_keys:
         camera_sq = util.SingleQueue()

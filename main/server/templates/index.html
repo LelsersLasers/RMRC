@@ -294,6 +294,31 @@ input[type="range"] {
                 </div>
             </div>
 
+            <h4>Arm</h4>
+            <div class="threebar-base blankbar" id="j1-outline-bar">
+                <div class="threebar-base" id="j1-outer-bar">
+                    <div class="threebar-base innerbar" id="j1-inner-bar">
+                        <span class="mono" id="arm-j1">   0.00 ~    0.00 (j1)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threebar-base blankbar" id="j2-outline-bar">
+                <div class="threebar-base" id="j2-outer-bar">
+                    <div class="threebar-base innerbar" id="j2-inner-bar">
+                        <span class="mono" id="arm-j2">   0.00 ~    0.00 (j2)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threebar-base blankbar" id="j3-outline-bar">
+                <div class="threebar-base" id="j3-outer-bar">
+                    <div class="threebar-base innerbar" id="j3-inner-bar">
+                        <span class="mono" id="arm-j3">   0.00 ~    0.00 (j3)</span>
+                    </div>
+                </div>
+            </div>
+
             <h4>FPS's</h4>
             <div class="bar" id="fps-webcam1-bar">
                 <span id="fps-webcam1">30 FPS (webcam1)</span>
@@ -681,6 +706,51 @@ input[type="range"] {
                             const current_text = current.toFixed(2).padStart(7, " ");
                             const target_text  = target.toFixed(2).padStart(7, " ");
                             motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${output_id})`;
+
+                            let target_ele = outer_ele;
+                            let current_ele = inner_ele;
+                            if (current_abs > target_abs) {
+                                target_ele = inner_ele;
+                                current_ele = outer_ele;
+                            }
+
+                            target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+                            current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+
+                            if (target < 0)  { target_ele.classList.add("backward-light"); }
+                            else             { target_ele.classList.add("forward-light");  }
+                            if (current < 0) { current_ele.classList.add("backward-light"); }
+                            else             { current_ele.classList.add("forward-light");  }
+                        }
+                        // -------------------------------------------------- //
+
+                        // -------------------------------------------------- //
+                        const arm = data["motors"];
+                        const arm_ids = ["j1", "j2", "j3"];
+                        for (let i = 0; i < arm_ids.length; i++) {
+                            const arm_id = arm_ids[i];
+
+                            const target  = arm["target"][arm_id] ;
+                            const current = arm["current"][arm_id];
+
+                            const current_abs = Math.abs(current);
+                            const target_abs  = Math.abs(target);
+
+                            const outer_width = Math.max(current_abs, target_abs);
+                            const inner_width_raw = Math.min(current_abs, target_abs);
+                            const inner_width = inner_width_raw / outer_width * 100;
+
+                            const outer_ele = document.getElementById(arm_id + "-outer-bar");
+                            outer_ele.style.width = outer_width + "%";
+                            const inner_ele = document.getElementById(arm_id + "-inner-bar");
+                            inner_ele.style.width = inner_width + "%";
+
+                            const motor_ele = document.getElementById("motor-" + arm_id);
+
+                            // 7: 0-999 (3) + "." + 2 decimal places + sign
+                            const current_text = current.toFixed(2).padStart(7, " ");
+                            const target_text  = target.toFixed(2).padStart(7, " ");
+                            motor_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
 
                             let target_ele = outer_ele;
                             let current_ele = inner_ele;
