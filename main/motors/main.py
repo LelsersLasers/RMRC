@@ -69,7 +69,9 @@ def thread(server_motor_dq, video_capture_zero):
                 # ------------------------------------------------------------ #
                 if server_motor_ds.s1["arm_active"]:
                     dxl_controller.mirror_and_update_arm_status()
+                    # TODO: should still read all 6 values when arm is inactive?
                 
+                server_motor_ds.s2["arm"]["active"]  = server_motor_ds.s1["arm_active"]
                 server_motor_ds.s2["arm"]["target"]  = dxl_controller.controller_statuses
                 server_motor_ds.s2["arm"]["current"] = dxl_controller.arm_statuses
                 # ------------------------------------------------------------ #

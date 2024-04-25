@@ -42,7 +42,8 @@ STATE_FROM_SELF = {
             "j1": 0,
             "j2": 0,
             "j3": 0,
-        }
+        },
+        "active": False,
     },
     "motor_fps": 20,
 }

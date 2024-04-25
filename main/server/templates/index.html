@@ -732,6 +732,7 @@ input[type="range"] {
 
                         // -------------------------------------------------- //
                         const arm = data["arm"];
+                        const arm_active_mod = arm["active"] ? 1 : -1;
                         const arm_ids = ["j1", "j2", "j3"];
                         for (let i = 0; i < arm_ids.length; i++) {
                             const arm_id = arm_ids[i];
@@ -739,8 +740,8 @@ input[type="range"] {
                             const target  = parseFloat(arm["target"][arm_id]);
                             const current = parseFloat(arm["current"][arm_id]);
 
-                            const current_abs = Math.abs(current) / 440 * 100;
-                            const target_abs  = Math.abs(target)  / 440 * 100
+                            const current_abs = Math.abs(current) / 440 * 100 * arm_active_mod;
+                            const target_abs  = Math.abs(target)  / 440 * 100 * arm_active_mod;
 
                             const outer_width = Math.max(current_abs, target_abs);
                             const inner_width_raw = Math.min(current_abs, target_abs);
