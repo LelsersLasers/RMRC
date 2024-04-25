@@ -174,19 +174,15 @@ class DynamixelController:
 
             for id in side_ids:
                 if self.to_writes[id] > 0 and self.has_wrote[id] < motors.consts.MAX_WRITES:
-                    success = True
-
                     dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
                     if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
                         print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-                        success = False
                     elif dxl_error != 0:
                         print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
-                        success = False
-
-                    self.has_wrote[id] += 1
-                    if success:
+                    else:
                         self.to_writes[id] -= 1
+                    
+                    self.has_wrote[id] += 1
 
     def update_motor_status_and_check_errors(self):
         for side, side_ids in MOTOR_DYNAMIXEL_IDS.items():
