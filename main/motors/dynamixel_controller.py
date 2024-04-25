@@ -13,6 +13,7 @@ PROTOCOL_VERSION = 2.0
 BAUDRATE = 57600
 
 ARM_OPERATING_MODE = 4 # Extended Position Control Mode
+MOTOR_OPERATING_MODE = 1 # Velocity Control Mode
 
 ADDR_OPERATING_MODE = 11
 ADDR_TORQUE_ENABLE = 64
@@ -24,23 +25,15 @@ ADDR_ERROR_CODE = 70
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
-ARM_DYNAMIXEL_IDS = { # ARM_DYNAMIXEL_IDS[controller_id] = arm_id
-    5: 8,
-    6: 9,
-    7: 10,	
-}
-ARM_JOINTS = { # ARM_JOINTS[id] = joint
-    5: "j1",
-    6: "j2",
-    7: "j3",
-    8: "j1",
-    9: "j2",
-    10: "j3",
+ARM_DYNAMIXEL_IDS = { # ARM_DYNAMIXEL_IDS[joint] = [controller_id, arm_id]
+    "j1": [5, 8],
+    "j2": [6, 9],
+    "j3": [7, 10],	
 }
 ARM_REST_POSES = {
-    1: 3072,
-    2: 1024,
-    3: 800,
+    "j1": 3072,
+    "j2": 1024,
+    "j3": 800,
 }
 # ---------------------------------------------------------------------------- #
 
@@ -130,44 +123,41 @@ class DynamixelController:
             print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
 
     def set_torque_status_all(self, status):
-        ids = (list(ARM_DYNAMIXEL_IDS.values())
-                + list(ARM_DYNAMIXEL_IDS.values())
-                + [id for side_ids in MOTOR_DYNAMIXEL_IDS.values() for id in side_ids])
+        ids = [id for id in ARM_DYNAMIXEL_IDS.values()] + [id for side_ids in MOTOR_DYNAMIXEL_IDS.values() for id in side_ids]
         for id in ids:
             self.set_torque_status(status, id)
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
     def set_up_arm(self):
-        for controller_id, arm_id in ARM_DYNAMIXEL_IDS.items():
-            self.packet_handler.write1ByteTxRx(self.port_handler, controller_id, ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
-            self.packet_handler.write1ByteTxRx(self.port_handler, arm_id,        ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
+        for joint, joint_ids in ARM_DYNAMIXEL_IDS.items():
+            for joint_id in joint_ids:
+                self.packet_handler.write1ByteTxRx(self.port_handler, joint_id, ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
+                self.set_torque_status(True, joint_id)
 
-            self.set_torque_status(True, controller_id)
-            self.set_torque_status(True, arm_id)
+                rest_pos = ARM_REST_POSES[joint]
+                self.packet_handler.write4ByteTxRx(self.port_handler, joint_id, ADDR_GOAL_POS, rest_pos)
 
-            self.packet_handler.write4ByteTxRx(self.port_handler, controller_id, ADDR_GOAL_POS, ARM_REST_POSES[controller_id])
-            self.packet_handler.write4ByteTxRx(self.port_handler, arm_id,        ADDR_GOAL_POS, ARM_REST_POSES[controller_id])
-
+            controller_id = joint_ids[0]
             self.set_torque_status(False, controller_id)
 
     def mirror(self):
-        for controller_id, arm_id in ARM_DYNAMIXEL_IDS.items():
+        for joint, joint_ids in ARM_DYNAMIXEL_IDS.items():
+            controller_id, arm_id = joint_ids
+
             controller_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, controller_id, ADDR_PRESENT_POS)
             self.packet_handler.write4ByteTxRx(self.port_handler, arm_id, ADDR_GOAL_POS, controller_pos)
             arm_pos,        _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, arm_id,        ADDR_PRESENT_POS)
 
-            arm_joint = ARM_JOINTS[arm_id]
-            controller_joint = ARM_JOINTS[controller_id]
-
-            self.arm_statuses[arm_joint] = arm_pos
-            self.controller_statuses[controller_joint] = controller_pos
+            self.arm_statuses[joint] = arm_pos
+            self.controller_statuses[joint] = controller_pos
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
     def set_up_motors(self):
         for side_ids in MOTOR_DYNAMIXEL_IDS.values():
             for id in side_ids:
+                self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_OPERATING_MODE, MOTOR_OPERATING_MODE)
                 self.set_torque_status(True, id)
 
     def update_speeds(self, speeds):
