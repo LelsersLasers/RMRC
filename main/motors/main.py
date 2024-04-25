@@ -19,7 +19,9 @@ def thread(server_motor_dq, video_capture_zero):
     try:
         if not video_capture_zero:
             dxl_controller = motors.dynamixel_controller.DynamixelController()
-            dxl_controller.set_torque_status(True)
+            dxl_controller.set_torque_status_all(False)
+            dxl_controller.set_up_arm()
+            dxl_controller.set_up_motors()
 
         while not graceful_killer.kill_now:
             server_motor_ds.update_s1(server_motor_dq)
@@ -57,10 +59,10 @@ def thread(server_motor_dq, video_capture_zero):
                     dxl_controller.update_speeds(dxl_controller.speeds)
                     
                 dxl_controller.try_write_speeds()
-                dxl_controller.update_status_and_check_errors()
+                dxl_controller.update_motor_status_and_check_errors()
 
                 server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
-                server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
+                server_motor_ds.s2["motors"]["current"] = dxl_controller.motor_statuses
             else:
                 server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]

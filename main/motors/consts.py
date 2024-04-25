@@ -31,5 +31,17 @@ STATE_FROM_SELF = {
             "right": 0,
         }
     },
+	"arm": {
+		"target": {
+            "j1": 0,
+            "j2": 0,
+            "j3": 0,
+        },
+        "current": {
+            "j1": 0,
+            "j2": 0,
+            "j3": 0,
+        }
+    },
     "motor_fps": 20,
 }

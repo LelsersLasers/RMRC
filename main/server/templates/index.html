@@ -725,13 +725,13 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
-                        const arm = data["motors"];
+                        const arm = data["arm"];
                         const arm_ids = ["j1", "j2", "j3"];
                         for (let i = 0; i < arm_ids.length; i++) {
                             const arm_id = arm_ids[i];
 
-                            const target  = arm["target"][arm_id] ;
-                            const current = arm["current"][arm_id];
+                            const target  = parseFloat(arm["target"][arm_id]);
+                            const current = parseFloat(arm["current"][arm_id]);
 
                             const current_abs = Math.abs(current);
                             const target_abs  = Math.abs(target);
@@ -745,12 +745,12 @@ input[type="range"] {
                             const inner_ele = document.getElementById(arm_id + "-inner-bar");
                             inner_ele.style.width = inner_width + "%";
 
-                            const motor_ele = document.getElementById("motor-" + arm_id);
+                            const arm_ele = document.getElementById("arm-" + arm_id);
 
                             // 7: 0-999 (3) + "." + 2 decimal places + sign
                             const current_text = current.toFixed(2).padStart(7, " ");
                             const target_text  = target.toFixed(2).padStart(7, " ");
-                            motor_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
+                            arm_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
 
                             let target_ele = outer_ele;
                             let current_ele = inner_ele;
