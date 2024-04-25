@@ -32,6 +32,7 @@ def thread(server_motor_dq, video_capture_zero):
             now = time.time()
 
             if not video_capture_zero:
+                # ------------------------------------------------------------ #
                 dxl_controller.min_writes = server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
@@ -63,14 +64,22 @@ def thread(server_motor_dq, video_capture_zero):
 
                 server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
                 server_motor_ds.s2["motors"]["current"] = dxl_controller.motor_statuses
+                # ------------------------------------------------------------ #
+
+                # ------------------------------------------------------------ #
+                dxl_controller.mirror()
+
+                server_motor_ds.s2["arm"]["target"]  = dxl_controller.controller_statuses
+                server_motor_ds.s2["arm"]["current"] = dxl_controller.arm_statuses
+                # ------------------------------------------------------------ #
             else:
                 server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
 
                 # just to test
                 import random
-                ratio_left  = random.random() + 0.5
-                ratio_right = random.random() + 0.5
+                ratio_left  = random.random() + 0.2
+                ratio_right = random.random() + 0.2
                 server_motor_ds.s2["motors"]["current"]["left"]  = server_motor_ds.s1["left"] * ratio_left
                 server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] * ratio_right
 

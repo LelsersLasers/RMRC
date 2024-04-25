@@ -2,6 +2,8 @@ import time
 import dynamixel_sdk
 import motors.consts
 
+
+# ---------------------------------------------------------------------------- #
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w210/
 # https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/api_reference/python/python_porthandler/#python
 
@@ -19,7 +21,9 @@ ADDR_GOAL_POS = 116
 ADDR_PRESENT_VELOCITY = 128
 ADDR_PRESENT_POS = 132
 ADDR_ERROR_CODE = 70
+# ---------------------------------------------------------------------------- #
 
+# ---------------------------------------------------------------------------- #
 ARM_DYNAMIXEL_IDS = { # ARM_DYNAMIXEL_IDS[controller_id] = arm_id
     5: 8,
     6: 9,
@@ -33,12 +37,14 @@ ARM_JOINTS = { # ARM_JOINTS[id] = joint
     9: "j2",
     10: "j3",
 }
-MOTOR_REST_POSES = {
+ARM_REST_POSES = {
     1: 3072,
     2: 1024,
     3: 800,
 }
+# ---------------------------------------------------------------------------- #
 
+# ---------------------------------------------------------------------------- #
 MOTOR_DYNAMIXEL_IDS = { # MOTOR_DYNAMIXEL_IDS[side] = [id1, id2]
     "left": [1, 3],
     "right": [2, 4],
@@ -47,8 +53,12 @@ ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
     "left": 1,
     "right": -1,
 }
+# ---------------------------------------------------------------------------- #
 
+
+# ---------------------------------------------------------------------------- #
 class DynamixelController:
+    # ------------------------------------------------------------------------ #
     def __init__(self):
         self.port_handler = dynamixel_sdk.PortHandler(DEVICE_NAME)
         self.packet_handler = dynamixel_sdk.PacketHandler(PROTOCOL_VERSION)
@@ -125,8 +135,9 @@ class DynamixelController:
                 + [id for side_ids in MOTOR_DYNAMIXEL_IDS.values() for id in side_ids])
         for id in ids:
             self.set_torque_status(status, id)
+    # ------------------------------------------------------------------------ #
 
-
+    # ------------------------------------------------------------------------ #
     def set_up_arm(self):
         for controller_id, arm_id in ARM_DYNAMIXEL_IDS.items():
             self.packet_handler.write1ByteTxRx(self.port_handler, controller_id, ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
@@ -135,8 +146,8 @@ class DynamixelController:
             self.set_torque_status(True, controller_id)
             self.set_torque_status(True, arm_id)
 
-            self.packet_handler.write4ByteTxRx(self.port_handler, controller_id, ADDR_GOAL_POS, MOTOR_REST_POSES[controller_id])
-            self.packet_handler.write4ByteTxRx(self.port_handler, arm_id,        ADDR_GOAL_POS, MOTOR_REST_POSES[controller_id])
+            self.packet_handler.write4ByteTxRx(self.port_handler, controller_id, ADDR_GOAL_POS, ARM_REST_POSES[controller_id])
+            self.packet_handler.write4ByteTxRx(self.port_handler, arm_id,        ADDR_GOAL_POS, ARM_REST_POSES[controller_id])
 
             self.set_torque_status(False, controller_id)
 
@@ -151,8 +162,9 @@ class DynamixelController:
 
             self.arm_statuses[arm_joint] = arm_pos
             self.controller_statuses[controller_joint] = controller_pos
+    # ------------------------------------------------------------------------ #
 
-
+    # ------------------------------------------------------------------------ #
     def set_up_motors(self):
         for side_ids in MOTOR_DYNAMIXEL_IDS.values():
             for id in side_ids:
@@ -207,3 +219,5 @@ class DynamixelController:
                     print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
                     print(f"rebooting {id}")
                     self.packet_handler.reboot(self.port_handler, id)
+    # ------------------------------------------------------------------------ #
+# ---------------------------------------------------------------------------- #
