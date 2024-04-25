@@ -124,7 +124,8 @@ class DynamixelController:
             print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
 
     def set_torque_status_all(self, status):
-        ids = [id for id in ARM_DYNAMIXEL_IDS.values()] + [id for side_ids in MOTOR_DYNAMIXEL_IDS.values() for id in side_ids]
+        ids  = [id for joint_ids in ARM_DYNAMIXEL_IDS.values()   for id in joint_ids]
+        ids += [id for side_ids  in MOTOR_DYNAMIXEL_IDS.values() for id in side_ids]
         for id in ids:
             self.set_torque_status(status, id)
 
