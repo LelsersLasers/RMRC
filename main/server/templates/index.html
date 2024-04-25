@@ -707,18 +707,14 @@ input[type="range"] {
                             const target_text  = target.toFixed(2).padStart(7, " ");
                             motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${output_id})`;
 
-                            let target_ele = outer_ele;
-                            let current_ele = inner_ele;
-                            if (current_abs > target_abs) {
-                                target_ele = inner_ele;
-                                current_ele = outer_ele;
-                            }
+                            let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
+                            let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
 
                             target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
                             current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
 
-                            if (target < 0)  { target_ele.classList.add("backward-light"); }
-                            else             { target_ele.classList.add("forward-light");  }
+                            if (target < 0)  { target_ele.classList.add("backward-dark"); }
+                            else             { target_ele.classList.add("forward-dark"); }
                             if (current < 0) { current_ele.classList.add("backward-light"); }
                             else             { current_ele.classList.add("forward-light");  }
                         }
@@ -733,8 +729,8 @@ input[type="range"] {
                             const target  = parseFloat(arm["target"][arm_id]);
                             const current = parseFloat(arm["current"][arm_id]);
 
-                            const current_abs = Math.abs(current);
-                            const target_abs  = Math.abs(target);
+                            const current_abs = Math.abs(current) / 440 * 100;
+                            const target_abs  = Math.abs(target)  / 440 * 100
 
                             const outer_width = Math.max(current_abs, target_abs);
                             const inner_width_raw = Math.min(current_abs, target_abs);
@@ -752,18 +748,14 @@ input[type="range"] {
                             const target_text  = target.toFixed(2).padStart(7, " ");
                             arm_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
 
-                            let target_ele = outer_ele;
-                            let current_ele = inner_ele;
-                            if (current_abs > target_abs) {
-                                target_ele = inner_ele;
-                                current_ele = outer_ele;
-                            }
+                            let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
+                            let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
 
                             target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
                             current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
 
-                            if (target < 0)  { target_ele.classList.add("backward-light"); }
-                            else             { target_ele.classList.add("forward-light");  }
+                            if (target < 0)  { target_ele.classList.add("backward-dark"); }
+                            else             { target_ele.classList.add("forward-dark");  }
                             if (current < 0) { current_ele.classList.add("backward-light"); }
                             else             { current_ele.classList.add("forward-light");  }
                         }
