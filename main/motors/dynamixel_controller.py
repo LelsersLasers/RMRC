@@ -126,6 +126,14 @@ class DynamixelController:
         ids = [id for id in ARM_DYNAMIXEL_IDS.values()] + [id for side_ids in MOTOR_DYNAMIXEL_IDS.values() for id in side_ids]
         for id in ids:
             self.set_torque_status(status, id)
+
+    def check_error_and_maybe_reboot(self, id):
+        error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+            
+        if error_code > 0:
+            print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
+            print(f"rebooting {id}")
+            self.packet_handler.reboot(self.port_handler, id)
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -151,6 +159,9 @@ class DynamixelController:
 
             self.arm_statuses[joint] = arm_pos
             self.controller_statuses[joint] = controller_pos
+
+            # TODO: need to check at all? For both controller_id and arm_id?
+            self.check_error_and_maybe_reboot(arm_id)
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -191,19 +202,13 @@ class DynamixelController:
 
             for id in side_ids:
                 dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, id, ADDR_PRESENT_VELOCITY)
-                error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
-                
                 # adjust for 2's complement
                 if dxl_present_velocity > 0x7fffffff:
                     dxl_present_velocity = dxl_present_velocity - 4294967296
                 # if dxl_present_current > 0x7fff:
                 # 	dxl_present_current = dxl_present_current - 65536
-                
                 self.motor_statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
-                    
-                if error_code > 0:
-                    print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
-                    print(f"rebooting {id}")
-                    self.packet_handler.reboot(self.port_handler, id)
+
+                self.check_error_and_maybe_reboot(id)
     # ------------------------------------------------------------------------ #
 # ---------------------------------------------------------------------------- #
