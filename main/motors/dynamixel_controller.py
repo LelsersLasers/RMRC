@@ -140,11 +140,11 @@ class DynamixelController:
     def set_up_arm(self):
         for joint, joint_ids in ARM_DYNAMIXEL_IDS.items():
             for joint_id in joint_ids:
-                self.packet_handler.write1ByteTxRx(self.port_handler, joint_id, ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
+                _dxl_comm_result, _dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, joint_id, ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
                 self.set_torque_status(True, joint_id)
 
                 rest_pos = ARM_REST_POSES[joint]
-                self.packet_handler.write4ByteTxRx(self.port_handler, joint_id, ADDR_GOAL_POS, rest_pos)
+                _dxl_comm_result, _dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, joint_id, ADDR_GOAL_POS, rest_pos)
 
             controller_id = joint_ids[0]
             self.set_torque_status(False, controller_id)
@@ -154,7 +154,7 @@ class DynamixelController:
             controller_id, arm_id = joint_ids
 
             controller_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, controller_id, ADDR_PRESENT_POS)
-            self.packet_handler.write4ByteTxRx(self.port_handler, arm_id, ADDR_GOAL_POS, controller_pos)
+            _dxl_comm_result, _dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, arm_id, ADDR_GOAL_POS, controller_pos)
             arm_pos,        _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, arm_id,        ADDR_PRESENT_POS)
 
             self.arm_statuses[joint] = arm_pos
@@ -168,7 +168,7 @@ class DynamixelController:
     def set_up_motors(self):
         for side_ids in MOTOR_DYNAMIXEL_IDS.values():
             for id in side_ids:
-                self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_OPERATING_MODE, MOTOR_OPERATING_MODE)
+                _dxl_comm_result, _dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_OPERATING_MODE, MOTOR_OPERATING_MODE)
                 self.set_torque_status(True, id)
 
     def update_speeds(self, speeds):
