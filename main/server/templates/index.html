@@ -295,6 +295,12 @@ input[type="range"] {
             </div>
 
             <h4>Arm</h4>
+
+            <label class="pointer" for="armActive">Arm active:</label>
+            <input type="checkbox" id="armActive" oninput="armActiveCheckbox()" />
+
+            <br />
+
             <div class="threebar-base blankbar" id="j1-outline-bar">
                 <div class="threebar-base" id="j1-outer-bar">
                     <div class="threebar-base innerbar" id="j1-inner-bar">
@@ -492,6 +498,8 @@ input[type="range"] {
         const POWER_STATE_STEP = 20;
         let power_state = 100;
 
+        let arm_active = false;
+
         let diagonal_multiplier = 0.4;
 
         let write_every_frame = false;
@@ -591,6 +599,8 @@ input[type="range"] {
                 fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
                 fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
                 fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
+
+                fetchAndInfo(FLASK_SERVER + "arm_active/" + arm_active);
 
                 fetchAndInfo(FLASK_SERVER + "invert/" + invert);
 
@@ -935,7 +945,7 @@ input[type="range"] {
                     keys = {};
                     display_keys();
                     
-                    // Note: config_sliders, write_every_frame, invert not reset when disconnected
+                    // Note: config_sliders, write_every_frame, invert, arm_active not reset when disconnected
                     // but resent when reconnected
                 });
         }, DELAY);
@@ -963,6 +973,14 @@ input[type="range"] {
         }
         function clamp(x, min, max) {
             return Math.min(Math.max(x, min), max);
+        }
+
+        function armActiveCheckbox() {
+            const ele = document.getElementById("armActive");
+            const value = ele.checked;
+            arm_active = value;
+
+            fetchAndInfo(FLASK_SERVER + "arm_active/" + value);
         }
 
         function diagonalSlider() {

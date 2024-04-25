@@ -17,6 +17,7 @@ STATE_FROM_SERVER = {
         "value": 330,
         "count": 0,
     },
+    "arm_active": False,
     "motor_writes": 1,
     "write_every_frame": False,
 }

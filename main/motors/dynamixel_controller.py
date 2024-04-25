@@ -141,7 +141,7 @@ class DynamixelController:
             controller_id = joint_ids[0]
             self.set_torque_status(False, controller_id)
 
-    def mirror(self):
+    def mirror_and_update_arm_status(self):
         for joint, joint_ids in ARM_DYNAMIXEL_IDS.items():
             controller_id, arm_id = joint_ids
 

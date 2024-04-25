@@ -44,6 +44,13 @@ def thread(server_dq, server_motor_dq):
         server_ds.s2["invert"] = value == "true"
         server_ds.put_s2(server_dq)
         return create_response(value)
+    
+    @app.route("/arm_active/<value>", methods=["GET"])
+    def invert(value):
+        server_motor_ds.s1["arm_active"] = value == "true"
+        server_motor_ds.put_s1(server_motor_dq)
+        return create_response(value)
+
 
     @app.route("/config/<type>/<key>/<value>", methods=["GET"])
     def config(type, key, value):
