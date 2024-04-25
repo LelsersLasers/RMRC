@@ -53,6 +53,7 @@ ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
 class DynamixelController:
     # ------------------------------------------------------------------------ #
     def __init__(self):
+        # -------------------------------------------------------------------- #
         self.port_handler = dynamixel_sdk.PortHandler(DEVICE_NAME)
         self.packet_handler = dynamixel_sdk.PacketHandler(PROTOCOL_VERSION)
 
@@ -64,8 +65,7 @@ class DynamixelController:
             print("Succeeded to change the baudrate")
         else:
             print("Failed to change the baudrate.")
-
-
+        # -------------------------------------------------------------------- #
         self.controller_statuses = { # controller_statuses[id] = #
             "j1": 0,
             "j2": 0,
@@ -76,7 +76,7 @@ class DynamixelController:
             "j2": 0,
             "j3": 0,
         }
-
+        # -------------------------------------------------------------------- #
         self.speeds = { # speeds[side] = %
             "left": 0,
             "right": 0,
@@ -99,6 +99,7 @@ class DynamixelController:
             4: 0,
         }
         self.min_writes = motors.consts.STATE_FROM_SERVER["motor_writes"]
+        # -------------------------------------------------------------------- #
 
     def close(self):
         self.update_speeds({
@@ -129,7 +130,6 @@ class DynamixelController:
 
     def check_error_and_maybe_reboot(self, id):
         error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
-            
         if error_code > 0:
             print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
             print(f"rebooting {id}")
@@ -192,7 +192,6 @@ class DynamixelController:
                         print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
                     else:
                         self.to_writes[id] -= 1
-                    
                     self.has_wrote[id] += 1
 
     def update_motor_status_and_check_errors(self):
