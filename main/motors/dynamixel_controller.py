@@ -66,12 +66,12 @@ class DynamixelController:
         else:
             print("Failed to change the baudrate.")
         # -------------------------------------------------------------------- #
-        self.controller_statuses = { # controller_statuses[id] = #
+        self.controller_statuses = { # controller_statuses[joint] = #
             "j1": 0,
             "j2": 0,
             "j3": 0,
         }
-        self.arm_statuses = { # arm_statuses[id] = #
+        self.arm_statuses = { # arm_statuses[joint] = #
             "j1": 0,
             "j2": 0,
             "j3": 0,
@@ -115,13 +115,20 @@ class DynamixelController:
         
         self.port_handler.closePort()
 
+    def handle_possible_write_issues(self, id, dxl_comm_result, dxl_error):
+        if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
+            print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+            return False
+        elif dxl_error != 0:
+            print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
+            return False
+        else:
+            return True
+
     def set_torque_status(self, status, id):
         status_code = 1 if status else 0
         dxl_comm_result, dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_TORQUE_ENABLE, status_code)
-        if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-            print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-        elif dxl_error != 0:
-            print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
+        self.handle_possible_write_issues(id, dxl_comm_result, dxl_error)
 
     def set_torque_status_all(self, status):
         ids  = [id for joint_ids in ARM_DYNAMIXEL_IDS.values()   for id in joint_ids]
@@ -141,11 +148,14 @@ class DynamixelController:
     def set_up_arm(self):
         for joint, joint_ids in ARM_DYNAMIXEL_IDS.items():
             for joint_id in joint_ids:
-                _dxl_comm_result, _dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, joint_id, ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
+                dxl_comm_result, dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, joint_id, ADDR_OPERATING_MODE, ARM_OPERATING_MODE)
+                self.handle_possible_write_issues(joint_id, dxl_comm_result, dxl_error)
+                
                 self.set_torque_status(True, joint_id)
 
                 rest_pos = ARM_REST_POSES[joint]
-                _dxl_comm_result, _dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, joint_id, ADDR_GOAL_POS, rest_pos)
+                dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, joint_id, ADDR_GOAL_POS, rest_pos)
+                self.handle_possible_write_issues(joint_id, dxl_comm_result, dxl_error)
 
             controller_id = joint_ids[0]
             self.set_torque_status(False, controller_id)
@@ -154,9 +164,14 @@ class DynamixelController:
         for joint, joint_ids in ARM_DYNAMIXEL_IDS.items():
             controller_id, arm_id = joint_ids
 
-            controller_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, controller_id, ADDR_PRESENT_POS)
-            _dxl_comm_result, _dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, arm_id, ADDR_GOAL_POS, controller_pos)
-            arm_pos,        _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, arm_id,        ADDR_PRESENT_POS)
+            controller_pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, controller_id, ADDR_PRESENT_POS)
+            self.handle_possible_write_issues(controller_id, dxl_comm_result, dxl_error)
+
+            dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, arm_id, ADDR_GOAL_POS, controller_pos)
+            self.handle_possible_write_issues(arm_id, dxl_comm_result, dxl_error)
+            
+            arm_pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(self.port_handler, arm_id, ADDR_PRESENT_POS)
+            self.handle_possible_write_issues(arm_id, dxl_comm_result, dxl_error)
 
             self.arm_statuses[joint] = arm_pos
             self.controller_statuses[joint] = controller_pos
@@ -169,7 +184,8 @@ class DynamixelController:
     def set_up_motors(self):
         for side_ids in MOTOR_DYNAMIXEL_IDS.values():
             for id in side_ids:
-                _dxl_comm_result, _dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_OPERATING_MODE, MOTOR_OPERATING_MODE)
+                dxl_comm_result, dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_OPERATING_MODE, MOTOR_OPERATING_MODE)
+                self.handle_possible_write_issues(id, dxl_comm_result, dxl_error)
                 self.set_torque_status(True, id)
 
     def update_speeds(self, speeds):
@@ -187,11 +203,8 @@ class DynamixelController:
             for id in side_ids:
                 if self.to_writes[id] > 0 and self.has_wrote[id] < motors.consts.MAX_WRITES:
                     dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, id, ADDR_GOAL_VELOCITY, power)
-                    if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-                        print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
-                    elif dxl_error != 0:
-                        print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
-                    else:
+                    success = self.handle_possible_write_issues(id, dxl_comm_result, dxl_error)
+                    if success:
                         self.to_writes[id] -= 1
                     self.has_wrote[id] += 1
 
