@@ -30,11 +30,6 @@ ARM_DYNAMIXEL_IDS = { # ARM_DYNAMIXEL_IDS[joint] = [controller_id, arm_id]
     "j2": [6, 9],
     "j3": [7, 10],	
 }
-ARM_REST_POSES = {
-    "j1": 3072,
-    "j2": 1024,
-    "j3": 800,
-}
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
@@ -153,7 +148,7 @@ class DynamixelController:
                 
                 self.set_torque_status(True, joint_id)
 
-                rest_pos = ARM_REST_POSES[joint]
+                rest_pos = motors.consts.ARM_REST_POSES[joint]
                 dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(self.port_handler, joint_id, ADDR_GOAL_POS, rest_pos)
                 self.handle_possible_write_issues(joint_id, dxl_comm_result, dxl_error)
 
