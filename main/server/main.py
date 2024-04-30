@@ -46,7 +46,7 @@ def thread(server_dq, server_motor_dq):
         return create_response(value)
     
     @app.route("/arm_active/<value>", methods=["GET"])
-    def invert(value):
+    def arm_active(value):
         server_motor_ds.s1["arm_active"] = value == "true"
         server_motor_ds.put_s1(server_motor_dq)
         return create_response(value)
