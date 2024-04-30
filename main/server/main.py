@@ -108,6 +108,8 @@ def thread(server_dq, server_motor_dq):
     
     @app.route("/get", methods=["GET"])
     def get():
+        start = time.time()
+
         server_ds.update_s1(server_dq)
         server_motor_ds.update_s2(server_motor_dq)
         
@@ -123,6 +125,10 @@ def thread(server_dq, server_motor_dq):
 
         fps_controller.update()
         server_ds.s1["fpses"][-1] = fps_controller.fps()
+
+        end = time.time()
+
+        print("GET:", (end - start) * 1000, "ms")
 
         return create_response(server_ds.s1)
 
