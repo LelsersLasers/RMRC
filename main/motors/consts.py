@@ -22,6 +22,7 @@ STATE_FROM_SERVER = {
         "j2": 1024,
         "j3": 800,
     },
+    "arm_reader_fps": 20,
 }
 STATE_FROM_SELF = {
     "motors": {
@@ -47,5 +48,6 @@ STATE_FROM_SELF = {
         },
         "active": False,
     },
+    "arm_reader_fps": 20,
     "motor_fps": 20,
 }

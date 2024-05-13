@@ -74,7 +74,7 @@ def thread(server_motor_dq, video_capture_zero):
                 server_motor_ds.s2["arm"]["active"]  = server_motor_ds.s1["arm_active"]
                 server_motor_ds.s2["arm"]["target"]  = dxl_controller.joint_statuses
                 server_motor_ds.s2["arm"]["current"] = arm_target_positions
-                # TODO: reader FPS?
+                server_motor_ds.s2["arm_reader_fps"] = server_motor_ds.s1["arm_reader_fps"]
                 # ------------------------------------------------------------ #
             else:
                 # just to test
