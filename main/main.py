@@ -23,7 +23,7 @@ import master.main
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
+    ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0) (testing version)", action="store_true")
     args = vars(ap.parse_args())
 
     video_capture_zero = args["video_capture_zero"]
