@@ -106,6 +106,8 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 self.handle_possible_dxl_issues(motor_id, dxl_comm_result, dxl_error)
 
                 self.set_torque_status(True, motor_id)
+        
+        super().setup_arm()
 
     def update_speeds(self, speeds):
         self.speeds = speeds
