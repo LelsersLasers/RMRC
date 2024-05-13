@@ -134,7 +134,8 @@ span {
 
 #delay-inital-bar { background-color: #BF616A; }
 #delay-total-bar  { background-color: #BF616A; }
-#delay-ping-bar   { background-color: #BF616A; }
+#delay-ping-bar   { background-color: #D08770; }
+#delay-arm-bar    { background-color: #A3BE8C; }
 
 
 .forward-light  { background-color: #bfd1ae; }
@@ -267,6 +268,9 @@ input[type="range"] {
             </div>
             <div class="bar" id="delay-ping-bar">
                 <span id="delay-ping">20 MS (ping)</span>
+            </div>
+            <div class="bar" id="delay-arm-bar">
+                <span id="delay-ping">50 MS (arm)</span>
             </div>
 
             <h4>Motors</h4>
@@ -892,6 +896,9 @@ input[type="range"] {
                         const diff = now - ms - ms_offset;
                         const inital_delay = diff.toFixed(0);
 
+                        const arm_delay_float = data["arm_delay"] * 1000;
+                        const arm_delay = arm_delay_float.toFixed(0);
+
                         delays.push(diff);
                         delays = delays.slice(-MAX_LEN);
                         const average = delays.reduce((a, b) => a + b, 0) / delays.length;
@@ -900,7 +907,7 @@ input[type="range"] {
                         const ping = now - start_ms;
                         const ping_delay = ping.toFixed(0);
 
-                        const max_delay = Math.max(inital_delay, average_delay, ping_delay, DELAY_RATIO_BASE);
+                        const max_delay = Math.max(inital_delay, average_delay, ping_delay, arm_delay, DELAY_RATIO_BASE);
                         max_delays.push(max_delay);
                         max_delays = max_delays.slice(-MAX_LEN);
                         const max_ratio_delay = Math.max(...max_delays);
@@ -915,15 +922,17 @@ input[type="range"] {
                             delaybar_inital.style.width = (inital_delay / max_ratio_delay) * 100 + "%";
                         }
 
-                        const delay_total_ele = document.getElementById("delay-total");
-                        delay_total_ele.innerHTML = average_delay + " MS (average)";
-                        const delaybar_total = document.getElementById("delay-total-bar");
-                        delaybar_total.style.width = (average_delay / max_ratio_delay) * 100 + "%";
+                        const delay_ids = ["total", "ping", "arm"];
+                        const delay_values = [average_delay, ping_delay, arm_delay];
+                        for (let i = 0; i < delay_ids.length; i++) {
+                            const delay_id = delay_ids[i];
+                            const delay_value = delay_values[i];
 
-                        const delay_ping_ele = document.getElementById("delay-ping")
-                        delay_ping_ele.innerHTML = ping_delay + " MS (ping)";
-                        const delaybar_ping = document.getElementById("delay-ping-bar");
-                        delaybar_ping.style.width = (ping_delay / max_ratio_delay) * 100 + "%";
+                            const delay_ele = document.getElementById("delay-" + delay_id);
+                            delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
+                            const delaybar = document.getElementById("delay-" + delay_id + "-bar");
+                            delaybar.style.width = (delay_value / max_ratio_delay) * 100 + "%";
+                        }
                         // -------------------------------------------------- //
                     } catch (e) {
                         console.log(e);
