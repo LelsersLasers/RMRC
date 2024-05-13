@@ -9,9 +9,9 @@ STATE_FROM_MASTER = {
     "hazmats_found": [],
     "qr_found": [],
 
-    # webcam1, hazmat, webcam2, ir, master, motor, backend
+    # webcam1, hazmat, webcam2, ir, master, motor, armreader, backend
     # motor and backend are set in server /get route, rest are sent from master.main.thread
-    "fpses": [-1, -1, -1, -1, -1, -1, -1],
+    "fpses": [-1, -1, -1, -1, -1, -1, -1, -1],
     
     "stats": {
         "ram": 0,

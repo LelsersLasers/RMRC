@@ -138,7 +138,8 @@ def thread(server_dq, server_motor_dq):
 
         # combine main info with motor info
         server_ds.s1.update(unpickled_server_motor_ds_s2)
-        server_ds.s1["fpses"][-2] = unpickled_server_motor_ds_s2["motor_fps"]
+        server_ds.s1["fpses"][-3] = unpickled_server_motor_ds_s2["motor_fps"]
+        server_ds.s1["fpses"][-2] = unpickled_server_motor_ds_s2["arm_reader_fps"]
 
         fps_controller.update()
         server_ds.s1["fpses"][-1] = fps_controller.fps()
