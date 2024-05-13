@@ -50,31 +50,6 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         self.velocity_limit = velocity_limit
         self.min_writes = min_writes
 
-        # self.velocity_limit = motors.consts.STATE_FROM_SERVER["velocity_limit"]["value"]
-        # self.min_writes = motors.consts.STATE_FROM_SERVER["motor_writes"]
-
-    def update_arm_positions(self, positions):
-        for joint, target_pos in positions.items():
-            output_joint_id = OUTPUT_JOINT_IDS[joint]
-
-            dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
-                self.port_handler,
-                output_joint_id,
-                dynamixel.base_controller.ADDR_GOAL_POS,
-                target_pos
-            )
-            self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
-
-            read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
-                self.port_handler,
-                output_joint_id,
-                dynamixel.base_controller.ADDR_PRESENT_POS
-            )
-            # self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
-
-            self.check_error_and_maybe_reboot(output_joint_id)
-            self.joint_statuses[joint] = read_pos
-
     def close(self):
         self.update_speeds({
             "left": 0,
@@ -153,3 +128,27 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 self.motor_statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
 
                 self.check_error_and_maybe_reboot(id)
+    
+    def update_arm_positions(self, target_positions, active):
+        for joint, target_pos in target_positions.items():
+            output_joint_id = OUTPUT_JOINT_IDS[joint]
+
+            if active:
+                dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
+                    self.port_handler,
+                    output_joint_id,
+                    dynamixel.base_controller.ADDR_GOAL_POS,
+                    target_pos
+                )
+                self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
+
+            read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
+                self.port_handler,
+                output_joint_id,
+                dynamixel.base_controller.ADDR_PRESENT_POS
+            )
+            if not active:
+                self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
+
+            self.check_error_and_maybe_reboot(output_joint_id)
+            self.joint_statuses[joint] = read_pos
