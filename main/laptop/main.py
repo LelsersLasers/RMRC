@@ -13,7 +13,7 @@ import laptop.consts
 
 
 BASE_URL = "127.0.0.1:5000"
-ARM_URL = BASE_URL + "/arm/" # + j1 + "/" + j2 + "/" + j3 + "/" + fps
+ARM_URL = BASE_URL + "/arm/" # + j1 + "/" + j2 + "/" + j3 + "/" + fps + "/" + time
 
 
 def thread(video_capture_zero):
@@ -43,26 +43,15 @@ def thread(video_capture_zero):
 
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
-            if time.time() - last_send < 1 / laptop.consts.SEND_FPS:
+            now = time.time()
+            if now - last_send < 1 / laptop.consts.SEND_RATE:
                 continue
 
-            last_send = time.time()
-            url = ARM_URL + f"{j1}/{j2}/{j3}/{fps}"
+            last_send = now
+            url = ARM_URL + f"{j1}/{j2}/{j3}/{fps}/{now}"
             _response = requests.get(url)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
             arm_reader.close_arm_reader()
             print("Closed dynamixel controller...")
-
-
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0)", action="store_true")
-    args = vars(ap.parse_args())
-
-    video_capture_zero = args["video_capture_zero"]
-
-    thread(video_capture_zero)
-
-    print("Exiting...")

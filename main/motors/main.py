@@ -75,6 +75,7 @@ def thread(server_motor_dq, video_capture_zero):
                 server_motor_ds.s2["arm"]["target"]  = dxl_controller.joint_statuses
                 server_motor_ds.s2["arm"]["current"] = arm_target_positions
                 server_motor_ds.s2["arm_reader_fps"] = server_motor_ds.s1["arm_reader_fps"]
+                server_motor_ds.s2["arm_delay"] = time.time() - server_motor_ds.s1["time"]
                 # ------------------------------------------------------------ #
             else:
                 # just to test
@@ -84,7 +85,6 @@ def thread(server_motor_dq, video_capture_zero):
                 server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
                 server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
 
-                # just to test
                 ratio_left  = random.random() + 0.5
                 ratio_right = random.random() + 0.5
                 server_motor_ds.s2["motors"]["current"]["left"]  = server_motor_ds.s1["left"] * ratio_left

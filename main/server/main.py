@@ -90,12 +90,13 @@ def thread(server_dq, server_motor_dq):
             "right": right,
         })
     
-    @app.route("/arm/<j1>/<j2>/<j3>/<fps>", methods=["GET"])
-    def arm(j1, j2, j3, fps):
+    @app.route("/arm/<j1>/<j2>/<j3>/<fps>/<time>", methods=["GET"])
+    def arm(j1, j2, j3, fps, time):
         server_motor_ds.s1["arm_target_positions"]["j1"] = int(j1)
         server_motor_ds.s1["arm_target_positions"]["j2"] = int(j2)
         server_motor_ds.s1["arm_target_positions"]["j3"] = int(j3)
         server_motor_ds.s1["arm_reader_fps"] = float(fps)
+        server_motor_ds.s1["time"] = float(time)
         server_motor_ds.put_s1(server_motor_dq)
 
         return create_response({
