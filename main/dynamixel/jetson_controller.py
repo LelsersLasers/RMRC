@@ -1,7 +1,17 @@
+# Runs on the Robot
+
+import dynamixel.base_arm
 import dynamixel.base_controller
 import dynamixel.motor_consts
 
 import time
+
+
+OUTPUT_JOINT_IDS = { # OUTPUT_JOINT_IDS[joint] = id
+    "j1": 8,
+    "j2": 9,
+    "j3": 10,
+}
 
 MOTOR_IDS = { # MOTOR_IDS[side] = [id1, id2]
     "left": [1, 3],
@@ -13,15 +23,15 @@ ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
 }
 
 
-class MotorController(dynamixel.base_controller.BaseController):
+class JetsonController(dynamixel.base_arm.BaseArm):
     def __init__(self, velocity_limit, min_writes):
-        super().__init__()
+        super().__init__(OUTPUT_JOINT_IDS)
 
         self.speeds = { # speeds[side] = %
             "left": 0,
             "right": 0,
         }
-        self.statuses = { # statuses[side] = %
+        self.motor_statuses = { # motor_statuses[side] = %
             "left": 0,
             "right": 0,
         }
@@ -43,6 +53,28 @@ class MotorController(dynamixel.base_controller.BaseController):
         # self.velocity_limit = motors.consts.STATE_FROM_SERVER["velocity_limit"]["value"]
         # self.min_writes = motors.consts.STATE_FROM_SERVER["motor_writes"]
 
+    def update_arm_positions(self, positions):
+        for joint, target_pos in positions.items():
+            output_joint_id = OUTPUT_JOINT_IDS[joint]
+
+            dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
+                self.port_handler,
+                output_joint_id,
+                dynamixel.base_controller.ADDR_GOAL_POS,
+                target_pos
+            )
+            self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
+
+            read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
+                self.port_handler,
+                output_joint_id,
+                dynamixel.base_controller.ADDR_PRESENT_POS
+            )
+            # self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
+
+            self.check_error_and_maybe_reboot(output_joint_id)
+            self.joint_statuses[joint] = read_pos
+
     def close(self):
         self.update_speeds({
             "left": 0,
@@ -58,7 +90,7 @@ class MotorController(dynamixel.base_controller.BaseController):
         
         super().close()
 
-    def setup_motors(self):
+    def setup(self):
         for motor_ids in MOTOR_IDS.values():
             self.set_torque_status_all(False, motor_ids)
         time.sleep(dynamixel.base_controller.SHORT_WAIT)
@@ -103,7 +135,7 @@ class MotorController(dynamixel.base_controller.BaseController):
     def update_motor_status_and_check_errors(self):
         for side, side_ids in MOTOR_IDS.items():
             orientation = ORIENTATIONS[side]
-            self.statuses[side] = 0
+            self.motor_statuses[side] = 0
 
             for id in side_ids:
                 dxl_present_velocity, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
@@ -116,6 +148,6 @@ class MotorController(dynamixel.base_controller.BaseController):
                     dxl_present_velocity = dxl_present_velocity - 4294967296
                 # if dxl_present_current > 0x7fff:
                 # 	dxl_present_current = dxl_present_current - 65536
-                self.statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
+                self.motor_statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
 
                 self.check_error_and_maybe_reboot(id)
