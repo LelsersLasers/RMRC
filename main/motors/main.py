@@ -3,7 +3,8 @@ import time
 import shared_util
 
 import motors.consts
-import motors.dynamixel_controller
+
+import dynamixel.jetson_controller
 
 import pickle
 
@@ -18,11 +19,11 @@ def thread(server_motor_dq, video_capture_zero):
 
     try:
         if not video_capture_zero:
-            dxl_controller = motors.dynamixel_controller.DynamixelController()
-            dxl_controller.set_torque_status_all(False)
-            dxl_controller.set_up_arm()
-            dxl_controller.set_up_motors()
-
+            velocity_limit = server_motor_ds.s1["velocity_limit"]["value"]
+            min_writes = server_motor_ds.s1["motor_writes"]
+            dxl_controller = dynamixel.jetson_controller.JetsonController(velocity_limit, min_writes)
+            dxl_controller.setup()
+        
         while not graceful_killer.kill_now:
             server_motor_ds.update_s1(server_motor_dq)
 
@@ -67,13 +68,13 @@ def thread(server_motor_dq, video_capture_zero):
                 # ------------------------------------------------------------ #
 
                 # ------------------------------------------------------------ #
-                if server_motor_ds.s1["arm_active"]:
-                    dxl_controller.mirror_and_update_arm_status()
-                    # TODO: should still read all 6 values when arm is inactive?
+                arm_target_positions = server_motor_ds.s1["arm_target_positions"]
+                dxl_controller.update_arm_positions(arm_target_positions, server_motor_ds.s1["arm_active"])
                 
                 server_motor_ds.s2["arm"]["active"]  = server_motor_ds.s1["arm_active"]
-                server_motor_ds.s2["arm"]["target"]  = dxl_controller.controller_statuses
-                server_motor_ds.s2["arm"]["current"] = dxl_controller.arm_statuses
+                server_motor_ds.s2["arm"]["target"]  = dxl_controller.joint_statuses
+                server_motor_ds.s2["arm"]["current"] = arm_target_positions
+                # TODO: reader FPS?
                 # ------------------------------------------------------------ #
             else:
                 # just to test
