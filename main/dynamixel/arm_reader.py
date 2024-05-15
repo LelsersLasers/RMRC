@@ -28,4 +28,4 @@ class ArmReader(dynamixel.base_arm.BaseArm):
             self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
             self.check_error_and_maybe_reboot(joint_id)
 
-            self.reader_statuses[joint] = pos
+            self.joint_statuses[joint] = pos

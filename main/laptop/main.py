@@ -28,7 +28,7 @@ def thread(video_capture_zero):
         
         while not graceful_killer.kill_now:
             fps_controller.update()
-            fps = fps_controller.get_fps()           
+            fps = fps_controller.fps()           
 
             if not video_capture_zero:
                 arm_reader.update_arm_status()
@@ -53,5 +53,5 @@ def thread(video_capture_zero):
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
-            arm_reader.close_arm_reader()
+            arm_reader.close()
             print("Closed dynamixel controller...")
