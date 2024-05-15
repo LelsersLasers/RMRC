@@ -16,6 +16,7 @@ class ArmReader(dynamixel.base_arm.BaseArm):
 
     def setup_arm_reader(self):
         super().setup_arm()
+        time.sleep(dynamixel.base_controller.SHORT_WAIT)
         self.set_torque_status_all(False, self.joint_ids.values())
 
     def update_arm_status(self):
