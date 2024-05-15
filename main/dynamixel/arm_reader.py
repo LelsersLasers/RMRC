@@ -2,6 +2,7 @@
 
 import dynamixel.base_controller
 import dynamixel.base_arm
+import time
 
 READER_JOINT_IDS = { # READER_JOINT_IDS[joint] = id
     "j1": 1,
