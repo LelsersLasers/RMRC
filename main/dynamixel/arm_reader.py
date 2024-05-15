@@ -16,7 +16,7 @@ class ArmReader(dynamixel.base_arm.BaseArm):
 
     def setup_arm_reader(self):
         super().setup_arm()
-        self.set_torque_status_all(True, self.joint_ids.values())
+        self.set_torque_status_all(False, self.joint_ids.values())
 
     def update_arm_status(self):
         for joint, joint_id in self.joint_ids.items():
