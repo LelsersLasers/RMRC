@@ -25,6 +25,10 @@ class ArmReader(dynamixel.base_arm.BaseArm):
                 joint_id,
                 dynamixel.base_controller.ADDR_PRESENT_POS
             )
+            if dxl_present_velocity > 0x7fffffff:
+                dxl_present_velocity = dxl_present_velocity - 4294967296
+            # if dxl_present_current > 0x7fff:
+            # 	dxl_present_current = dxl_present_current - 65536
             self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
             self.check_error_and_maybe_reboot(joint_id)
 
