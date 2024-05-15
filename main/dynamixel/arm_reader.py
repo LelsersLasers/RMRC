@@ -5,9 +5,9 @@ import dynamixel.base_arm
 import time
 
 READER_JOINT_IDS = { # READER_JOINT_IDS[joint] = id
-    "j1": 4,
-    "j2": 5,
-    "j3": 6,
+    "j1": 1,
+    "j2": 2,
+    "j3": 3,
 }
 
 
