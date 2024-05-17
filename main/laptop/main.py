@@ -2,7 +2,6 @@
 print("STARTING...\n")
 
 import time
-import argparse
 import requests
 
 import shared_util
@@ -49,8 +48,11 @@ def thread(video_capture_zero):
 
             last_send = now
             url = ARM_URL + f"{j1}/{j2}/{j3}/{fps}/{now}"
-            # _response = requests.get(url)
-            print(url)
+            try:
+                _response = requests.get(url)
+            except requests.exceptions.InvalidSchema:
+                print(f"Invalid schema: {url}")
+                time.sleep(laptop.consts.GET_FAIL_WAIT)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
