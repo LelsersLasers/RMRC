@@ -3,6 +3,7 @@ import time
 import shared_util
 
 import motors.consts
+import dynamixel.arm_consts
 import server.arm_server.consts
 
 import dynamixel.jetson_controller
@@ -75,10 +76,17 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
                 arm_active = primary_server_motor_ds.s1["arm_active"]
                 arm_target_positions = arm_server_motor_ss.s["arm_target_positions"]
                 dxl_controller.update_arm_positions(arm_target_positions, arm_active)
+
+                for joint in arm_target_positions.keys():
+                    arm_target_positions[joint] =  shared_util.adjust_2s_complement(arm_target_positions[joint])
+                    arm_target_positions[joint] %= dynamixel.arm_consts.MAX_POSITION
+
+                    dxl_controller.joint_statuses[joint] = shared_util.adjust_2s_complement(dxl_controller.joint_statuses[joint])
+                    dxl_controller.joint_statuses[joint] %= dynamixel.arm_consts.MAX_POSITION
                 
                 primary_server_motor_ds.s2["arm"]["active"]  = arm_active
-                primary_server_motor_ds.s2["arm"]["target"]  = dxl_controller.joint_statuses
-                primary_server_motor_ds.s2["arm"]["current"] = arm_target_positions
+                primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
+                primary_server_motor_ds.s2["arm"]["current"] = dxl_controller.joint_statuses
                 primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ss.s["arm_reader_fps"]
                 primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ss.s["time"]
                 # ------------------------------------------------------------ #

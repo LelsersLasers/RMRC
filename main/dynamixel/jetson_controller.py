@@ -1,5 +1,7 @@
 # Runs on the Robot
 
+import shared_util
+
 import dynamixel.base_arm
 import dynamixel.base_controller
 import dynamixel.motor_consts
@@ -120,11 +122,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                     id,
                     dynamixel.base_controller.ADDR_PRESENT_VELOCITY
                 )
-                # adjust for 2's complement
-                if dxl_present_velocity > 0x7fffffff:
-                    dxl_present_velocity = dxl_present_velocity - 4294967296
-                # if dxl_present_current > 0x7fff:
-                # 	dxl_present_current = dxl_present_current - 65536
+                dxl_present_velocity = shared_util.adjust_2s_complement(dxl_present_velocity)
                 self.motor_statuses[side] += (dxl_present_velocity / self.velocity_limit * orientation) / 2
 
                 self.check_error_and_maybe_reboot(id)

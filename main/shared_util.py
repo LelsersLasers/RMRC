@@ -80,3 +80,13 @@ class SingleState:
     def put_s(self, dq):
         dq.put(self.s)
 # ---------------------------------------------------------------------------- #
+
+
+# ---------------------------------------------------------------------------- #
+def adjust_2s_complement(x):
+    if x > 0x7fffffff:
+        return x - 4294967296
+    else:
+        return x
+    # if x > 0x7fff:
+    # 	return x - 65536
