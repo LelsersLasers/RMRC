@@ -13,7 +13,8 @@ import detection.main
 import motors.consts
 import motors.main
 
-import server.main
+import server.arm_server.main
+import server.primary_server.main
 
 import camera.consts
 import camera.main
@@ -50,20 +51,25 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    server_dq = util.DoubleQueue()
-    server_motor_dq = util.DoubleQueue()
-    server_thread = util.create_thread(server.main.thread, (server_dq, server_motor_dq), "server")
+    primary_server_dq = util.DoubleQueue()
+    primary_server_motor_dq = util.DoubleQueue()
+    primary_server_thread = util.create_thread(server.primary_server.main.thread, (primary_server_dq, primary_server_motor_dq), "primary_server")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    motor_thread = util.create_thread(motors.main.thread, (server_motor_dq, video_capture_zero), "motor")
+    arm_server_motor_sq = util.SingleQueue()
+    arm_server_thread = util.create_thread(server.arm_server.main.thread, (arm_server_motor_sq,), "arm_server")
+    # ------------------------------------------------------------------------ #
+
+    # ------------------------------------------------------------------------ #
+    motor_thread = util.create_thread(motors.main.thread, (primary_server_motor_dq, arm_server_motor_sq, video_capture_zero), "motor")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
     print("\nStarting master thread...\n")
 
     try:
-        master.main.thread(detection_dq, server_dq, camera_sqs, video_capture_zero)
+        master.main.thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
@@ -79,21 +85,21 @@ if __name__ == "__main__":
         util.close_thread(camera_thread)
 
     util.close_thread(detection_thread)
-
-    util.close_thread(server_thread)
-
+    util.close_thread(primary_server_thread)
+    util.close_thread(arm_server_thread)
     util.close_thread(motor_thread)
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
     print("Closing queues...")
 
-    detection_dq.close()
-    server_dq.close()
-    server_motor_dq.close()
-
     for camera_sq in camera_sqs.values():
         camera_sq.close()
+
+    detection_dq.close()
+    primary_server_dq.close()
+    primary_server_motor_dq.close()
+    arm_server_motor_sq.close()
     # ------------------------------------------------------------------------ #
 
     print("Done.")

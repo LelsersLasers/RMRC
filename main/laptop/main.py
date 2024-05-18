@@ -11,10 +11,6 @@ import dynamixel.arm_reader
 import laptop.consts
 
 
-BASE_URL = "127.0.0.1:5000"
-ARM_URL = BASE_URL + "/arm/" # + j1 + "/" + j2 + "/" + j3 + "/" + fps + "/" + time
-
-
 def thread(video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
@@ -47,7 +43,7 @@ def thread(video_capture_zero):
                 continue
 
             last_send = now
-            url = ARM_URL + f"{j1}/{j2}/{j3}/{fps}/{now}"
+            url = laptop.consts.ARM_URL + f"{j1}/{j2}/{j3}/{fps}/{now}"
             try:
                 _response = requests.get(url)
             except requests.exceptions.InvalidSchema:

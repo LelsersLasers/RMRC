@@ -14,16 +14,9 @@ STATE_FROM_SERVER = {
         "value": 330,
         "count": 0,
     },
-    "arm_active": False,
     "motor_writes": 1,
     "write_every_frame": False,
-    "arm_target_positions": {
-        "j1": 3072,
-        "j2": 1024,
-        "j3": 800,
-    },
-    "arm_reader_fps": 20,
-    "time": time.time(),
+    "arm_active": False,
 }
 STATE_FROM_SELF = {
     "motors": {

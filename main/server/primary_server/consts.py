@@ -1,3 +1,5 @@
+PORT = 5000
+
 STATE_FROM_MASTER = {
     "frames": {
 		"webcam1": "",
