@@ -29,8 +29,8 @@ STATE_FROM_SELF = {
             "right": 0,
         }
     },
-	"arm": {
-		"target": {
+    "arm": {
+        "target": {
             "j1": 0,
             "j2": 0,
             "j3": 0,

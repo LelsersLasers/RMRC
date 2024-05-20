@@ -2,12 +2,12 @@ PORT = 5000
 
 STATE_FROM_MASTER = {
     "frames": {
-		"webcam1": "",
-		"detection": "",
-		"webcam2": "",
-		"ir": "",
+        "webcam1": "",
+        "detection": "",
+        "webcam2": "",
+        "ir": "",
     },
-	
+    
     "hazmats_found": [],
     "qr_found": [],
 
@@ -51,5 +51,5 @@ STATE_FROM_SELF = {
     "motion_new_frame_weight": 0.4,
     "hazmat_levenshtein_thresh": 0.4,
     "hazmat_angle_change": 90,
-	"master_fps": 200,
+    "master_fps": 200,
 }

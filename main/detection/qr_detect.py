@@ -33,4 +33,4 @@ def qr_detect_and_draw(frame):
     #     )
 
     # return links
-	return []
+    return []
