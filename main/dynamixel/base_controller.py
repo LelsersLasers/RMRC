@@ -9,16 +9,16 @@ PROTOCOL_VERSION = 2.0
 
 BAUDRATE = 57600
 
-ARM_OPERATING_MODE = 4 # Extended Position Control Mode
-MOTOR_OPERATING_MODE = 1 # Velocity Control Mode
+ARM_OPERATING_MODE    = 4 # Extended Position Control Mode
+MOTOR_OPERATING_MODE  = 1 # Velocity Control Mode
 
-ADDR_OPERATING_MODE = 11
-ADDR_TORQUE_ENABLE = 64
-ADDR_GOAL_VELOCITY = 104
-ADDR_GOAL_POS = 116
+ADDR_OPERATING_MODE   = 11
+ADDR_TORQUE_ENABLE    = 64
+ADDR_ERROR_CODE       = 70
+ADDR_GOAL_VELOCITY    = 104
+ADDR_GOAL_POS         = 116
 ADDR_PRESENT_VELOCITY = 128
-ADDR_PRESENT_POS = 132
-ADDR_ERROR_CODE = 70
+ADDR_PRESENT_POS      = 132
 
 SHORT_WAIT = 0.1
 # ---------------------------------------------------------------------------- #
