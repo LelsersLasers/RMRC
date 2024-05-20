@@ -14,7 +14,6 @@ import laptop.consts
 def thread(video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
-    last_send = time.time()
 
     try:
         if not video_capture_zero:
@@ -32,17 +31,13 @@ def thread(video_capture_zero):
                 j3 = arm_reader.joint_statuses["j3"]
             else:
                 import random
-                j1 = random.randint(0, 440)
-                j2 = random.randint(0, 440)
-                j3 = random.randint(0, 440)
+                j1 = random.randint(0, 4000)
+                j2 = random.randint(0, 4000)
+                j3 = random.randint(0, 4000)
 
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
             now = time.time()
-            if now - last_send < 1 / laptop.consts.SEND_RATE:
-                continue
-
-            last_send = now
             url = laptop.consts.ARM_URL + f"{j1}/{j2}/{j3}/{fps}/{now}"
             try:
                 _response = requests.get(url)
