@@ -7,4 +7,4 @@ ARM_URL      = BASE_URL      + "/arm/" # + j1 + "/" + j2 + "/" + j3 + "/" + fps 
 READER_TEST_FPS = 10
 READER_TEST_DRIFT_RESET = 80
 
-GET_FAIL_WAIT = 1.0
+GET_FAIL_WAIT = 0.5

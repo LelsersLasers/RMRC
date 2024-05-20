@@ -31,8 +31,6 @@ def thread(video_capture_zero):
             fps_controller.update()
             fps = fps_controller.fps()   
 
-            print(frames)        
-
             if not video_capture_zero:
                 arm_reader.update_arm_status()
                 j1 = arm_reader.joint_statuses["j1"]
@@ -41,10 +39,10 @@ def thread(video_capture_zero):
             else:
                 frames += 1
                 if frames % laptop.consts.READER_TEST_DRIFT_RESET == 0:
-                    drift = random.randint(-10, 10)
-                j1 += random.randint(-10, 10) + drift
-                j2 += random.randint(-10, 10) + drift
-                j3 += random.randint(-10, 10) + drift
+                    drift = random.randint(-20, 20)
+                j1 += random.randint(-5, 5) + drift
+                j2 += random.randint(-5, 5) + drift
+                j3 += random.randint(-5, 5) + drift
 
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
@@ -52,7 +50,7 @@ def thread(video_capture_zero):
             arm_url = laptop.consts.ARM_TEST_URL if video_capture_zero else laptop.consts.ARM_URL
             url = arm_url + f"{j1}/{j2}/{j3}/{fps}/{now}"
             try:
-                _response = requests.get(url)
+                _response = requests.get(url, timeout=0.5)
             except requests.exceptions.RequestException as e:
                 print(f"{type(e)}: {url}")
                 time.sleep(laptop.consts.GET_FAIL_WAIT)
