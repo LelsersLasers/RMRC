@@ -158,6 +158,7 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
 
             primary_server_ds.s1["time"] = frame_read_times[base_key]
 
+            # webcam1, hazmat, webcam2, ir, master, motor, armreader, backend
             if video_capture_zero:
                 fpses = [
                     camera_sses[base_key].s["fps"],
@@ -165,6 +166,7 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                     camera_sses[base_key].s["fps"],
                     camera_sses[base_key].s["fps"],
                     fps_controller.fps(),
+                    -1,
                     -1,
                     -1,
                 ]
@@ -175,6 +177,7 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                     camera_sses["webcam2"].s["fps"],
                     camera_sses["ir"].s["fps"],
                     fps_controller.fps(),
+                    -1,
                     -1,
                     -1,
                 ]

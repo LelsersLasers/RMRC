@@ -270,7 +270,7 @@ input[type="range"] {
                 <span id="delay-ping">20 MS (ping)</span>
             </div>
             <div class="bar" id="delay-arm-bar">
-                <span id="delay-ping">50 MS (arm)</span>
+                <span id="delay-arm">50 MS (arm)</span>
             </div>
 
             <h4>Motors</h4>
@@ -678,7 +678,7 @@ input[type="range"] {
                         max_fpses = max_fpses.slice(-MAX_LEN);
                         const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
 
-                        const fps_ids = ["webcam1", "detection", "webcam2", "ir", "master", "motor", "backend", "armreader", "frontend"];
+                        const fps_ids = ["webcam1", "detection", "webcam2", "ir", "master", "motor", "armreader", "backend", "frontend"];
 
                         for (let i = 0; i < fps_ids.length; i++) {
                             const fps_id = fps_ids[i];
@@ -731,8 +731,8 @@ input[type="range"] {
                             target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
                             current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
 
-                            if (target < 0)  { target_ele.classList.add("backward-dark"); }
-                            else             { target_ele.classList.add("forward-dark"); }
+                            if (target < 0)  { target_ele.classList.add("backward-dark");   }
+                            else             { target_ele.classList.add("forward-dark");    }
                             if (current < 0) { current_ele.classList.add("backward-light"); }
                             else             { current_ele.classList.add("forward-light");  }
                         }
@@ -748,8 +748,8 @@ input[type="range"] {
                             const target  = parseFloat(arm["target"][arm_id]);
                             const current = parseFloat(arm["current"][arm_id]);
 
-                            const current_abs = Math.abs(current) / 440 * 100 * arm_active_mod;
-                            const target_abs  = Math.abs(target)  / 440 * 100 * arm_active_mod;
+                            const current_abs = Math.abs(current) / 4000 * 100 * arm_active_mod;
+                            const target_abs  = Math.abs(target)  / 4000 * 100 * arm_active_mod;
 
                             const outer_width = Math.max(current_abs, target_abs);
                             const inner_width_raw = Math.min(current_abs, target_abs);
@@ -773,8 +773,8 @@ input[type="range"] {
                             target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
                             current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
 
-                            if (target < 0)  { target_ele.classList.add("backward-dark"); }
-                            else             { target_ele.classList.add("forward-dark");  }
+                            if (target < 0)  { target_ele.classList.add("backward-dark");   }
+                            else             { target_ele.classList.add("forward-dark");    }
                             if (current < 0) { current_ele.classList.add("backward-light"); }
                             else             { current_ele.classList.add("forward-light");  }
                         }
