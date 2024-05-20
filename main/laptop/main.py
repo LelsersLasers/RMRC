@@ -38,7 +38,8 @@ def thread(video_capture_zero):
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
             now = time.time()
-            url = laptop.consts.ARM_URL + f"{j1}/{j2}/{j3}/{fps}/{now}"
+            arm_url = laptop.consts.ARM_TEST_URL if video_capture_zero else laptop.consts.ARM_URL
+            url = arm_url + f"{j1}/{j2}/{j3}/{fps}/{now}"
             try:
                 _response = requests.get(url)
             except requests.exceptions.RequestException as e:
