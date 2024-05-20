@@ -309,7 +309,7 @@ input[type="range"] {
             <div class="threebar-base blankbar" id="j1-outline-bar">
                 <div class="threebar-base" id="j1-outer-bar">
                     <div class="threebar-base innerbar" id="j1-inner-bar">
-                        <span class="mono" id="arm-j1">    0.00 ~     0.00 (j1)</span>
+                        <span class="mono" id="arm-j1">    0 ~     0 (j1)</span>
                     </div>
                 </div>
             </div>
@@ -317,7 +317,7 @@ input[type="range"] {
             <div class="threebar-base blankbar" id="j2-outline-bar">
                 <div class="threebar-base" id="j2-outer-bar">
                     <div class="threebar-base innerbar" id="j2-inner-bar">
-                        <span class="mono" id="arm-j2">    0.00 ~     0.00 (j2)</span>
+                        <span class="mono" id="arm-j2">    0 ~     0 (j2)</span>
                     </div>
                 </div>
             </div>
@@ -325,7 +325,7 @@ input[type="range"] {
             <div class="threebar-base blankbar" id="j3-outline-bar">
                 <div class="threebar-base" id="j3-outer-bar">
                     <div class="threebar-base innerbar" id="j3-inner-bar">
-                        <span class="mono" id="arm-j3">    0.00 ~     0.00 (j3)</span>
+                        <span class="mono" id="arm-j3">    0 ~     0 (j3)</span>
                     </div>
                 </div>
             </div>
@@ -740,7 +740,6 @@ input[type="range"] {
 
                         // -------------------------------------------------- //
                         const arm = data["arm"];
-                        const arm_active_mod = arm["active"] ? 1 : -1;
                         const arm_ids = ["j1", "j2", "j3"];
                         for (let i = 0; i < arm_ids.length; i++) {
                             const arm_id = arm_ids[i];
@@ -748,8 +747,8 @@ input[type="range"] {
                             const target  = parseFloat(arm["target"][arm_id]);
                             const current = parseFloat(arm["current"][arm_id]);
 
-                            const current_abs = Math.abs(current) / 4000 * 100 * arm_active_mod;
-                            const target_abs  = Math.abs(target)  / 4000 * 100 * arm_active_mod;
+                            const current_abs = Math.abs(current) / 4000 * 100;
+                            const target_abs  = Math.abs(target)  / 4000 * 100;
 
                             const outer_width = Math.max(current_abs, target_abs);
                             const inner_width_raw = Math.min(current_abs, target_abs);
@@ -762,9 +761,9 @@ input[type="range"] {
 
                             const arm_ele = document.getElementById("arm-" + arm_id);
 
-                            // 8: 0-4000 (4) + "." + 2 decimal places + sign
-                            const current_text = current.toFixed(2).padStart(8, " ");
-                            const target_text  = target .toFixed(2).padStart(8, " ");
+                            // 6: 0-4000 (4) + "." + sign
+                            const current_text = current.toFixed(0).padStart(6, " ");
+                            const target_text  = target .toFixed(0).padStart(6, " ");
                             arm_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
 
                             let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
@@ -773,10 +772,10 @@ input[type="range"] {
                             target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
                             current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
 
-                            if (target < 0)  { target_ele.classList.add("backward-dark");   }
-                            else             { target_ele.classList.add("forward-dark");    }
-                            if (current < 0) { current_ele.classList.add("backward-light"); }
-                            else             { current_ele.classList.add("forward-light");  }
+                            if (arm["active"]) { target_ele.classList.add("backward-dark");   }
+                            else               { target_ele.classList.add("forward-dark");    }
+                            if (arm["active"]) { current_ele.classList.add("backward-light"); }
+                            else               { current_ele.classList.add("forward-light");  }
                         }
                         // -------------------------------------------------- //
                         

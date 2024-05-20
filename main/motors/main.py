@@ -93,15 +93,31 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
             else:
                 # just to test
                 import random
+                def rand_ratio(variance):
+                    return (random.random() - 0.5) * variance + 1
 
                 # ------------------------------------------------------------ #
                 primary_server_motor_ds.s2["motors"]["target"]["left"]  = primary_server_motor_ds.s1["left"]
                 primary_server_motor_ds.s2["motors"]["target"]["right"] = primary_server_motor_ds.s1["right"]
 
-                ratio_left  = random.random() + 0.5
-                ratio_right = random.random() + 0.5
+                ratio_left  = rand_ratio(0.4)
+                ratio_right = rand_ratio(0.4)
                 primary_server_motor_ds.s2["motors"]["current"]["left"]  = primary_server_motor_ds.s1["left"] * ratio_left
                 primary_server_motor_ds.s2["motors"]["current"]["right"] = primary_server_motor_ds.s1["right"] * ratio_right
+                # ------------------------------------------------------------ #
+
+                # ------------------------------------------------------------ #
+                primary_server_motor_ds.s2["arm"]["active"] = primary_server_motor_ds.s1["arm_active"]
+                primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ss.s["arm_reader_fps"]
+                primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ss.s["time"]
+                
+                arm_target_positions = arm_server_motor_ss.s["arm_target_positions"]
+                primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
+
+                for joint in arm_target_positions.keys():
+                    ratio = rand_ratio(0.2)
+                    primary_server_motor_ds.s2["arm"]["current"][joint] =  arm_target_positions[joint] * ratio
+                    primary_server_motor_ds.s2["arm"]["current"][joint] %= dynamixel.arm_consts.MAX_POSITION
                 # ------------------------------------------------------------ #
 
                 time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
