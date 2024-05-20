@@ -19,10 +19,19 @@ def thread(video_capture_zero):
         if not video_capture_zero:
             arm_reader = dynamixel.arm_reader.ArmReader()
             arm_reader.setup_arm_reader()
+        else:
+            import random
+            frames = 0
+            drift = random.randint(-10, 10)
+            j1    = random.randint(0, 4000)
+            j2    = random.randint(0, 4000)
+            j3    = random.randint(0, 4000)
         
         while not graceful_killer.kill_now:
             fps_controller.update()
-            fps = fps_controller.fps()           
+            fps = fps_controller.fps()   
+
+            print(frames)        
 
             if not video_capture_zero:
                 arm_reader.update_arm_status()
@@ -30,10 +39,12 @@ def thread(video_capture_zero):
                 j2 = arm_reader.joint_statuses["j2"]
                 j3 = arm_reader.joint_statuses["j3"]
             else:
-                import random
-                j1 = random.randint(0, 4000)
-                j2 = random.randint(0, 4000)
-                j3 = random.randint(0, 4000)
+                frames += 1
+                if frames % laptop.consts.READER_TEST_DRIFT_RESET == 0:
+                    drift = random.randint(-10, 10)
+                j1 += random.randint(-10, 10) + drift
+                j2 += random.randint(-10, 10) + drift
+                j3 += random.randint(-10, 10) + drift
 
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
