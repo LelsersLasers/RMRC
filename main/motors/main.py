@@ -77,11 +77,12 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
                 arm_target_positions = arm_server_motor_ss.s["arm_target_positions"]
                 dxl_controller.update_arm_positions(arm_target_positions, arm_active)
 
+                arm_target_display = {}
                 for joint in arm_target_positions.keys():
-                    arm_target_positions[joint] =  shared_util.adjust_2s_complement(arm_target_positions[joint])
-                    arm_target_positions[joint] %= dynamixel.arm_consts.MAX_POSITION
+                    arm_target_display[joint]  = shared_util.adjust_2s_complement(arm_target_positions[joint])
+                    arm_target_display[joint] %= dynamixel.arm_consts.MAX_POSITION
 
-                    dxl_controller.joint_statuses[joint] = shared_util.adjust_2s_complement(dxl_controller.joint_statuses[joint])
+                    dxl_controller.joint_statuses[joint]  = shared_util.adjust_2s_complement(dxl_controller.joint_statuses[joint])
                     dxl_controller.joint_statuses[joint] %= dynamixel.arm_consts.MAX_POSITION
                 
                 primary_server_motor_ds.s2["arm"]["active"]  = arm_active
