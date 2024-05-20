@@ -46,8 +46,8 @@ def thread(video_capture_zero):
             url = laptop.consts.ARM_URL + f"{j1}/{j2}/{j3}/{fps}/{now}"
             try:
                 _response = requests.get(url)
-            except requests.exceptions.InvalidSchema:
-                print(f"Invalid schema: {url}")
+            except requests.exceptions.RequestException as e:
+                print(f"{type(e)}: {url}")
                 time.sleep(laptop.consts.GET_FAIL_WAIT)
     finally:
         if not video_capture_zero:
