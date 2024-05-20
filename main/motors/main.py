@@ -37,6 +37,7 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
 
             now = time.time()
 
+            # ---------------------------------------------------------------- #
             if not video_capture_zero:
                 # ------------------------------------------------------------ #
                 dxl_controller.min_writes = primary_server_motor_ds.s1["motor_writes"]
@@ -91,6 +92,7 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
                 primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ss.s["arm_reader_fps"]
                 primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ss.s["time"]
                 # ------------------------------------------------------------ #
+            # ---------------------------------------------------------------- #
             else:
                 # just to test
                 import random
@@ -122,6 +124,7 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
                 # ------------------------------------------------------------ #
 
                 time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
+            # ---------------------------------------------------------------- #
 
             # Note: directly putting pickled dict into q2 instead of using primary_server_motor_ds.put_s2(dq)
             # Solves issue of left motor value being interpreted as 0 in the server thread
