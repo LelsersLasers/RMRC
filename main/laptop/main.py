@@ -22,10 +22,8 @@ def thread(video_capture_zero):
         else:
             import random
             frames = 0
-            drift = random.randint(-10, 10)
-            j1    = random.randint(0, 4000)
-            j2    = random.randint(0, 4000)
-            j3    = random.randint(0, 4000)
+            drift = random.randint(-25, 25)
+            joint_values = [random.randint(0, 4000) for _ in range(3)]
         
         while not graceful_killer.kill_now:
             fps_controller.update()
@@ -39,10 +37,9 @@ def thread(video_capture_zero):
             else:
                 frames += 1
                 if frames % laptop.consts.READER_TEST_DRIFT_RESET == 0:
-                    drift = random.randint(-20, 20)
-                j1 += random.randint(-5, 5) + drift
-                j2 += random.randint(-5, 5) + drift
-                j3 += random.randint(-5, 5) + drift
+                    drift = random.randint(-25, 25)
+                joint_values = [(j + random.randint(-10, 10) + drift) % 4000 for j in joint_values]
+                j1, j2, j3 = joint_values
 
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
