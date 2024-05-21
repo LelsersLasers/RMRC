@@ -20,7 +20,7 @@ ADDR_GOAL_POS         = 116
 ADDR_PRESENT_VELOCITY = 128
 ADDR_PRESENT_POS      = 132
 
-SHORT_WAIT = 0.1
+SHORT_WAIT = 0.5
 # ---------------------------------------------------------------------------- #
 
 
