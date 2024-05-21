@@ -42,4 +42,6 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 rest_pos
             )
             self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
+
+            time.sleep(dynamixel.base_controller.SHORT_WAIT)
             
