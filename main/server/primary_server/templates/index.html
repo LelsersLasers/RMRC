@@ -747,8 +747,8 @@ input[type="range"] {
                             const target  = parseFloat(arm["target"][arm_id]);
                             const current = parseFloat(arm["current"][arm_id]);
 
-                            const current_abs = Math.abs(current) / 4000 * 100;
-                            const target_abs  = Math.abs(target)  / 4000 * 100;
+                            const current_abs = Math.abs(current) / 4096 * 100;
+                            const target_abs  = Math.abs(target)  / 4096 * 100;
 
                             const outer_width = Math.max(current_abs, target_abs);
                             const inner_width_raw = Math.min(current_abs, target_abs);
@@ -761,7 +761,7 @@ input[type="range"] {
 
                             const arm_ele = document.getElementById("arm-" + arm_id);
 
-                            // 5: 0-4000 (4)
+                            // 5: 0-4096 (4)
                             const current_text = current.toFixed(0).padStart(4, " ");
                             const target_text  = target .toFixed(0).padStart(4, " ");
                             arm_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
