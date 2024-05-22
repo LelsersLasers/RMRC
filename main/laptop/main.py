@@ -17,8 +17,8 @@ def thread(video_capture_zero):
 
     try:
         if not video_capture_zero:
-            arm_reader = dynamixel.arm_reader.ArmReader(True)
-            # arm_reader = dynamixel.arm_reader.ArmReader()
+            arm_reader = dynamixel.arm_reader.ArmReader(False)
+            # arm_reader = dynamixel.arm_reader.ArmReader(True)
             arm_reader.setup_arm()
         else:
             import random
