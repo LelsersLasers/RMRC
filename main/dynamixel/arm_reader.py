@@ -14,11 +14,21 @@ READER_JOINT_IDS = { # READER_JOINT_IDS[joint] = id
 class ArmReader(dynamixel.base_arm.BaseArm):
     def __init__(self):
         super().__init__(READER_JOINT_IDS)
+        self.is_active = False
 
-    def setup_arm_reader(self):
-        super().setup_arm()
-        time.sleep(dynamixel.base_controller.SHORT_WAIT)
-        self.set_torque_status_all(False, self.joint_ids.values())
+    # def setup_arm_reader(self):
+    #     super().setup_arm()
+    #     time.sleep(dynamixel.base_controller.SHORT_WAIT)
+    #     self.set_torque_status_all(False, self.joint_ids.values())
+
+    def maybe_update_torque(self, arm_active):
+        # if active -> torque off
+        if arm_active and not self.is_active:
+            self.set_torque_status_all(False, self.joint_ids.values())
+            self.is_active = True
+        elif not arm_active and self.is_active:
+            self.set_torque_status_all(True, self.joint_ids.values())
+            self.is_active = False
 
     def update_arm_status(self):
         for joint, joint_id in self.joint_ids.items():

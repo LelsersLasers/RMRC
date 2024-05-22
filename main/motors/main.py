@@ -11,12 +11,12 @@ import dynamixel.jetson_controller
 import pickle
 
 
-def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
+def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
     primary_server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
     last_count = motors.consts.STATE_FROM_SERVER["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
 
-    arm_server_motor_ss = shared_util.SingleState(server.arm_server.consts.STATE_FROM_SELF)
+    arm_server_motor_ds = shared_util.DoubleState(server.arm_server.consts.STATE_FROM_SELF, server.arm_server.consts.STATE_FROM_MOTORS)
 
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
@@ -30,7 +30,7 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
         
         while not graceful_killer.kill_now:
             primary_server_motor_ds.update_s1(primary_server_motor_dq)
-            arm_server_motor_ss.update_s(arm_server_motor_sq)
+            arm_server_motor_ds.update_s1(arm_server_motor_dq)
 
             fps_controller.update()
             primary_server_motor_ds.s2["motor_fps"] = fps_controller.fps()
@@ -75,7 +75,7 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
 
                 # ------------------------------------------------------------ #
                 arm_active = primary_server_motor_ds.s1["arm_active"]
-                arm_target_positions = arm_server_motor_ss.s["arm_target_positions"]
+                arm_target_positions = arm_server_motor_ds.s1["arm_target_positions"]
                 dxl_controller.update_arm_positions(arm_target_positions, arm_active)
 
                 arm_target_display = {}
@@ -87,10 +87,12 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
                     dxl_controller.joint_statuses[joint] %= dynamixel.arm_consts.MAX_POSITION
                 
                 primary_server_motor_ds.s2["arm"]["active"]  = arm_active
+                arm_server_motor_ds.s2["arm_active"]         = arm_active
+
                 primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
                 primary_server_motor_ds.s2["arm"]["current"] = dxl_controller.joint_statuses
-                primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ss.s["arm_reader_fps"]
-                primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ss.s["time"]
+                primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
+                primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
                 # ------------------------------------------------------------ #
             # ---------------------------------------------------------------- #
             else:
@@ -111,10 +113,12 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
 
                 # ------------------------------------------------------------ #
                 primary_server_motor_ds.s2["arm"]["active"] = primary_server_motor_ds.s1["arm_active"]
-                primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ss.s["arm_reader_fps"]
-                primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ss.s["time"]
+                arm_server_motor_ds.s2["arm_active"]        = primary_server_motor_ds.s1["arm_active"]
+
+                primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
+                primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
                 
-                arm_target_positions = arm_server_motor_ss.s["arm_target_positions"]
+                arm_target_positions = arm_server_motor_ds.s1["arm_target_positions"]
                 primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
 
                 for joint in arm_target_positions.keys():
@@ -130,6 +134,8 @@ def thread(primary_server_motor_dq, arm_server_motor_sq, video_capture_zero):
             # Solves issue of left motor value being interpreted as 0 in the server thread
             pickled_server_motor_ds_s2 = pickle.dumps(primary_server_motor_ds.s2)
             primary_server_motor_dq.put_q2(pickled_server_motor_ds_s2)
+
+            arm_server_motor_ds.put_s2(arm_server_motor_dq)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")

@@ -18,7 +18,7 @@ def thread(video_capture_zero):
     try:
         if not video_capture_zero:
             arm_reader = dynamixel.arm_reader.ArmReader()
-            arm_reader.setup_arm_reader()
+            arm_reader.setup_arm()
         else:
             import random
             frames = 0
@@ -47,7 +47,13 @@ def thread(video_capture_zero):
             arm_url = laptop.consts.ARM_TEST_URL if video_capture_zero else laptop.consts.ARM_URL
             url = arm_url + f"{j1}/{j2}/{j3}/{fps}/{now}"
             try:
-                _response = requests.get(url, timeout=0.5)
+                response = requests.get(url, timeout=0.5)
+                data = response.json()
+                arm_active = data["arm_active"]
+                if not video_capture_zero:
+                    arm_reader.maybe_update_torque(arm_active)
+                else:
+                    print(f"Arm Active: {arm_active}")
             except requests.exceptions.RequestException as e:
                 print(f"{type(e)}: {url}")
                 time.sleep(laptop.consts.GET_FAIL_WAIT)

@@ -57,12 +57,12 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    arm_server_motor_sq = util.SingleQueue()
-    arm_server_thread = util.create_thread(server.arm_server.main.thread, (arm_server_motor_sq,), "arm_server")
+    arm_server_motor_dq = util.DoubleQueue()
+    arm_server_thread = util.create_thread(server.arm_server.main.thread, (arm_server_motor_dq,), "arm_server")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    motor_thread = util.create_thread(motors.main.thread, (primary_server_motor_dq, arm_server_motor_sq, video_capture_zero), "motor")
+    motor_thread = util.create_thread(motors.main.thread, (primary_server_motor_dq, arm_server_motor_dq, video_capture_zero), "motor")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     detection_dq.close()
     primary_server_dq.close()
     primary_server_motor_dq.close()
-    arm_server_motor_sq.close()
+    arm_server_motor_dq.close()
     # ------------------------------------------------------------------------ #
 
     print("Done.")

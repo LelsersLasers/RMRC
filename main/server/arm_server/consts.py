@@ -11,3 +11,7 @@ STATE_FROM_SELF = {
     "arm_reader_fps": 20,
     "time": time.time(),
 }
+
+STATE_FROM_MOTORS = {
+    "arm_active": False,
+}
