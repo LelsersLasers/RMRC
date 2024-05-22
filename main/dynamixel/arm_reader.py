@@ -17,10 +17,11 @@ class ArmReader(dynamixel.base_arm.BaseArm):
         self.is_active = is_active
 
     def setup_arm(self):
-        super().setup_arm()
+        cycles = super().setup_arm()
         if self.is_active:
             time.sleep(dynamixel.base_controller.SHORT_WAIT)
             self.set_torque_status_all(False, self.joint_ids.values())
+        return cycles
 
     def maybe_update_torque(self, arm_active):
         # if active -> torque off

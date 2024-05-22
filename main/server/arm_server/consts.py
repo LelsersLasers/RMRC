@@ -3,6 +3,11 @@ import time
 PORT = 5001
 
 STATE_FROM_SELF = {
+    "cycles": {
+        "j1": 0,
+        "j2": 0,
+        "j3": 0,
+    },
     "arm_target_positions": {
         "j1": 3072,
         "j2": 1024,

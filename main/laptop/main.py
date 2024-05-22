@@ -16,11 +16,13 @@ def thread(video_capture_zero):
     graceful_killer = shared_util.GracefulKiller()
 
     base_url = laptop.consts.BASE_TEST_URL if video_capture_zero else laptop.consts.BASE_URL
+    have_sent_cycles = False
+
     try:
         if not video_capture_zero:
             arm_reader = dynamixel.arm_reader.ArmReader(False)
             # arm_reader = dynamixel.arm_reader.ArmReader(True)
-            arm_reader.setup_arm()
+            cycles = arm_reader.setup_arm()
         else:
             import random
             frames = 0
@@ -44,6 +46,16 @@ def thread(video_capture_zero):
                 j1, j2, j3 = joint_values
 
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
+
+
+            if not have_sent_cycles and not video_capture_zero:
+                try:
+                    cycles_url = base_url + f"/cycles/{cycles['j1']}/{cycles['j2']}/{cycles['j3']}"
+                    _response = requests.get(cycles_url, timeout=0.5)
+                    have_sent_cycles = True
+                except requests.exceptions.RequestException as e:
+                    print(f"{type(e)}: {cycles_url}")
+                    time.sleep(laptop.consts.GET_FAIL_WAIT)
 
             now = time.time()
             url = base_url + f"/joints/{j1}/{j2}/{j3}/{fps}/{now}"

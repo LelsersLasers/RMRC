@@ -76,7 +76,8 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
                 # ------------------------------------------------------------ #
                 arm_active = primary_server_motor_ds.s1["arm_active"]
                 arm_target_positions = arm_server_motor_ds.s1["arm_target_positions"]
-                dxl_controller.update_arm_positions(arm_target_positions, arm_active)
+                arm_cycles = arm_server_motor_ds.s1["cycles"]
+                dxl_controller.update_arm_positions(arm_target_positions, arm_cycles, arm_active)
 
                 arm_target_display = {}
                 for joint in arm_target_positions.keys():

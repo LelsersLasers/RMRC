@@ -51,6 +51,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         }
         self.velocity_limit = velocity_limit
         self.min_writes = min_writes
+        self.cycles = {} # cycles[joint] = pos // 4096
 
     def close(self):
         self.update_speeds({
@@ -84,7 +85,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 self.set_torque_status(True, motor_id)
         
-        super().setup_arm()
+        self.cycles = super().setup_arm()
 
     def update_speeds(self, speeds):
         self.speeds = speeds
@@ -127,16 +128,18 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 self.check_error_and_maybe_reboot(id)
     
-    def update_arm_positions(self, target_positions, active):
+    def update_arm_positions(self, target_positions, reader_cycles, active):
         for joint, target_pos in target_positions.items():
             output_joint_id = OUTPUT_JOINT_IDS[joint]
 
             if active:
+                adjusted_target_pos = (self.cycles[joint] - reader_cycles[joint]) * 4096 + target_pos
+
                 dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
                     self.port_handler,
                     output_joint_id,
                     dynamixel.base_controller.ADDR_GOAL_POS,
-                    target_pos
+                    adjusted_target_pos
                 )
                 self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
 

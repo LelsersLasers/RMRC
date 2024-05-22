@@ -51,6 +51,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
         else:
             joint_order = ["j1", "j3", "j2"]
 
+        cycles = {} # cycles[joint] = pos // 4096
 
         for joint in joint_order:
             joint_id = self.joint_ids[joint]
@@ -77,4 +78,6 @@ class BaseArm(dynamixel.base_controller.BaseController):
             self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
 
             time.sleep(dynamixel.base_controller.SHORT_WAIT)
+
+        return cycles
             
