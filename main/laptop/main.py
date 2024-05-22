@@ -15,6 +15,7 @@ def thread(video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
+    base_url = laptop.consts.BASE_TEST_URL if video_capture_zero else laptop.consts.BASE_URL
     try:
         if not video_capture_zero:
             arm_reader = dynamixel.arm_reader.ArmReader(False)
@@ -45,8 +46,7 @@ def thread(video_capture_zero):
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
             now = time.time()
-            arm_url = laptop.consts.ARM_TEST_URL if video_capture_zero else laptop.consts.ARM_URL
-            url = arm_url + f"{j1}/{j2}/{j3}/{fps}/{now}"
+            url = base_url + f"/joints/{j1}/{j2}/{j3}/{fps}/{now}"
             try:
                 response = requests.get(url, timeout=0.5)
                 data = response.json()
