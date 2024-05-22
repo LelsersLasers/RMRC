@@ -43,10 +43,12 @@ class BaseArm(dynamixel.base_controller.BaseController):
 
             starting_poses[joint] = (pos, pos % dynamixel.arm_consts.MAX_POSITION)
 
-        if starting_poses["j3"][1] > 3072 or starting_poses["j3"][1] < 1024:
-            joint_order = ["j1", "j3", "j2"]
-        else:
+
+        if 1024 < starting_poses["j2"][1] < 3072:
             joint_order = ["j1", "j2", "j3"]
+        else:
+            joint_order = ["j1", "j3", "j2"]
+
 
         
         for joint in joint_order:
@@ -66,7 +68,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 low_rest_pos = 4096 * (starting_poses["j2"][0] // 4096) + base_rest_pos
                 high_rest_pos = low_rest_pos + 4096
 
-                if starting_poses["j2"][1] > 2048 and starting_poses["j2"][1] < base_rest_pos:
+                if 2048 < starting_poses["j2"][1] < base_rest_pos:
                     rest_pos = high_rest_pos
                 else:
                     rest_pos = low_rest_pos
