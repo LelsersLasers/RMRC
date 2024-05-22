@@ -60,7 +60,19 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 dynamixel.arm_consts.ARM_STRAIGHT,
             )
 
-            rest_pos = dynamixel.arm_consts.ARM_REST_POSES[joint]
+            base_rest_pos = dynamixel.arm_consts.ARM_REST_POSES[joint]
+
+            if joint == "j2":
+                low_rest_pos = 4096 * (starting_poses["j2"][0] // 4096) + base_rest_pos
+                high_rest_pos = low_rest_pos + 4096
+
+                if starting_poses["j2"][1] > 2048 and starting_poses["j2"][1] < base_rest_pos:
+                    rest_pos = high_rest_pos
+                else:
+                    rest_pos = low_rest_pos
+            else:
+                rest_pos = base_rest_pos
+
             dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
                 self.port_handler,
                 joint_id,
