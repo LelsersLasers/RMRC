@@ -45,6 +45,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
 
             starting_poses[joint] = (pos, pos % dynamixel.arm_consts.MAX_POSITION)
 
+        # Have to make sure joints don't collide with the base plate or robot
 
         if 1024 < starting_poses["j2"][1] < 3072:
             joint_order = ["j1", "j2", "j3"]
@@ -62,6 +63,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 low_rest_pos = 4096 * (starting_poses["j2"][0] // 4096) + base_rest_pos
                 high_rest_pos = low_rest_pos + 4096
 
+                # j2 can not cross 2048 which is straight down as it moves to rest position
                 if 2048 < starting_poses["j2"][1] < base_rest_pos:
                     rest_pos = high_rest_pos
                 else:
