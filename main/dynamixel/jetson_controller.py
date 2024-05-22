@@ -83,6 +83,9 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 )
                 self.handle_possible_dxl_issues(motor_id, dxl_comm_result, dxl_error)
 
+                self.check_error_and_maybe_reboot(motor_id, True)
+                time.sleep(dynamixel.base_controller.SHORT_WAIT)
+
                 self.set_torque_status(True, motor_id)
         
         self.cycles = super().setup_arm()

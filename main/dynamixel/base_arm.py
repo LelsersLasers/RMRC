@@ -34,6 +34,9 @@ class BaseArm(dynamixel.base_controller.BaseController):
             )
             self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
 
+            self.check_error_and_maybe_reboot(joint_id, True)
+            time.sleep(dynamixel.base_controller.SHORT_WAIT)
+            
             pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(
                 self.port_handler,
                 joint_id,

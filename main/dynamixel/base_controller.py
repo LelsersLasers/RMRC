@@ -60,9 +60,9 @@ class BaseController:
     def set_torque_status_all(self, status, ids):
         for id in ids: self.set_torque_status(status, id)
 
-    def check_error_and_maybe_reboot(self, id):
+    def check_error_and_maybe_reboot(self, id, force=False):
         error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
-        if error_code > 0:
+        if error_code > 0 or force:
             print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
             print(f"rebooting {id}")
             self.packet_handler.reboot(self.port_handler, id)
