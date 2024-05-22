@@ -41,6 +41,8 @@ class BaseArm(dynamixel.base_controller.BaseController):
             )
             self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
 
+            self.set_torque_status(True, joint_id)
+
             starting_poses[joint] = (pos, pos % dynamixel.arm_consts.MAX_POSITION)
 
 
@@ -50,17 +52,8 @@ class BaseArm(dynamixel.base_controller.BaseController):
             joint_order = ["j1", "j3", "j2"]
 
 
-        
         for joint in joint_order:
             joint_id = self.joint_ids[joint]
-            self.set_torque_status(True, joint_id)
-
-            dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
-                self.port_handler,
-                joint_id,
-                dynamixel.base_controller.ADDR_GOAL_POS,
-                dynamixel.arm_consts.ARM_STRAIGHT,
-            )
 
             base_rest_pos = dynamixel.arm_consts.ARM_REST_POSES[joint]
 
