@@ -48,28 +48,31 @@ def thread(video_capture_zero):
                 time.sleep(1 / laptop.consts.READER_TEST_FPS)
 
 
+            now = time.time()
+            joints_url = base_url + f"joints/{j1}/{j2}/{j3}/{fps}/{now}"
+            
             if not have_sent_cycles and not video_capture_zero:
                 try:
-                    cycles_url = base_url + f"/cycles/{cycles['j1']}/{cycles['j2']}/{cycles['j3']}"
+                    cycles_url = base_url + f"cycles/{cycles['j1']}/{cycles['j2']}/{cycles['j3']}"
                     _response = requests.get(cycles_url, timeout=0.5)
                     have_sent_cycles = True
                 except requests.exceptions.RequestException as e:
                     print(f"{type(e)}: {cycles_url}")
-                    time.sleep(laptop.consts.GET_FAIL_WAIT)
+            else:
+                print(joints_url)
 
-            now = time.time()
-            url = base_url + f"/joints/{j1}/{j2}/{j3}/{fps}/{now}"
-            try:
-                response = requests.get(url, timeout=0.5)
-                data = response.json()
-                arm_active = data["arm_active"]
-                if not video_capture_zero:
-                    arm_reader.maybe_update_torque(arm_active)
-                else:
-                    print(f"Arm Active: {arm_active}")
-            except requests.exceptions.RequestException as e:
-                print(f"{type(e)}: {url}")
-                time.sleep(laptop.consts.GET_FAIL_WAIT)
+            if have_sent_cycles:
+                try:
+                    response = requests.get(joints_url, timeout=0.5)
+                    data = response.json()
+                    arm_active = data["arm_active"]
+                    if not video_capture_zero:
+                        arm_reader.maybe_update_torque(arm_active)
+                    else:
+                        print(f"Arm Active: {arm_active}")
+                except requests.exceptions.RequestException as e:
+                    print(f"{type(e)}: {joints_url}")
+                    time.sleep(laptop.consts.GET_FAIL_WAIT)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
