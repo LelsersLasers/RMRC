@@ -47,6 +47,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
             self.set_torque_status(True, joint_id)
 
             starting_poses[joint] = (pos, pos % dynamixel.arm_consts.MAX_POSITION)
+            print("joint:", joint, "pos:", pos, "pos % MAX_POSITION:", pos % dynamixel.arm_consts.MAX_POSITION)
 
         # Have to make sure joints don't collide with the base plate or robot
 
