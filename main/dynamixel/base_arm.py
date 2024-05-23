@@ -79,7 +79,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 else:
                     rest_pos = low_rest_pos
             elif joint == "j3":
-                rest_pos = low_rest_pos
+                rest_pos = high_rest_pos
 
             cycles[joint] = rest_pos // 4096
 
