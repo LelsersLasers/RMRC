@@ -65,8 +65,8 @@ class BaseArm(dynamixel.base_controller.BaseController):
             high_rest_pos = low_rest_pos + 4096
 
             if joint == "j1":
-                low_dist  = abs(starting_poses[joint][1] - low_rest_pos)
-                high_dist = abs(starting_poses[joint][1] - high_rest_pos)
+                low_dist  = abs(starting_poses[joint][0] - low_rest_pos)
+                high_dist = abs(starting_poses[joint][0] - high_rest_pos)
                 if low_dist <= high_dist:
                     rest_pos = low_rest_pos
                 else:
