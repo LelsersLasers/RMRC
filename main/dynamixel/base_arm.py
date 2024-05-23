@@ -64,7 +64,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
             
 
             if joint == "j1":
-                low_rest_pos = 4096 * ((starting_poses["j3"][0] // 4096) - 1) + base_rest_pos
+                low_rest_pos = 4096 * ((starting_poses["j1"][0] // 4096) - 1) + base_rest_pos
                 high_rest_pos = low_rest_pos + 4096
                 # low_rest_pos = 4096 * (starting_poses["j3"][0] // 4096) + base_rest_pos
                 # high_rest_pos = low_rest_pos + 4096
@@ -86,7 +86,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 else:
                     rest_pos = low_rest_pos
             elif joint == "j3":
-                rest_pos = 4096 * (starting_poses["j2"][0] // 4096) + base_rest_pos
+                rest_pos = 4096 * (starting_poses["j3"][0] // 4096) + base_rest_pos
 
             cycles[joint] = rest_pos // 4096
 
