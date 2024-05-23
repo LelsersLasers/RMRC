@@ -57,7 +57,8 @@ def thread(video_capture_zero):
                     _response = requests.get(cycles_url, timeout=0.5)
                     have_sent_cycles = True
                 except requests.exceptions.RequestException as e:
-                    print(f"{type(e)}: {cycles_url}")
+                    # print(f"{type(e)}: {cycles_url}")
+                    print("Joints URL:", joints_url)
             else:
                 print(joints_url)
 
