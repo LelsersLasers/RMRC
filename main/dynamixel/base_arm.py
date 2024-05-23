@@ -73,7 +73,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
                     rest_pos = high_rest_pos
             elif joint == "j2":
                 # j2 can not cross 2048 which is straight down as it moves to rest position
-                if 2048 < starting_poses["j2"][1] < base_rest_pos:
+                if 2048 < starting_poses["j2"][1]:
                     rest_pos = high_rest_pos
                 else:
                     rest_pos = low_rest_pos
