@@ -80,6 +80,8 @@ class BaseArm(dynamixel.base_controller.BaseController):
             elif joint == "j3":
                 rest_pos = low_rest_pos
 
+            cycles[joint] = rest_pos // 4096
+
 
             dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
                 self.port_handler,
