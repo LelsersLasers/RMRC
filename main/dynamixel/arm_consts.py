@@ -6,6 +6,6 @@ ARM_STRAIGHT = 3072
 
 ARM_REST_POSES = {
     "j1": 1024,
-    "j2": 3500,
+    "j2": 3250,
     "j3": 1200,
 }
