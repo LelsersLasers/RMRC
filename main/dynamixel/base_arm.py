@@ -64,18 +64,10 @@ class BaseArm(dynamixel.base_controller.BaseController):
             
 
             if joint == "j1":
-                low_rest_pos = 4096 * ((starting_poses["j1"][0] // 4096) - 1) + base_rest_pos
-                high_rest_pos = low_rest_pos + 4096
-                # low_rest_pos = 4096 * (starting_poses["j3"][0] // 4096) + base_rest_pos
-                # high_rest_pos = low_rest_pos + 4096
-
-                low_dist  = abs(starting_poses[joint][0] - low_rest_pos)
-                high_dist = abs(starting_poses[joint][0] - high_rest_pos)
-                
-                if low_dist <= high_dist:
-                    rest_pos = low_rest_pos
-                else:
-                    rest_pos = high_rest_pos
+                # i: -1, 0, 1
+                rest_poses = [4096 * ((starting_poses["j1"][0] // 4096) + i) + base_rest_pos for i in range(-1, 2)]
+                # Pick the closest rest position
+                rest_pos = min(rest_poses, key=lambda x: abs(x - starting_poses["j1"][0]))
             elif joint == "j2":
                 low_rest_pos = 4096 * ((starting_poses["j2"][0] // 4096) - 1) + base_rest_pos
                 high_rest_pos = low_rest_pos + 4096
@@ -86,6 +78,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 else:
                     rest_pos = low_rest_pos
             elif joint == "j3":
+                # TODO: does anything need to be done here or does joint_order take care of it?
                 rest_pos = 4096 * (starting_poses["j3"][0] // 4096) + base_rest_pos
 
             cycles[joint] = rest_pos // 4096
