@@ -66,13 +66,15 @@ class BaseArm(dynamixel.base_controller.BaseController):
             if joint == "j1":
                 # i: -1, 0, 1
                 rest_poses = [4096 * ((starting_poses["j1"][0] // 4096) + i) + base_rest_pos for i in range(-1, 2)]
-                # Pick the closest rest position
+                # Pick the closest rest position from current and neighboring cycles
                 rest_pos = min(rest_poses, key=lambda x: abs(x - starting_poses["j1"][0]))
             elif joint == "j2":
                 low_rest_pos = 4096 * ((starting_poses["j2"][0] // 4096) - 1) + base_rest_pos
                 high_rest_pos = low_rest_pos + 4096
 
                 # j2 can not cross 2048 which is straight down as it moves to rest position
+                # on (2048, 4096) it should move to the rest position on the current  cyle
+                # on (0, 2048)    it should move to the rest position on the previous cycle
                 if 2048 < starting_poses["j2"][1]:
                     rest_pos = high_rest_pos
                 else:
