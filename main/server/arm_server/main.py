@@ -15,7 +15,7 @@ def thread(arm_server_motor_dq):
     arm_server_motor_ds = shared_util.DoubleState(server.arm_server.consts.STATE_FROM_SELF, server.arm_server.consts.STATE_FROM_MOTORS)
 
     @app.route("/cycles/<j1>/<j2>/<j3>", methods=["GET"])
-    def arm(j1, j2, j3):
+    def cycles(j1, j2, j3):
         arm_server_motor_ds.s1["cycles"]["j1"] = int(j1)
         arm_server_motor_ds.s1["cycles"]["j2"] = int(j2)
         arm_server_motor_ds.s1["cycles"]["j3"] = int(j3)
@@ -28,7 +28,7 @@ def thread(arm_server_motor_dq):
         })
 
     @app.route("/joints/<j1>/<j2>/<j3>/<fps>/<time>", methods=["GET"])
-    def arm(j1, j2, j3, fps, time):
+    def joints(j1, j2, j3, fps, time):
         arm_server_motor_ds.s1["arm_target_positions"]["j1"] = int(j1)
         arm_server_motor_ds.s1["arm_target_positions"]["j2"] = int(j2)
         arm_server_motor_ds.s1["arm_target_positions"]["j3"] = int(j3)
