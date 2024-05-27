@@ -20,7 +20,7 @@ def thread(video_capture_zero):
 
     try:
         if not video_capture_zero:
-            # arm_reader = dynamixel.arm_reader.ArmReader(True)
+            # arm_reader = dynamixel.arm_reader.ArmReader(False)
             arm_reader = dynamixel.arm_reader.ArmReader(True)
             cycles = arm_reader.setup_arm()
         else:
@@ -28,6 +28,7 @@ def thread(video_capture_zero):
             frames = 0
             drift = random.randint(-25, 25)
             joint_values = [random.randint(0, 4096) for _ in range(3)]
+            cycles = { "j1": 0, "j2": 0, "j3": 0 }
         
         while not graceful_killer.kill_now:
             fps_controller.update()
@@ -45,22 +46,19 @@ def thread(video_capture_zero):
                 joint_values = [(j + random.randint(-10, 10) + drift) % 4096 for j in joint_values]
                 j1, j2, j3 = joint_values
 
-                time.sleep(1 / laptop.consts.READER_TEST_FPS)
-
+                time.sleep(1 / laptop.consts.READER_TEST_FPS + random.uniform(-0.02, 0.02))
 
             now = time.time()
             joints_url = base_url + f"joints/{j1}/{j2}/{j3}/{fps}/{now}"
             
-            if not have_sent_cycles and not video_capture_zero:
+            if not have_sent_cycles:
                 try:
                     cycles_url = base_url + f"cycles/{cycles['j1']}/{cycles['j2']}/{cycles['j3']}"
                     _response = requests.get(cycles_url, timeout=0.5)
                     have_sent_cycles = True
                 except requests.exceptions.RequestException as e:
-                    # print(f"{type(e)}: {cycles_url}")
+                    print(f"{type(e)}: {cycles_url}")
                     print("Joints URL:", joints_url)
-            else:
-                print(joints_url)
 
             if have_sent_cycles:
                 try:

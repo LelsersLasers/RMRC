@@ -131,11 +131,11 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 self.check_error_and_maybe_reboot(id)
     
-    def update_arm_positions(self, target_positions, reader_cycles, active):
+    def update_arm_positions(self, target_positions, reader_cycles, should_write):
         for joint, target_pos in target_positions.items():
             output_joint_id = OUTPUT_JOINT_IDS[joint]
 
-            if active:
+            if should_write:
                 adjusted_target_pos = (self.cycles[joint] - reader_cycles[joint]) * 4096 + target_pos
 
                 dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
@@ -151,7 +151,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 output_joint_id,
                 dynamixel.base_controller.ADDR_PRESENT_POS
             )
-            if not active:
+            if not should_write:
                 self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
 
             self.check_error_and_maybe_reboot(output_joint_id)

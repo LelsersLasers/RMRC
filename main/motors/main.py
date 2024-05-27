@@ -17,6 +17,7 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
 
     arm_server_motor_ds = shared_util.DoubleState(server.arm_server.consts.STATE_FROM_SELF, server.arm_server.consts.STATE_FROM_MOTORS)
+    last_arm_time = server.arm_server.consts.STATE_FROM_SELF["time"]
 
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
@@ -74,10 +75,14 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
                 # ------------------------------------------------------------ #
 
                 # ------------------------------------------------------------ #
+                new_data = arm_server_motor_ds.s1["time"] > last_arm_time
                 arm_active = primary_server_motor_ds.s1["arm_active"]
+                should_write = new_data and arm_active
+
                 arm_target_positions = arm_server_motor_ds.s1["arm_target_positions"]
                 arm_cycles = arm_server_motor_ds.s1["cycles"]
-                dxl_controller.update_arm_positions(arm_target_positions, arm_cycles, arm_active)
+
+                dxl_controller.update_arm_positions(arm_target_positions, arm_cycles, should_write)
 
                 arm_target_display = {}
                 for joint in arm_target_positions.keys():
@@ -90,10 +95,14 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
                 primary_server_motor_ds.s2["arm"]["active"]  = arm_active
                 arm_server_motor_ds.s2["arm_active"]         = arm_active
 
-                primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
                 primary_server_motor_ds.s2["arm"]["current"] = dxl_controller.joint_statuses
-                primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
-                primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
+                
+                if new_data:
+                    primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
+                    primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
+                    primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
+
+                    last_arm_time = arm_server_motor_ds.s1["time"]
                 # ------------------------------------------------------------ #
             # ---------------------------------------------------------------- #
             else:
@@ -113,11 +122,16 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
                 # ------------------------------------------------------------ #
 
                 # ------------------------------------------------------------ #
+                new_data = arm_server_motor_ds.s1["time"] > last_arm_time
+
                 primary_server_motor_ds.s2["arm"]["active"] = primary_server_motor_ds.s1["arm_active"]
                 arm_server_motor_ds.s2["arm_active"]        = primary_server_motor_ds.s1["arm_active"]
 
-                primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
-                primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
+                if new_data:
+                    primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
+                    primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
+
+                    last_arm_time = arm_server_motor_ds.s1["time"]
                 
                 arm_target_positions = arm_server_motor_ds.s1["arm_target_positions"]
                 primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
@@ -128,7 +142,7 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
                     primary_server_motor_ds.s2["arm"]["current"][joint] %= dynamixel.arm_consts.MAX_POSITION
                 # ------------------------------------------------------------ #
 
-                time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
+                time.sleep(1 / motors.consts.MOTOR_TEST_FPS +  + random.uniform(-0.02, 0.02))
             # ---------------------------------------------------------------- #
 
             # Note: directly putting pickled dict into q2 instead of using primary_server_motor_ds.put_s2(dq)
