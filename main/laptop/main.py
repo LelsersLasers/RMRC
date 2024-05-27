@@ -21,6 +21,7 @@ def thread(video_capture_zero):
     try:
         if not video_capture_zero:
             # arm_reader = dynamixel.arm_reader.ArmReader(False)
+            # TODO: JUST FOR TESTING, otherwise arm starts off
             arm_reader = dynamixel.arm_reader.ArmReader(True)
             cycles = arm_reader.setup_arm()
         else:
