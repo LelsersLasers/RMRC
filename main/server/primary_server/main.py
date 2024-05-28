@@ -28,8 +28,8 @@ def thread(primary_server_dq, primary_server_motor_dq):
     def index():
         return flask.render_template("index.html")
     
-    @app.route("/calibrate", methods=["GET"])
-    def calibrate():
+    @app.route("/server_time", methods=["GET"])
+    def server_time():
         now = time.time()
         response = flask.jsonify(now)
         response.headers.add("Access-Control-Allow-Origin", "*")

@@ -631,7 +631,7 @@ input[type="range"] {
         }
 
         function calibrate() {
-            const path = "calibrate"
+            const path = "server_time"
             const start_ms = now_ms();
             fetch(FLASK_SERVER + path)
                 .then(response => response.json())
