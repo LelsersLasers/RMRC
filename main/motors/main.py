@@ -100,7 +100,7 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
                 if new_data:
                     primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
                     primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
-                    primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
+                    primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"] - primary_server_motor_ds.s1["time_offset"]
 
                     last_arm_time = arm_server_motor_ds.s1["time"]
                 # ------------------------------------------------------------ #
@@ -129,7 +129,7 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
 
                 if new_data:
                     primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
-                    primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"]
+                    primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"] - primary_server_motor_ds.s1["time_offset"]
 
                     last_arm_time = arm_server_motor_ds.s1["time"]
                 

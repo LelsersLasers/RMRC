@@ -35,6 +35,13 @@ def thread(primary_server_dq, primary_server_motor_dq):
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
     
+    @app.route("/time_offset/<offset>", methods=["GET"])
+    def time_offset(offset):
+        offset = float(offset) / 1000
+        server_motor_ds.s1["time_offset"] = offset
+        server_motor_ds.put_s1(primary_server_motor_dq)
+        return server.util.create_response(offset)
+
     @app.route("/invert/<value>", methods=["GET"])
     def invert(value):
         primary_server_ds.s2["invert"] = value == "true"
