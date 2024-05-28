@@ -22,9 +22,9 @@ def thread(arm_server_motor_dq):
         arm_server_motor_ds.put_s1(arm_server_motor_dq)
 
         return server.util.create_response({
-            "j1": arm_server_motor_ds.s2["cycles"]["j1"],
-            "j2": arm_server_motor_ds.s2["cycles"]["j2"],
-            "j3": arm_server_motor_ds.s2["cycles"]["j3"]
+            "j1": arm_server_motor_ds.s1["cycles"]["j1"],
+            "j2": arm_server_motor_ds.s1["cycles"]["j2"],
+            "j3": arm_server_motor_ds.s1["cycles"]["j3"]
         })
 
     @app.route("/joints/<j1>/<j2>/<j3>/<fps>/<time>", methods=["GET"])
