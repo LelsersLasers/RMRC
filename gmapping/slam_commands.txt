@@ -1,0 +1,7 @@
+roslaunch hls_lfcd_lds_driver hlds_laser.launch > /dev/null
+python3 imu_msg_publisher_node.py
+roslaunch rf2o_laser_odometry rf2o_laser_odometry.launch > /dev/null
+roslaunch robot_localization odom_ekf.launch > /dev/null
+rosrun gmapping slam_gmapping
+rosrun rqt_tf_tree rqt_tf_tree
+rviz
