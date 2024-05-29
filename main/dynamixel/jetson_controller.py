@@ -110,7 +110,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                         dynamixel.base_controller.ADDR_GOAL_VELOCITY,
                         power
                     )
-                    success = self.handle_possible_write_issues(id, dxl_comm_result, dxl_error)
+                    success = self.handle_possible_dxl_issues(id, dxl_comm_result, dxl_error)
                     if success:
                         self.to_writes[id] -= 1
                     self.has_wrote[id] += 1
