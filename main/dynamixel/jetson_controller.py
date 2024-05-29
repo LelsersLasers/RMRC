@@ -146,7 +146,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 )
                 self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
 
-            read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
+            read_pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(
                 self.port_handler,
                 output_joint_id,
                 dynamixel.base_controller.ADDR_PRESENT_POS
