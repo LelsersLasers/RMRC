@@ -98,7 +98,7 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
                 primary_server_motor_ds.s2["arm"]["current"] = dxl_controller.joint_statuses
                 
                 if new_data:
-                    primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
+                    primary_server_motor_ds.s2["arm"]["target"]  = arm_target_display
                     primary_server_motor_ds.s2["arm_reader_fps"] = arm_server_motor_ds.s1["arm_reader_fps"]
                     primary_server_motor_ds.s2["arm_delay"] = time.time() - arm_server_motor_ds.s1["time"] - primary_server_motor_ds.s1["time_offset"]
 
