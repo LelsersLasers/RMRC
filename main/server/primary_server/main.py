@@ -47,6 +47,12 @@ def thread(primary_server_dq, primary_server_motor_dq):
         primary_server_ds.s2["invert"] = value == "true"
         primary_server_ds.put_s2(primary_server_dq)
         return server.util.create_response(value)
+    
+    @app.route("/show_detections/<value>", methods=["GET"])
+    def show_detections(value):
+        primary_server_ds.s2["show_detections"] = value == "true"
+        primary_server_ds.put_s2(primary_server_dq)
+        return server.util.create_response(value)
 
     @app.route("/config/<type>/<key>/<value>", methods=["GET"])
     def config(type, key, value):

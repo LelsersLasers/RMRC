@@ -103,8 +103,10 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                         last_frame = frames[key]
                     elif key == alt_key:
                         primary_server_ds.s1["frames"]["webcam2"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
-                    else:
+                    elif key == "arm":
                         primary_server_ds.s1["frames"][key] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
+                    elif key == "ir" and not primary_server_ds.s2["show_detections"]:
+                        primary_server_ds.s1["frames"]["detection_ir"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
 
             frame = frames[base_key]            
             # ---------------------------------------------------------------- #
@@ -112,7 +114,7 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
             # ---------------------------------------------------------------- #
             detection_ds.update_s2(detection_dq)
 
-            if detection_ds.s2["last_update"] > last_detection_time:
+            if primary_server_ds.s2["show_detections"] and detection_ds.s2["last_update"] > last_detection_time:
                 last_detection_time = detection_ds.s2["last_update"]
 
                 if detection_ds.s2["frame"] is not None:
@@ -120,7 +122,7 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                 else:
                     detection_frame = np.zeros_like(frame)
 
-                primary_server_ds.s1["frames"]["detection"] = base64.b64encode(cv2.imencode(".jpg", detection_frame)[1]).decode()
+                primary_server_ds.s1["frames"]["detection_ir"] = base64.b64encode(cv2.imencode(".jpg", detection_frame)[1]).decode()
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
@@ -142,7 +144,8 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
             # -----------------------------------------------------------------#
             if video_capture_zero:
                 primary_server_ds.s1["frames"]["webcam2"] = primary_server_ds.s1["frames"]["webcam1"]
-                primary_server_ds.s1["frames"]["ir"]      = primary_server_ds.s1["frames"]["webcam1"]
+                if not primary_server_ds.s2["show_detections"]:
+                    primary_server_ds.s1["frames"]["detection_ir"] = primary_server_ds.s1["frames"]["webcam1"]
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
@@ -158,12 +161,13 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
 
             primary_server_ds.s1["time"] = frame_read_times[base_key]
 
-            # webcam1, hazmat, webcam2, ir, master, motor, armreader, backend
+            # "webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend"
             if video_capture_zero:
                 fpses = [
                     camera_sses[base_key].s["fps"],
-                    detection_ds.s2["fps"],
                     camera_sses[base_key].s["fps"],
+                    camera_sses[base_key].s["fps"],
+                    detection_ds.s2["fps"],
                     camera_sses[base_key].s["fps"],
                     fps_controller.fps(),
                     -1,
@@ -173,8 +177,9 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
             else:
                 fpses = [
                     camera_sses["webcam1"].s["fps"],
-                    detection_ds.s2["fps"],
                     camera_sses["webcam2"].s["fps"],
+                    camera_sses["arm"].s["fps"],
+                    detection_ds.s2["fps"],
                     camera_sses["ir"].s["fps"],
                     fps_controller.fps(),
                     -1,

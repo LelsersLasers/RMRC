@@ -3,17 +3,18 @@ PORT = 5000
 STATE_FROM_MASTER = {
     "frames": {
         "webcam1": "",
-        "detection": "",
+        "arm": "",
         "webcam2": "",
-        "ir": "",
+        "detection_ir": "",
     },
     
     "hazmats_found": [],
     "qr_found": [],
 
-    # webcam1, hazmat, webcam2, ir, master, motor, armreader, backend
+    # webcam1, detections, webcam2, ir, master, motor, armreader, backend
+    # "webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend"
     # motor, armreader, backend are set in server /get route, rest are sent from master.main.thread
-    "fpses": [-1, -1, -1, -1, -1, -1, -1, -1],
+    "fpses": [-1, -1, -1, -1, -1, -1, -1, -1, -1],
     
     "stats": {
         "ram": 0,
@@ -46,6 +47,7 @@ STATE_FROM_SELF = {
         "qr": 0,
     },
     "invert": False,
+    "show_detections": False,
     "motion_min_area": 500,
     "motion_threshold": 65,
     "motion_new_frame_weight": 0.4,
