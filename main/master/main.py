@@ -144,6 +144,7 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
             # -----------------------------------------------------------------#
             if video_capture_zero:
                 primary_server_ds.s1["frames"]["webcam2"] = primary_server_ds.s1["frames"]["webcam1"]
+                primary_server_ds.s1["frames"]["arm"]     = primary_server_ds.s1["frames"]["webcam1"]
                 if not primary_server_ds.s2["show_detections"]:
                     primary_server_ds.s1["frames"]["detection_ir"] = primary_server_ds.s1["frames"]["webcam1"]
             # ---------------------------------------------------------------- #
