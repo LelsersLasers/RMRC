@@ -415,14 +415,20 @@ input[type="range"] {
             <p>
                 Hold <kbd>wasd</kbd> or arrow keys to move the robot.<br />
                 Hold <kbd>z</kbd> to set all motor speeds to 0.<br />
+                Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
+                
                 Press <kbd>h</kbd> to toggle running hazmat detection.<br />
                 Press <kbd>r</kbd> to toggle running QR detection.<br />
                 Press <kbd>m</kbd> to toggle running motion detection.<br />
+                
                 Press <kbd>c</kbd> to clear all found hazmat labels.<br />
                 Press <kbd>x</kbd> to clear all found QR codes.<br />
-                Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
+                
+                
                 Press <kbd>l</kbd> to invert controls.<br />
                 Press <kbd>p</kbd> to toggle between showing detections output and IR.<br />
+                Press <kbd>o</kbd> to toggle arm active.<br />
+                
                 Press <kbd>1-4</kbd> to switched focused feed.<br />
                 Press <kbd>1-4</kbd> again to super zoom on focused feed.<br />
                 Press <kbd>0</kbd> to show camera grid.<br />
@@ -1018,6 +1024,11 @@ input[type="range"] {
 
             fetchAndInfo(FLASK_SERVER + "show_detections/" + show_detections);
         }
+        function setShowDetections(value) {
+            const ele = document.getElementById("showDetections");
+            ele.checked = value;
+            showDetectionsCheckbox();
+        }
 
         function diagonalSlider() {
             const ele = document.getElementById("diagonal");
@@ -1159,6 +1170,7 @@ input[type="range"] {
                 if (run_hazmat) {
                     time_bar_ele.classList.remove("time-bar-idle");
                     time_bar_ele.classList.add("time-bar-active");
+                    setShowDetections(true);
                 } else {
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
@@ -1171,6 +1183,7 @@ input[type="range"] {
                 if (run_qr) {
                     time_bar_ele.classList.remove("time-bar-idle");
                     time_bar_ele.classList.add("time-bar-active");
+                    setShowDetections(true);
                 } else {
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
@@ -1183,6 +1196,7 @@ input[type="range"] {
                 if (run_motion) {
                     time_bar_ele.classList.remove("time-bar-idle");
                     time_bar_ele.classList.add("time-bar-active");
+                    setShowDetections(true);
                 } else {
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
@@ -1223,6 +1237,7 @@ input[type="range"] {
                 arm_active = !arm_active;
                 const ele = document.getElementById("armActive");
                 ele.checked = arm_active;
+                fetchAndInfo(FLASK_SERVER + "arm_active/" + arm_active);
             }
 
             display_keys();
