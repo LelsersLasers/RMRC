@@ -19,13 +19,19 @@ def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
     print("\nControls:")
     print("Hold 'wasd' or arrow keys to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")
+    print("Press 't'/'T' to increase/decrease power by 20%.")
+    
     print("Press 'h' to toggle running hazmat detection.")
     print("Press 'r' to toggle running qr detection.")
     print("Press 'm' to toggle running motion detection.")
+    
     print("Press 'c' to clear all found hazmat labels.")
     print("Press 'x' to clear all found QR codes.")
-    print("Press 't'/'T' to increase/decrease power by 20%.")
+    
     print("Press 'l' to invert controls.")
+    print("Press 'p' to toggle showing detections output and IR.")
+    print("Press 'o' to toggle arm active.")
+    
     print("Press 1-4 to switched focused feed.")
     print("Press 1-4 again to super zoom on focused feed.")
     print("Press 0 to show camera grid.")
