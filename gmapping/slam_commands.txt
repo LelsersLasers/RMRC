@@ -1,5 +1,6 @@
 roslaunch hls_lfcd_lds_driver hlds_laser.launch > /dev/null
-python3 imu_msg_publisher_node.py
+python3 imu_msg_publisher_node.py -p 0
+roslaunch imu_filter_madgwick imu_filter_madgwick.launch
 roslaunch rf2o_laser_odometry rf2o_laser_odometry.launch > /dev/null
 roslaunch robot_localization odom_ekf.launch > /dev/null
 rosrun gmapping slam_gmapping
