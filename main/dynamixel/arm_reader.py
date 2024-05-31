@@ -16,10 +16,6 @@ class ArmReader(dynamixel.base_arm.BaseArm):
         super().__init__(READER_JOINT_IDS)
         self.is_active = False
 
-    def setup_arm(self):
-        cycles = super().setup_arm()
-        return cycles
-
     def maybe_update_torque(self, arm_active):
         # if active -> torque off
         if arm_active and not self.is_active:

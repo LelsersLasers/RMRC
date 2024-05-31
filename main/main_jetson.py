@@ -24,9 +24,11 @@ import master.main
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("-a", "--no-arm-rest-pos", required=False, help="don't move the arm to default rest position", action="store_true")
     ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0) (testing version)", action="store_true")
     args = vars(ap.parse_args())
 
+    no_arm_rest_pos = args["no_arm_rest_pos"]
     video_capture_zero = args["video_capture_zero"]
     # ------------------------------------------------------------------------ #
 
@@ -62,7 +64,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    motor_thread = util.create_thread(motors.main.thread, (primary_server_motor_dq, arm_server_motor_dq, video_capture_zero), "motor")
+    motor_thread = util.create_thread(motors.main.thread, (primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video_capture_zero), "motor")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #

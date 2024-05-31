@@ -11,7 +11,7 @@ import dynamixel.arm_reader
 import laptop.consts
 
 
-def thread(video_capture_zero):
+def thread(no_arm_rest_pos, video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
@@ -22,7 +22,7 @@ def thread(video_capture_zero):
     try:
         if not video_capture_zero:
             arm_reader = dynamixel.arm_reader.ArmReader()
-            cycles = arm_reader.setup_arm()
+            cycles = arm_reader.setup_arm(no_arm_rest_pos)
         else:
             import random
             frames = 0

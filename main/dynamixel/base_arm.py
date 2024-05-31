@@ -19,7 +19,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
         time.sleep(dynamixel.base_controller.SHORT_WAIT)
         super().close()
 
-    def setup_arm(self):
+    def setup_arm(self, no_arm_rest_pos):
         self.set_torque_status_all(False, self.joint_ids.values())
         time.sleep(dynamixel.base_controller.SHORT_WAIT)
 
@@ -61,7 +61,6 @@ class BaseArm(dynamixel.base_controller.BaseController):
             joint_id = self.joint_ids[joint]
 
             base_rest_pos = dynamixel.arm_consts.ARM_REST_POSES[joint]
-            
 
             if joint == "j1":
                 # i: -1, 0, 1
@@ -85,17 +84,17 @@ class BaseArm(dynamixel.base_controller.BaseController):
 
             cycles[joint] = rest_pos // 4096
 
+            if not no_arm_rest_pos:
+                dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
+                    self.port_handler,
+                    joint_id,
+                    dynamixel.base_controller.ADDR_GOAL_POS,
+                    rest_pos
+                )
+                self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
+                self.check_error_and_maybe_reboot(joint_id)
 
-            dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
-                self.port_handler,
-                joint_id,
-                dynamixel.base_controller.ADDR_GOAL_POS,
-                rest_pos
-            )
-            self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
-            self.check_error_and_maybe_reboot(joint_id)
-
-            time.sleep(dynamixel.base_controller.SHORT_WAIT)
+                time.sleep(dynamixel.base_controller.SHORT_WAIT)
 
         return cycles
             

@@ -11,7 +11,7 @@ import dynamixel.jetson_controller
 import pickle
 
 
-def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
+def thread(primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video_capture_zero):
     primary_server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
     last_count = motors.consts.STATE_FROM_SERVER["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
@@ -27,7 +27,7 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, video_capture_zero):
             velocity_limit = primary_server_motor_ds.s1["velocity_limit"]["value"]
             min_writes = primary_server_motor_ds.s1["motor_writes"]
             dxl_controller = dynamixel.jetson_controller.JetsonController(velocity_limit, min_writes)
-            dxl_controller.setup()
+            dxl_controller.setup(no_arm_rest_pos)
         
         while not graceful_killer.kill_now:
             primary_server_motor_ds.update_s1(primary_server_motor_dq)

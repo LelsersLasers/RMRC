@@ -68,7 +68,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         
         super().close()
 
-    def setup(self):
+    def setup(self, no_arm_rest_pos):
         for motor_ids in MOTOR_IDS.values():
             self.set_torque_status_all(False, motor_ids)
         time.sleep(dynamixel.base_controller.SHORT_WAIT)
@@ -88,7 +88,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 self.set_torque_status(True, motor_id)
         
-        self.cycles = super().setup_arm()
+        self.cycles = super().setup_arm(no_arm_rest_pos)
 
     def update_speeds(self, speeds):
         self.speeds = speeds
