@@ -12,15 +12,12 @@ READER_JOINT_IDS = { # READER_JOINT_IDS[joint] = id
 
 
 class ArmReader(dynamixel.base_arm.BaseArm):
-    def __init__(self, is_active):
+    def __init__(self):
         super().__init__(READER_JOINT_IDS)
-        self.is_active = is_active
+        self.is_active = False
 
     def setup_arm(self):
         cycles = super().setup_arm()
-        if self.is_active:
-            time.sleep(dynamixel.base_controller.SHORT_WAIT)
-            self.set_torque_status_all(False, self.joint_ids.values())
         return cycles
 
     def maybe_update_torque(self, arm_active):
