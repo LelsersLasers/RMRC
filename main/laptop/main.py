@@ -17,6 +17,7 @@ def thread(video_capture_zero):
 
     base_url = laptop.consts.BASE_TEST_URL if video_capture_zero else laptop.consts.BASE_URL
     have_sent_cycles = False
+    last_sent_joints = time.time()
 
     try:
         if not video_capture_zero:
@@ -60,17 +61,19 @@ def thread(video_capture_zero):
                     print("Joints URL:", joints_url)
 
             if have_sent_cycles:
-                try:
-                    response = requests.get(joints_url, timeout=0.5)
-                    data = response.json()
-                    arm_active = data["arm_active"]
-                    if not video_capture_zero:
-                        arm_reader.maybe_update_torque(arm_active)
-                    else:
-                        print(f"Arm Active: {arm_active}")
-                except requests.exceptions.RequestException as e:
-                    print(f"{type(e)}: {joints_url}")
-                    time.sleep(laptop.consts.GET_FAIL_WAIT)
+                if arm_active or now - last_sent_joints > 1 / laptop.consts.LOW_SEND_RATE:
+                    last_sent_joints = now
+                    try:
+                        response = requests.get(joints_url, timeout=0.5)
+                        data = response.json()
+                        arm_active = data["arm_active"]
+                        if not video_capture_zero:
+                            arm_reader.maybe_update_torque(arm_active)
+                        else:
+                            print(f"Arm Active: {arm_active}")
+                    except requests.exceptions.RequestException as e:
+                        print(f"{type(e)}: {joints_url}")
+                        time.sleep(laptop.consts.GET_FAIL_WAIT)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
