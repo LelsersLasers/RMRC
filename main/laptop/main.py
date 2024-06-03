@@ -54,9 +54,8 @@ def thread(no_arm_rest_pos, video_capture_zero):
                     _response = requests.get(cycles_url, timeout=0.5)
                     have_sent_cycles = True
                 except requests.exceptions.RequestException as e:
-                    # print(f"{type(e)}: {cycles_url}")
-                    # print("Joints URL:", joints_url)
-                    ...
+                    print(f"{type(e)}: {cycles_url}")
+                    print("Joints URL:", joints_url)
 
             if have_sent_cycles:
                 if arm_active or now - last_sent_joints > 1 / laptop.consts.LOW_SEND_RATE:
