@@ -4,7 +4,7 @@ import pyPS4Controller.controller
 
 
 INTERFACE = "/dev/input/js0"
-MAX_JOYSTICK_VALUE = 32768
+MAX_JOYSTICK_VALUE = 32767
 
 
 class PS4Controller(pyPS4Controller.controller.Controller):
@@ -19,39 +19,31 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.base_url = laptop.consts.BASE_PRIMARY_TEST_URL if video_capture_zero else laptop.consts.BASE_PRIMARY_URL
     
     def on_L3_up(self, value):
-        print("on_L3_up", value)
         self.left_y_value = value
         self.calculate_power()
     def on_L3_down(self, value):
-        print("on_L3_down", value)
         self.left_y_value = value
         self.calculate_power()
     def on_L3_y_at_rest(self):
-        print("on_L3_y_at_rest")
         self.left_y_value = 0
         self.calculate_power()
 
     def on_R3_left(self, value):
-        print("on_R3_left", value)
         self.right_x_value = value
         self.calculate_power()
     def on_R3_right(self, value):
-        print("on_R3_right", value)
         self.right_x_value = value
         self.calculate_power()
     def on_R3_x_at_rest(self):
-        print("on_R3_x_at_rest")
         self.calculate_power()
         self.right_x_value = 0
 
     def on_circle_press(self):
-        print("on_circle_press")
         self.circle_down = True
         self.left_y_value  = 0
         self.right_x_value = 0
         self.calculate_power()
     def on_circle_release(self):
-        print("on_circle_release")
         self.circle_down = False
         self.left_y_value  = 0
         self.right_x_value = 0
