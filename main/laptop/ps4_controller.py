@@ -76,7 +76,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
 
         print(left_speed, right_speed)
 
-        # self.invert = asyncio.run(power_request(self.base_url, left_speed, right_speed))
+        self.invert = asyncio.run(power_request(self.base_url, left_speed, right_speed))
 
         # try:
         #     power_url = self.base_url + f"power/{left_speed}/{right_speed}"
