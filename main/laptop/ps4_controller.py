@@ -1,4 +1,5 @@
 import requests
+import asyncio
 import laptop.consts
 import pyPS4Controller.controller
 
@@ -73,13 +74,73 @@ class PS4Controller(pyPS4Controller.controller.Controller):
                 if   x_input < 0: speed_left  *= diagonal_multiplier
                 elif x_input > 0: speed_right *= diagonal_multiplier
 
-        try:
-            power_url = self.base_url + f"power/{left_speed}/{right_speed}"
-            response = requests.get(power_url, timeout=0.5)
-            data = response.json()
-            self.invert = data["invert"]
-        except requests.exceptions.RequestException as e:
-            print(f"{type(e)}: {power_url}")
+        self.invert = asyncio.run(power_request(self.base_url, left_speed, right_speed))
+
+        # try:
+        #     power_url = self.base_url + f"power/{left_speed}/{right_speed}"
+        #     response = requests.get(power_url, timeout=0.5)
+        #     data = response.json()
+        #     self.invert = data["invert"]
+        # except requests.exceptions.RequestException as e:
+        #     # print(f"{type(e)}: {power_url}")
+        #     ...
+
+    # Overriding defaults so avoid prints
+    def on_x_press(self): pass
+    def on_x_release(self): pass
+    def on_triangle_press(self): pass
+    def on_triangle_release(self): pass
+    # def on_circle_press(self): pass
+    # def on_circle_release(self): pass
+    def on_square_press(self): pass
+    def on_square_release(self): pass
+    def on_L1_press(self): pass
+    def on_L1_release(self): pass
+    def on_L2_press(self, value): pass
+    def on_L2_release(self): pass
+    def on_R1_press(self): pass
+    def on_R1_release(self): pass
+    def on_R2_press(self, value): pass
+    def on_R2_release(self): pass
+    def on_up_arrow_press(self): pass
+    def on_up_down_arrow_release(self): pass
+    def on_down_arrow_press(self): pass
+    def on_left_arrow_press(self): pass
+    def on_left_right_arrow_release(self): pass
+    def on_right_arrow_press(self): pass
+    def on_L3_up(self, value): pass
+    # def on_L3_down(self, value): pass
+    def on_L3_left(self, value): pass
+    def on_L3_right(self, value): pass
+    # def on_L3_y_at_rest(self): pass
+    def on_L3_x_at_rest(self): pass
+    def on_L3_press(self): pass
+    def on_L3_release(self): pass
+    def on_R3_up(self, value): pass
+    def on_R3_down(self, value): pass
+    # def on_R3_left(self, value): pass
+    # def on_R3_right(self, value): pass
+    def on_R3_y_at_rest(self): pass
+    # def on_R3_x_at_rest(self): pass
+    def on_R3_press(self): pass
+    def on_R3_release(self): pass
+    def on_options_press(self): pass
+    def on_options_release(self): pass
+    def on_share_press(self): pass
+    def on_share_release(self): pass
+    def on_playstation_button_press(self): pass
+    def on_playstation_button_release(self): pass
+
+async def power_request(base_url, left_speed, right_speed):
+    try:
+        power_url = base_url + f"power/{left_speed}/{right_speed}"
+        response = requests.get(power_url, timeout=0.5)
+        data = response.json()
+        invert = data["invert"]
+        return invert
+    except requests.exceptions.RequestException as e:
+        # print(f"{type(e)}: {power_url}")
+        ...
 
 
 def thread(video_capture_zero):
