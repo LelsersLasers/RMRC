@@ -1,6 +1,3 @@
-# Print before imports for instant feedback
-print("STARTING...\n")
-
 import time
 import requests
 
