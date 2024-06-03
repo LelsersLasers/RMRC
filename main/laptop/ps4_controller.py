@@ -1,5 +1,5 @@
 import requests
-import asyncio
+import threading
 import laptop.consts
 import pyPS4Controller.controller
 
@@ -14,8 +14,12 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         
         self.left_y_value  = 0
         self.right_x_value = 0
-        self.invert = False
+        # self.invert = False
         self.circle_down = False
+
+        self.result_dict = {
+            "invert": False,
+        }
 
         self.base_url = laptop.consts.BASE_PRIMARY_TEST_URL if video_capture_zero else laptop.consts.BASE_PRIMARY_URL
     
@@ -54,7 +58,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         y_input = self.left_y_value / MAX_JOYSTICK_VALUE
         x_input = self.right_x_value / MAX_JOYSTICK_VALUE
 
-        if self.invert: y_input = -y_input
+        if self.result_dict["invert"]: y_input = -y_input
 
         left_speed  = 0
         right_speed = 0
@@ -67,7 +71,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
                 left_speed  = y_input
                 right_speed = y_input
 
-                invert_mod = -1 if self.invert else 1
+                invert_mod = -1 if self.result_dict["invert"] else 1
                 x_input *= invert_mod
                 diagonal_multiplier = 1 - abs(x_input)
 
@@ -76,7 +80,9 @@ class PS4Controller(pyPS4Controller.controller.Controller):
 
         print(left_speed, right_speed)
 
-        asyncio.create_task(power_request(self.base_url, left_speed, right_speed))
+        t = threading.Thread(target=power_request, args=(self.result_dict, self.base_url, left_speed, right_speed))
+        t.start()
+
 
         # try:
         #     power_url = self.base_url + f"power/{left_speed}/{right_speed}"
@@ -133,13 +139,13 @@ class PS4Controller(pyPS4Controller.controller.Controller):
     def on_playstation_button_press(self): pass
     def on_playstation_button_release(self): pass
 
-async def power_request(base_url, left_speed, right_speed):
+def power_request(result_dict, base_url, left_speed, right_speed):
     try:
         power_url = base_url + f"power/{left_speed}/{right_speed}"
         response = requests.get(power_url, timeout=0.5)
         data = response.json()
         invert = data["invert"]
-        return invert
+        result_dict["invert"] = invert
     except requests.exceptions.RequestException as e:
         # print(f"{type(e)}: {power_url}")
         ...
