@@ -71,8 +71,8 @@ class PS4Controller(pyPS4Controller.controller.Controller):
                 x_input *= invert_mod
                 diagonal_multiplier = 1 - abs(x_input)
 
-                if   x_input < 0: speed_left  *= diagonal_multiplier
-                elif x_input > 0: speed_right *= diagonal_multiplier
+                if   x_input < 0: left_speed  *= diagonal_multiplier
+                elif x_input > 0: right_speed *= diagonal_multiplier
 
         print(left_speed, right_speed)
 
