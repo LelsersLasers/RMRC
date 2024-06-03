@@ -139,7 +139,6 @@ def power_request(result_dict, base_url, left_speed, right_speed):
 
 
 def thread(video_capture_zero):
-    # TODO
     while True:
         ps4 = PS4Controller(video_capture_zero=video_capture_zero, interface=INTERFACE, connecting_using_ds4drv=False)
-        ps4.listen()
+        ps4.listen(timeout=-1)
