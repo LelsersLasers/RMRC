@@ -90,6 +90,7 @@ def thread(primary_server_dq, primary_server_motor_dq):
         return server.util.create_response({
             "left": left,
             "right": right,
+            "invert": primary_server_ds.s2["invert"],
         })
     
     @app.route("/arm_active/<value>", methods=["GET"])
