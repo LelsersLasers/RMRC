@@ -83,16 +83,6 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         t = threading.Thread(target=power_request, args=(self.result_dict, self.base_url, left_speed, right_speed))
         t.start()
 
-
-        # try:
-        #     power_url = self.base_url + f"power/{left_speed}/{right_speed}"
-        #     response = requests.get(power_url, timeout=0.5)
-        #     data = response.json()
-        #     self.invert = data["invert"]
-        # except requests.exceptions.RequestException as e:
-        #     # print(f"{type(e)}: {power_url}")
-        #     ...
-
     # Overriding defaults so avoid prints
     def on_x_press(self): pass
     def on_x_release(self): pass
@@ -147,8 +137,7 @@ def power_request(result_dict, base_url, left_speed, right_speed):
         invert = data["invert"]
         result_dict["invert"] = invert
     except requests.exceptions.RequestException as e:
-        # print(f"{type(e)}: {power_url}")
-        ...
+        print(f"{type(e)}: {power_url}")
 
 
 def thread(video_capture_zero):
