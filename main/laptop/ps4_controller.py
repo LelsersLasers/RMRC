@@ -79,6 +79,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
                 elif x_input > 0: right_speed *= diagonal_multiplier
 
         t = threading.Thread(target=power_request, args=(self.result_dict, self.base_url, left_speed, right_speed))
+        t.daemon = True
         t.start()
 
     # Overriding defaults so avoid prints
