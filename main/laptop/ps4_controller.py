@@ -74,6 +74,8 @@ class PS4Controller(pyPS4Controller.controller.Controller):
                 if   x_input < 0: speed_left  *= diagonal_multiplier
                 elif x_input > 0: speed_right *= diagonal_multiplier
 
+        print(left_speed, right_speed)
+
         self.invert = asyncio.run(power_request(self.base_url, left_speed, right_speed))
 
         # try:
