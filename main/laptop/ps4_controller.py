@@ -78,8 +78,6 @@ class PS4Controller(pyPS4Controller.controller.Controller):
                 if   x_input < 0: left_speed  *= diagonal_multiplier
                 elif x_input > 0: right_speed *= diagonal_multiplier
 
-        print(left_speed, right_speed)
-
         t = threading.Thread(target=power_request, args=(self.result_dict, self.base_url, left_speed, right_speed))
         t.start()
 
@@ -141,6 +139,7 @@ def power_request(result_dict, base_url, left_speed, right_speed):
 
 
 def thread(video_capture_zero):
+    # TODO
     while True:
         ps4 = PS4Controller(video_capture_zero=video_capture_zero, interface=INTERFACE, connecting_using_ds4drv=False)
         ps4.listen()
