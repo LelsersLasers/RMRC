@@ -14,6 +14,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.left_y_value  = 0
         self.right_x_value = 0
         self.invert = False
+        self.circle_down = False
 
         self.base_url = laptop.consts.BASE_PRIMARY_TEST_URL if video_capture_zero else laptop.consts.BASE_PRIMARY_URL
     
@@ -43,6 +44,19 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.calculate_power()
         self.right_x_value = 0
 
+    def on_circle_press(self):
+        print("on_circle_press")
+        self.circle_down = True
+        self.left_y_value  = 0
+        self.right_x_value = 0
+        self.calculate_power()
+    def on_circle_release(self):
+        print("on_circle_release")
+        self.circle_down = False
+        self.left_y_value  = 0
+        self.right_x_value = 0
+        self.calculate_power()
+
     def calculate_power(self):
         y_input = self.left_y_value / MAX_JOYSTICK_VALUE
         x_input = self.right_x_value / MAX_JOYSTICK_VALUE
@@ -52,19 +66,20 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         left_speed  = 0
         right_speed = 0
 
-        if y_input == 0:
-            left_speed  =  x_input
-            right_speed = -x_input
-        else:
-            left_speed  = y_input
-            right_speed = y_input
+        if not self.circle_down:
+            if y_input == 0:
+                left_speed  =  x_input
+                right_speed = -x_input
+            else:
+                left_speed  = y_input
+                right_speed = y_input
 
-            invert_mod = -1 if self.invert else 1
-            x_input *= invert_mod
-            diagonal_multiplier = 1 - abs(x_input)
+                invert_mod = -1 if self.invert else 1
+                x_input *= invert_mod
+                diagonal_multiplier = 1 - abs(x_input)
 
-            if   x_input < 0: speed_left  *= diagonal_multiplier
-            elif x_input > 0: speed_right *= diagonal_multiplier
+                if   x_input < 0: speed_left  *= diagonal_multiplier
+                elif x_input > 0: speed_right *= diagonal_multiplier
 
         try:
             power_url = self.base_url + f"power/{left_speed}/{right_speed}"
