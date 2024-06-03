@@ -110,7 +110,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
     def on_left_arrow_press(self): pass
     def on_left_right_arrow_release(self): pass
     def on_right_arrow_press(self): pass
-    def on_L3_up(self, value): pass
+    # def on_L3_up(self, value): pass
     # def on_L3_down(self, value): pass
     def on_L3_left(self, value): pass
     def on_L3_right(self, value): pass
