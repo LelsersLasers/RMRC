@@ -88,6 +88,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.request_dict["last_time"] = time.time()
 
         self.request_threads = [t for t in self.request_threads if t.is_alive()]
+        print(f"Threads: {len(self.request_threads)}")
 
         if len(self.request_threads) == 0:
             # if no threads currently waiting to send something
@@ -104,6 +105,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
             t.daemon = True
             t.start()
             self.request_threads.append(t)
+        # else: there is a thread that is currently available to repond to the new inputs
         
 
     # Overriding defaults so avoid prints
