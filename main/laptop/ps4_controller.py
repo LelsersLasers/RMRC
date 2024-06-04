@@ -107,9 +107,6 @@ class PS4Controller(pyPS4Controller.controller.Controller):
             t.start()
             self.request_threads.append(t)
         # else: there is a thread that is currently available to repond to the new inputs
-
-        if not self.request_dict["success"]:
-            time.sleep(laptop.consts.GET_FAIL_WAIT)
         
 
     # Overriding defaults so avoid prints
