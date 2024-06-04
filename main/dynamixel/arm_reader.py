@@ -21,9 +21,11 @@ class ArmReader(dynamixel.base_arm.BaseArm):
         if arm_active and not self.is_active:
             self.set_torque_status_all(False, self.joint_ids.values())
             self.is_active = True
+            print("Arm torque off")
         elif not arm_active and self.is_active:
             self.set_torque_status_all(True, self.joint_ids.values())
             self.is_active = False
+            print("Arm torque on")
 
     def update_arm_status(self):
         for joint, joint_id in self.joint_ids.items():
