@@ -16,7 +16,10 @@ def process(no_arm_rest_pos, video_capture_zero):
     base_url = laptop.consts.BASE_ARM_TEST_URL if video_capture_zero else laptop.consts.BASE_ARM_URL
     have_sent_cycles = False
     last_sent_joints = time.time()
-    request_dict = { "arm_active": False }
+    request_dict = {
+        "arm_active": False,
+        "success": True,
+    }
 
     try:
         if not video_capture_zero:
@@ -58,6 +61,7 @@ def process(no_arm_rest_pos, video_capture_zero):
                 except requests.exceptions.RequestException as e:
                     print(f"{type(e)}: {cycles_url}")
                     print("Joints URL:", joints_url)
+                    time.sleep(laptop.consts.GET_FAIL_WAIT)
 
             if have_sent_cycles:
                 if request_dict["arm_active"] or now - last_sent_joints > 1 / laptop.consts.ARM_LOW_SEND_RATE:
@@ -68,6 +72,8 @@ def process(no_arm_rest_pos, video_capture_zero):
             
                 if not video_capture_zero:
                     arm_reader.maybe_update_torque(request_dict["arm_active"])
+                if not request_dict["success"]:
+                    time.sleep(laptop.consts.GET_FAIL_WAIT)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")
@@ -80,5 +86,7 @@ def joints_request(joints_url, request_dict):
         response = requests.get(joints_url, timeout=laptop.consts.GET_TIMEOUT)
         data = response.json()
         request_dict["arm_active"] = data["arm_active"]
+        request_dict["success"] = True
     except requests.exceptions.RequestException as e:
         print(f"{type(e)}: {joints_url}")
+        request_dict["success"] = False

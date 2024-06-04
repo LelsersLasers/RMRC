@@ -18,11 +18,12 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.circle_down = False
 
         self.request_dict = {
-            "invert": False,
             "left": 0,
             "right": 0,
             "last_time": time.time(),
             "outbound": False,
+            "invert": False,
+            "success": True,
         }
         self.request_threads = []
 
@@ -106,6 +107,9 @@ class PS4Controller(pyPS4Controller.controller.Controller):
             t.start()
             self.request_threads.append(t)
         # else: there is a thread that is currently available to repond to the new inputs
+
+        if not self.request_dict["success"]:
+            time.sleep(laptop.consts.GET_FAIL_WAIT)
         
 
     # Overriding defaults so avoid prints
@@ -168,8 +172,10 @@ def power_request(request_dict, base_url):
         response = requests.get(power_url, timeout=laptop.consts.GET_TIMEOUT)
         data = response.json()
         request_dict["invert"] = data["invert"]
+        request_dict["success"] = True
     except requests.exceptions.RequestException as e:
         print(f"{type(e)}: {power_url}")
+        request_dict["success"] = False
 
 
 def process(video_capture_zero):
