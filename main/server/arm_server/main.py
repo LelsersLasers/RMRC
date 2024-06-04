@@ -6,7 +6,7 @@ import shared_util
 import server.arm_server.consts
 import server.util
 
-def thread(arm_server_motor_dq):
+def process(arm_server_motor_dq):
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.WARNING)
 

@@ -4,7 +4,7 @@ import shared_util
 import camera.consts
 
 
-def thread(camera_sq, key):
+def process(camera_sq, key):
     camera_ss = shared_util.SingleState(camera.consts.STATE_FROM_SELF)
 
     print(f"Opening camera {key}...")

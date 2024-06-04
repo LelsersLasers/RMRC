@@ -13,7 +13,7 @@ import server.primary_server.consts
 import pickle
 
 
-def thread(primary_server_dq, primary_server_motor_dq):
+def process(primary_server_dq, primary_server_motor_dq):
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.WARNING)
 

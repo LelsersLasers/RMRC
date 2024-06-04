@@ -172,7 +172,7 @@ def power_request(request_dict, base_url):
         print(f"{type(e)}: {power_url}")
 
 
-def thread(video_capture_zero):
+def process(video_capture_zero):
     while True:
         ps4 = PS4Controller(video_capture_zero=video_capture_zero, interface=INTERFACE, connecting_using_ds4drv=False)
         ps4.listen(timeout=-1)

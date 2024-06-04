@@ -57,39 +57,39 @@ def last_from_queue(q, last_value):
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
-def thread_str(t):
-    return f"Name: {t.name} PID: {t.pid} Exit code: {t.exitcode} Alive: {t.is_alive()}"
+def process_str(p):
+    return f"Name: {p.name} PID: {p.pid} Exit code: {p.exitcode} Alive: {p.is_alive()}"
 
 
-def create_thread(target, args, name):
+def create_process(target, args, name):
     process_name = f"{name}_process"
-    thread = multiprocessing.Process(target=target, args=args, name=process_name)
-    thread.daemon = True
-    thread.start()
-    print(f"\nStarting {thread_str(thread)}...")
-    return thread
+    p = multiprocessing.Process(target=target, args=args, name=process_name)
+    p.daemon = True
+    p.start()
+    print(f"\nStarting {process_str(p)}...")
+    return p
 
-def close_thread(t):
-    print(f"\nClosing {t.name} thread...")
+def close_process(p):
+    print(f"\nClosing {p.name}...")
 
-    print(f"1) {thread_str(t)}")
+    print(f"1) {process_str(p)}")
     time.sleep(1)
-    t.join(1)
-    print(f"2) {thread_str(t)}")
+    p.join(1)
+    print(f"2) {process_str(p)}")
 
     for i in range(2):
-        if t.is_alive():
-            t.terminate()
+        if p.is_alive():
+            p.terminate()
             time.sleep(1)
-            t.join(1)
-            print(f"{3 + i}) {thread_str(t)}")
+            p.join(1)
+            print(f"{3 + i}) {process_str(p)}")
         else:
             break
 
     try:
         # multiprocessing.Process.close() was added in Python 3.7
         # (catch does not exist for Python 3.6)
-        t.close()
+        p.close()
     except AttributeError:
         pass
 # ---------------------------------------------------------------------------- #

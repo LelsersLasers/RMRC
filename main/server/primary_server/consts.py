@@ -13,7 +13,7 @@ STATE_FROM_MASTER = {
 
     # webcam1, detections, webcam2, ir, master, motor, armreader, backend
     # "webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend"
-    # motor, armreader, backend are set in server /get route, rest are sent from master.main.thread
+    # motor, armreader, backend are set in server /get route, rest are sent from master.main.process
     "fpses": [-1, -1, -1, -1, -1, -1, -1, -1, -1],
     
     "stats": {

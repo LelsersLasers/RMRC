@@ -15,7 +15,7 @@ import detection.motion_detect
 
 
 # ---------------------------------------------------------------------------- #
-def thread(detection_dq):
+def process(detection_dq):
     detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_SERVER, detection.consts.STATE_FROM_SELF)
 
     last_clear = detection.consts.STATE_FROM_SERVER["clear"].copy()

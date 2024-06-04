@@ -15,7 +15,7 @@ import server.primary_server.consts
 import camera.consts
 
 
-def thread(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
+def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
     print("\nControls:")
     print("Hold 'wasd' or arrow keys to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")

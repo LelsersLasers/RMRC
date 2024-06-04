@@ -9,7 +9,7 @@ import dynamixel.arm_reader
 import laptop.consts
 
 
-def thread(no_arm_rest_pos, video_capture_zero):
+def process(no_arm_rest_pos, video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 

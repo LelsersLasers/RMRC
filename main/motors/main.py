@@ -11,7 +11,7 @@ import dynamixel.jetson_controller
 import pickle
 
 
-def thread(primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video_capture_zero):
+def process(primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video_capture_zero):
     primary_server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
     last_count = motors.consts.STATE_FROM_SERVER["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
@@ -146,7 +146,7 @@ def thread(primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video_
             # ---------------------------------------------------------------- #
 
             # Note: directly putting pickled dict into q2 instead of using primary_server_motor_ds.put_s2(dq)
-            # Solves issue of left motor value being interpreted as 0 in the server thread
+            # Solves issue of left motor value being interpreted as 0 in the server process
             pickled_server_motor_ds_s2 = pickle.dumps(primary_server_motor_ds.s2)
             primary_server_motor_dq.put_q2(pickled_server_motor_ds_s2)
 

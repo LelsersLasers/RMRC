@@ -21,16 +21,16 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------------------ #
     if ps4:
-        ps4_thread = util.create_thread(laptop.ps4_controller.thread, (video_capture_zero,), "ps4_controller")
+        ps4_process = util.create_process(laptop.ps4_controller.process, (video_capture_zero,), "ps4_controller")
 
-    laptop.main.thread(no_arm_rest_pos, video_capture_zero)
+    laptop.main.process(no_arm_rest_pos, video_capture_zero)
     # ------------------------------------------------------------------------ #
 
     print("\n\nExiting...\n\n")
 
     # ------------------------------------------------------------------------ #
     if ps4:
-        util.close_thread(ps4_thread)
+        util.close_process(ps4_process)
     # ------------------------------------------------------------------------ #
 
     print("Done.")
