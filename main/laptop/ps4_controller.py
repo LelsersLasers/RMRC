@@ -1,3 +1,4 @@
+import time
 import requests
 import threading
 import laptop.consts
@@ -14,12 +15,16 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         
         self.left_y_value  = 0
         self.right_x_value = 0
-        # self.invert = False
         self.circle_down = False
 
-        self.result_dict = {
+        self.request_dict = {
             "invert": False,
+            "left": 0,
+            "right": 0,
+            "last_time": time.time(),
+            "outbound": False,
         }
+        self.request_threads = []
 
         self.base_url = laptop.consts.BASE_PRIMARY_TEST_URL if video_capture_zero else laptop.consts.BASE_PRIMARY_URL
     
@@ -58,7 +63,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         y_input = self.left_y_value / MAX_JOYSTICK_VALUE
         x_input = self.right_x_value / MAX_JOYSTICK_VALUE
 
-        if self.result_dict["invert"]: y_input = -y_input
+        if self.request_dict["invert"]: y_input = -y_input
 
         left_speed  = 0
         right_speed = 0
@@ -71,16 +76,35 @@ class PS4Controller(pyPS4Controller.controller.Controller):
                 left_speed  = y_input
                 right_speed = y_input
 
-                invert_mod = -1 if self.result_dict["invert"] else 1
+                invert_mod = -1 if self.request_dict["invert"] else 1
                 x_input *= invert_mod
                 diagonal_multiplier = 1 - abs(x_input)
 
                 if   x_input < 0: left_speed  *= diagonal_multiplier
                 elif x_input > 0: right_speed *= diagonal_multiplier
 
-        t = threading.Thread(target=power_request, args=(self.result_dict, self.base_url, left_speed, right_speed))
-        t.daemon = True
-        t.start()
+        self.request_dict["left"]  = left_speed
+        self.request_dict["right"] = right_speed
+        self.request_dict["last_time"] = time.time()
+
+        self.request_threads = [t for t in self.request_threads if t.is_alive()]
+
+        if len(self.request_threads) == 0:
+            # if no threads currently waiting to send something
+            self.request_dict["outbound"] = False
+            t = threading.Thread(target=power_request, args=(self.request_dict, self.base_url))
+            t.daemon = True
+            t.start()
+            self.request_threads.append(t)
+        elif self.request_dict["outbound"]:
+            # all existing threads are just waiting on the request
+            # and no longer checking for new inputs
+            self.request_dict["outbound"] = False
+            t = threading.Thread(target=power_request, args=(self.request_dict, self.base_url))
+            t.daemon = True
+            t.start()
+            self.request_threads.append(t)
+        
 
     # Overriding defaults so avoid prints
     def on_x_press(self): pass
@@ -128,13 +152,20 @@ class PS4Controller(pyPS4Controller.controller.Controller):
     def on_playstation_button_press(self): pass
     def on_playstation_button_release(self): pass
 
-def power_request(result_dict, base_url, left_speed, right_speed):
+def power_request(request_dict, base_url):
+    orginal_time = request_dict["last_time"]
+    time.sleep(laptop.consts.PS4_REQUEST_WAIT)
+    new_time = request_dict["last_time"]
+
+    if orginal_time != new_time:
+        time.sleep(laptop.consts.PS4_REQUEST_WAIT)
+
     try:
-        power_url = base_url + f"power/{left_speed}/{right_speed}"
-        response = requests.get(power_url, timeout=0.5)
+        power_url = base_url + f"power/{request_dict['left']}/{request_dict['right']}"
+        request_dict["outbound"] = True
+        response = requests.get(power_url, timeout=laptop.consts.GET_TIMEOUT)
         data = response.json()
-        invert = data["invert"]
-        result_dict["invert"] = invert
+        request_dict["invert"] = data["invert"]
     except requests.exceptions.RequestException as e:
         print(f"{type(e)}: {power_url}")
 

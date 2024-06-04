@@ -51,17 +51,17 @@ def thread(no_arm_rest_pos, video_capture_zero):
             if not have_sent_cycles:
                 try:
                     cycles_url = base_url + f"cycles/{cycles['j1']}/{cycles['j2']}/{cycles['j3']}"
-                    _response = requests.get(cycles_url, timeout=0.5)
+                    _response = requests.get(cycles_url, timeout=laptop.consts.GET_TIMEOUT)
                     have_sent_cycles = True
                 except requests.exceptions.RequestException as e:
                     print(f"{type(e)}: {cycles_url}")
                     print("Joints URL:", joints_url)
 
             if have_sent_cycles:
-                if arm_active or now - last_sent_joints > 1 / laptop.consts.LOW_SEND_RATE:
+                if arm_active or now - last_sent_joints > 1 / laptop.consts.ARM_LOW_SEND_RATE:
                     last_sent_joints = now
                     try:
-                        response = requests.get(joints_url, timeout=0.5)
+                        response = requests.get(joints_url, timeout=laptop.consts.GET_TIMEOUT)
                         data = response.json()
                         arm_active = data["arm_active"]
                         if not video_capture_zero:
