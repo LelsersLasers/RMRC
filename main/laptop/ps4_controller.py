@@ -10,6 +10,7 @@ MAX_JOYSTICK_VALUE = 32767
 
 
 class PS4Controller(pyPS4Controller.controller.Controller):
+    # ------------------------------------------------------------------------ #
     def __init__(self, video_capture_zero, **kwargs):
         pyPS4Controller.controller.Controller.__init__(self, **kwargs)
         
@@ -28,7 +29,9 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.request_threads = []
 
         self.base_url = laptop.consts.BASE_PRIMARY_TEST_URL if video_capture_zero else laptop.consts.BASE_PRIMARY_URL
+    # ------------------------------------------------------------------------ #
     
+    # ------------------------------------------------------------------------ #
     def on_L3_up(self, value):
         self.left_y_value = value
         self.calculate_power()
@@ -59,7 +62,9 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.left_y_value  = 0
         self.right_x_value = 0
         self.calculate_power()
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     def calculate_power(self):
         y_input = self.left_y_value / MAX_JOYSTICK_VALUE
         x_input = self.right_x_value / MAX_JOYSTICK_VALUE
@@ -117,8 +122,9 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         #     # there is a thread that is currently available to repond to the new inputs
         #     print("Saved a get")
         # -------------------------------------------------------------------- #
-        
+    # ------------------------------------------------------------------------ #
 
+    # ------------------------------------------------------------------------ #
     # Overriding defaults so avoid prints
     def on_x_press(self): pass
     def on_x_release(self): pass
@@ -164,7 +170,11 @@ class PS4Controller(pyPS4Controller.controller.Controller):
     def on_share_release(self): pass
     def on_playstation_button_press(self): pass
     def on_playstation_button_release(self): pass
+    # ------------------------------------------------------------------------ #
+# ---------------------------------------------------------------------------- #
 
+
+# ---------------------------------------------------------------------------- #
 def power_request(request_dict, base_url):
     orginal_time = request_dict["last_time"]
     time.sleep(laptop.consts.PS4_REQUEST_WAIT)
@@ -194,9 +204,12 @@ def power_request_old(request_dict, base_url):
     except requests.exceptions.RequestException as e:
         print(f"{type(e)}: {power_url}")
         request_dict["success"] = False
+# ---------------------------------------------------------------------------- #
 
 
+# ---------------------------------------------------------------------------- #
 def process(video_capture_zero):
     while True:
         ps4 = PS4Controller(video_capture_zero=video_capture_zero, interface=INTERFACE, connecting_using_ds4drv=False)
         ps4.listen(timeout=-1)
+# ---------------------------------------------------------------------------- #
