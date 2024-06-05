@@ -64,7 +64,12 @@ def process(primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video
                         dxl_controller.speeds["left"] = primary_server_motor_ds.s1["left"]
                         dxl_controller.speeds["right"] = primary_server_motor_ds.s1["right"]
 
-                    print(f"Writing speeds: {dxl_controller.speeds}")
+                    display_speeds = {
+                        "left":  dxl_controller.speeds["left"]  * primary_server_motor_ds.s1["power_percent"],
+                        "right": dxl_controller.speeds["right"] * primary_server_motor_ds.s1["power_percent"],
+                    }
+                    print(f"Writing speeds: {display_speeds}")
+                    
                     dxl_controller.power_percent = primary_server_motor_ds.s1["power_percent"]
                     dxl_controller.update_speeds(dxl_controller.speeds)
                     
