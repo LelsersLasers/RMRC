@@ -43,6 +43,9 @@ img {
 .slot3        { grid-column: 9/13; grid-row: 1/ 4; }
 .super        { grid-column: 1/13; grid-row: 1/13; }
 .none         { display: none; }
+.flip         { transform: rotateY(180deg); }
+/* .flip         { transform: scale(-1); } */
+
 
 #frameholder {
     display: grid;
@@ -336,6 +339,9 @@ input[type="range"] {
 
             <label class="pointer" for="showDetections">Show Detections Output:</label>
             <input type="checkbox" id="showDetections" oninput="showDetectionsCheckbox()" />
+
+            <label class="pointer" for="flipArmCamera">Flip Arm Camera:</label>
+            <input type="checkbox" id="flipArmCamera" oninput="flipArmCameraCheckbox()" />
 
             <div class="bar" id="fps-webcam1-bar">
                 <span id="fps-webcam1">30 FPS (webcam1)</span>
@@ -1031,6 +1037,18 @@ input[type="range"] {
             const ele = document.getElementById("showDetections");
             ele.checked = value;
             showDetectionsCheckbox();
+        }
+
+        function flipArmCameraCheckbox() {
+            const checkbox_ele = document.getElementById("flipArmCamera");
+            const value = checkbox_ele.checked;
+
+            const arm_camera_ele = document.getElementById("arm");
+            if (value) {
+                arm_camera_ele.classList.add("flip");
+            } else {
+                arm_camera_ele.classList.remove("flip");
+            }
         }
 
         function diagonalSlider() {
