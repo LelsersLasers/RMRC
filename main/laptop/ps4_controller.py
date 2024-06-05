@@ -88,25 +88,35 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         self.request_dict["right"] = right_speed
         self.request_dict["last_time"] = time.time()
 
-        self.request_threads = [t for t in self.request_threads if t.is_alive()]
-        print(f"Threads: {len(self.request_threads)}")
+        # -------------------------------------------------------------------- #
+        t = threading.Thread(target=power_request_old, args=(self.request_dict, self.base_url))
+        t.daemon = True
+        t.start()
+        # -------------------------------------------------------------------- #
 
-        if len(self.request_threads) == 0:
-            # if no threads currently waiting to send something
-            self.request_dict["outbound"] = False
-            t = threading.Thread(target=power_request, args=(self.request_dict, self.base_url))
-            t.daemon = True
-            t.start()
-            self.request_threads.append(t)
-        elif self.request_dict["outbound"]:
-            # all existing threads are just waiting on the request
-            # and no longer checking for new inputs
-            self.request_dict["outbound"] = False
-            t = threading.Thread(target=power_request, args=(self.request_dict, self.base_url))
-            t.daemon = True
-            t.start()
-            self.request_threads.append(t)
-        # else: there is a thread that is currently available to repond to the new inputs
+        # -------------------------------------------------------------------- #
+        # self.request_threads = [t for t in self.request_threads if t.is_alive()]
+        # print(f"Threads: {len(self.request_threads)}")
+
+        # if len(self.request_threads) == 0:
+        #     # if no threads currently waiting to send something
+        #     self.request_dict["outbound"] = False
+        #     t = threading.Thread(target=power_request, args=(self.request_dict, self.base_url))
+        #     t.daemon = True
+        #     t.start()
+        #     self.request_threads.append(t)
+        # elif self.request_dict["outbound"]:
+        #     # all existing threads are just waiting on the request
+        #     # and no longer checking for new inputs
+        #     self.request_dict["outbound"] = False
+        #     t = threading.Thread(target=power_request, args=(self.request_dict, self.base_url))
+        #     t.daemon = True
+        #     t.start()
+        #     self.request_threads.append(t)
+        # else:
+        #     # there is a thread that is currently available to repond to the new inputs
+        #     print("Saved a get")
+        # -------------------------------------------------------------------- #
         
 
     # Overriding defaults so avoid prints
@@ -166,6 +176,17 @@ def power_request(request_dict, base_url):
     try:
         power_url = base_url + f"power/{request_dict['left']}/{request_dict['right']}"
         request_dict["outbound"] = True
+        response = requests.get(power_url, timeout=laptop.consts.GET_TIMEOUT)
+        data = response.json()
+        request_dict["invert"] = data["invert"]
+        request_dict["success"] = True
+    except requests.exceptions.RequestException as e:
+        print(f"{type(e)}: {power_url}")
+        request_dict["success"] = False
+
+def power_request_old(request_dict, base_url):
+    try:
+        power_url = base_url + f"power/{request_dict['left']}/{request_dict['right']}"
         response = requests.get(power_url, timeout=laptop.consts.GET_TIMEOUT)
         data = response.json()
         request_dict["invert"] = data["invert"]
