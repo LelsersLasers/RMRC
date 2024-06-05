@@ -1115,7 +1115,7 @@ input[type="range"] {
         }
 
         function calculate_grid() {
-            const ids = ["webcam1", "detection", "webcam2", "ir"];
+            const ids = ["webcam1", "arm", "webcam2", "detection_ir"];
             const eles = ids.map(id => document.getElementById(id));
 
             if (view_mode == 0) {
@@ -1204,7 +1204,7 @@ input[type="range"] {
                     time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
-                const ids = ["webcam1", "detection", "webcam2", "ir"];
+                const ids = ["webcam1", "arm", "webcam2", "detection_ir"];
                 const eles = ids.map(id => document.getElementById(id));
 
                 const new_view_mode = parseInt(key);
