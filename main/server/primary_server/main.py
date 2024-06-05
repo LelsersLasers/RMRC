@@ -144,7 +144,7 @@ def process(primary_server_dq, primary_server_motor_dq):
 
         end = time.time()
 
-        # print("GET:", (end - start) * 1000, "ms")
+        print("GET:", (end - start) * 1000, "ms")
 
         return server.util.create_response(primary_server_ds.s1)
 
