@@ -17,7 +17,8 @@ STATE_FROM_SERVER = {
     "motor_writes": 1,
     "write_every_frame": False,
     "arm_active": False,
-	"time_offset": 0,
+    "time_offset": 0,
+    "power_percent": 0.6,
 }
 STATE_FROM_SELF = {
     "motors": {

@@ -79,6 +79,13 @@ def process(primary_server_dq, primary_server_motor_dq):
         primary_server_motor_ds.put_s1(primary_server_motor_dq)
         return server.util.create_response(value)
     
+    @app.route("/power_percent/<decimal>", methods=["GET"])
+    def power_percent(decimal):
+        decimal = float(decimal)
+        primary_server_motor_ds.s1["power_percent"] = decimal
+        primary_server_motor_ds.put_s1(primary_server_motor_dq)
+        return server.util.create_response(decimal)
+
     @app.route("/power/<left>/<right>/", methods=["GET"])
     def power(left, right):
         # Has percent power built into values

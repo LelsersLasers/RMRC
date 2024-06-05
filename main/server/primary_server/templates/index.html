@@ -518,8 +518,8 @@ input[type="range"] {
         let view_mode = 0;
         let super_zoom = false;
 
-        const POWER_STATE_STEP = 20;
-        let power_state = 60;
+        const POWER_PERCENT_STEP = 20;
+        let power_percent = 60;
 
         let arm_active = false;
 
@@ -722,7 +722,7 @@ input[type="range"] {
                         for (let i = 0; i < motors_ids.length; i++) {
                             const motors_id = motors_ids[i];
 
-                            const target  = motors["target"][motors_id]  * 100 * invert_mod;
+                            const target  = motors["target"][motors_id]  * 100 * invert_mod * power_percent / 100;
                             const current = motors["current"][motors_id] * 100 * invert_mod;
 
                             const current_abs = Math.abs(current);
@@ -993,16 +993,20 @@ input[type="range"] {
             calculate_grid();
         }
         
-        function setPower(value) {	
+        function setPowerPercent(value) {	
             const output = document.getElementById("power-ouput");
             output.innerHTML = value + "%";
+
+            const decimal = value / 100;
+            fetchAndInfo(FLASK_SERVER + "power_percent/" + decimal);
+
             calculate_power();
         }
         function powerSlider() {
             const ele = document.getElementById("power");
             const value = parseInt(ele.value);
-            power_state = value;
-            setPower(value);
+            power_percent = value;
+            setPowerPercent(value);
         }
         function clamp(x, min, max) {
             return Math.min(Math.max(x, min), max);
@@ -1089,17 +1093,16 @@ input[type="range"] {
                 else			return  0;
             }
 
-            const base_speed = power_state / 100;
             let speed_left = 0;
             let speed_right = 0;
 
             if (y_input == 0) {
                 const x_mod = match_x(x_input);
-                speed_left  = 	x_mod * base_speed;
-                speed_right =  -x_mod * base_speed;
+                speed_left  = 	x_mod;
+                speed_right =  -x_mod;
             } else {
-                speed_left  = y_input * base_speed;
-                speed_right = y_input * base_speed;
+                speed_left  = y_input;
+                speed_right = y_input;
                 x_input *= invert_mod;
 
                 if (x_input < 0)		speed_left  *= diagonal_multiplier;
@@ -1150,17 +1153,17 @@ input[type="range"] {
                 sidebar.style.display = show_sidebar ? "block" : "none";
             } else if (key == "t") {
                 const mod = Object.keys(keys).includes("shift") ? -1 : 1;
-                if (power_state == 1 && mod == 1) {
-                    power_state = POWER_STATE_STEP;
+                if (power_percent == 1 && mod == 1) {
+                    power_percent = POWER_PERCENT_STEP;
                 } else {
-                    power_state += POWER_STATE_STEP * mod;
-                    power_state = clamp(power_state, 1, 100);	
+                    power_percent += POWER_PERCENT_STEP * mod;
+                    power_percent = clamp(power_percent, 1, 100);	
                 }
                 
-                setPower(power_state);
+                setPowerPercent(power_percent);
 
                 const range_ele = document.getElementById("power");
-                range_ele.value = power_state;
+                range_ele.value = power_percent;
             } else if (key == "h") {
                 run_hazmat = !run_hazmat;
                 fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);

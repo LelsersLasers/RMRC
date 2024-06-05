@@ -6,6 +6,8 @@ import dynamixel.base_arm
 import dynamixel.base_controller
 import dynamixel.motor_consts
 
+import motors.consts
+
 import time
 
 
@@ -29,6 +31,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
     def __init__(self, velocity_limit, min_writes):
         super().__init__(OUTPUT_JOINT_IDS)
 
+        self.power_percent = motors.consts.STATE_FROM_SERVER["power_percent"]
         self.speeds = { # speeds[side] = %
             "left": 0,
             "right": 0,
@@ -100,7 +103,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         for side, side_ids in MOTOR_IDS.items():
             speed = self.speeds[side]
             orientation = ORIENTATIONS[side]
-            power = int(speed * orientation * self.velocity_limit)
+            power = int(speed * self.power_percent * orientation * self.velocity_limit)
 
             for id in side_ids:
                 if self.to_writes[id] > 0 and self.has_wrote[id] < dynamixel.motor_consts.MAX_WRITES:
