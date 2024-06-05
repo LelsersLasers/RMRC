@@ -31,6 +31,8 @@ def process(no_arm_rest_pos, video_capture_zero):
             drift = random.randint(-25, 25)
             joint_values = [random.randint(0, 4096) for _ in range(3)]
             cycles = { "j1": 0, "j2": 0, "j3": 0 }
+
+        print("Arm setup done...")
         
         while not graceful_killer.kill_now:
             fps_controller.update()
@@ -72,6 +74,8 @@ def process(no_arm_rest_pos, video_capture_zero):
             
                 if not video_capture_zero:
                     arm_reader.maybe_update_torque(request_dict["arm_active"])
+                else:
+                    print("Arm active:", request_dict["arm_active"])
                 if not request_dict["success"]:
                     time.sleep(laptop.consts.GET_FAIL_WAIT)
     finally:
