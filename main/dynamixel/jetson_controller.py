@@ -55,6 +55,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         self.velocity_limit = velocity_limit
         self.min_writes = min_writes
         self.cycles = {} # cycles[joint] = pos // 4096
+        self.last_read_arm = time.time()
 
     def close(self):
         self.update_speeds({
@@ -134,7 +135,10 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 self.check_error_and_maybe_reboot(id)
     
-    def update_arm_positions(self, target_positions, reader_cycles, should_write):
+    def update_arm_positions(self, target_positions, reader_cycles, new_data, arm_active):
+        should_write = arm_active and new_data 
+        should_read  = arm_active or (time.time() - self.last_read_arm > 1 / motors.consts.ARM_LOW_READ_RATE)
+
         for joint, target_pos in target_positions.items():
             output_joint_id = OUTPUT_JOINT_IDS[joint]
 
@@ -149,13 +153,13 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 )
                 self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
 
-            read_pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(
-                self.port_handler,
-                output_joint_id,
-                dynamixel.base_controller.ADDR_PRESENT_POS
-            )
-            if not should_write:
-                self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
-
-            self.check_error_and_maybe_reboot(output_joint_id)
-            self.joint_statuses[joint] = read_pos
+            if should_read:
+                self.last_read_arm = time.time()
+                
+                read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
+                    self.port_handler,
+                    output_joint_id,
+                    dynamixel.base_controller.ADDR_PRESENT_POS
+                )
+                self.check_error_and_maybe_reboot(output_joint_id)
+                self.joint_statuses[joint] = read_pos

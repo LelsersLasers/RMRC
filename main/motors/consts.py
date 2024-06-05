@@ -1,5 +1,7 @@
 import time
 
+ARM_LOW_READ_RATE = 2
+
 MOTOR_SHUTOFF_TIME = 1.0
 MOTOR_TEST_FPS = 10
 # ---------------------------------------------------------------------------- #

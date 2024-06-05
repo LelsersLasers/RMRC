@@ -88,7 +88,7 @@ def process(primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video
                 arm_target_positions = arm_server_motor_ds.s1["arm_target_positions"]
                 arm_cycles = arm_server_motor_ds.s1["cycles"]
 
-                dxl_controller.update_arm_positions(arm_target_positions, arm_cycles, should_write)
+                dxl_controller.update_arm_positions(arm_target_positions, arm_cycles, new_data, arm_active)
 
                 arm_target_display = {}
                 for joint in arm_target_positions.keys():
