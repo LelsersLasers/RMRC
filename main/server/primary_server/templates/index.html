@@ -506,7 +506,8 @@ input[type="range"] {
 
     <script>
         const current_url = window.location.href;
-        const FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
+        const PRIMARY_FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
+        const MOTOR_FLASK_SERVER = PRIMARY_FLASK_SERVER.replace("5000", "5001");
         const FRONT_END_FPS = 30;
 
         const GRID_FRAME_RATIO = 4 / 3;
@@ -601,7 +602,7 @@ input[type="range"] {
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    const print_url = url.replace(FLASK_SERVER, "");
+                    const print_url = url.replace(PRIMARY_FLASK_SERVER, "").replace(MOTOR_FLASK_SERVER, "");
                     const print_data = JSON.stringify(data);
                     console.info(`'${print_url}': ${print_data}`);
                 });
@@ -630,20 +631,20 @@ input[type="range"] {
 
             try {
                 powerSlider();
-                fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
-                fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
-                fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/hazmat/" + run_hazmat);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/qr/" + run_qr);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/motion/" + run_motion);
 
-                fetchAndInfo(FLASK_SERVER + "arm_active/" + arm_active);
-                fetchAndInfo(FLASK_SERVER + "show_detections/" + show_detections);
-                fetchAndInfo(FLASK_SERVER + "invert/" + invert);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "show_detections/" + show_detections);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
 
                 for (const key in config_sliders) {
                     const value = config_sliders[key];
                     const type = CONFIG_TYPE[key];
-                    fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + value);
+                    fetchAndInfo(PRIMARY_FLASK_SERVER + "config/" + type + "/" + key + "/" + value);
                 }
-                fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "write_every_frame/" + write_every_frame);
 
                 connected = true;
             } catch (e) {
@@ -658,7 +659,7 @@ input[type="range"] {
         function calibrate() {
             const path = "server_time"
             const start_ms = now_ms();
-            fetch(FLASK_SERVER + path)
+            fetch(PRIMARY_FLASK_SERVER + path)
                 .then(response => response.json())
                 .then(data => {
                     const now = now_ms();
@@ -670,7 +671,7 @@ input[type="range"] {
 
                     ms_offset = diff - ping / 2;
 
-                    fetchAndInfo(FLASK_SERVER + "time_offset/" + ms_offset);
+                    fetchAndInfo(PRIMARY_FLASK_SERVER + "time_offset/" + ms_offset);
 
                     const calibration_ele = document.getElementById("calibration");
                     calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
@@ -685,7 +686,7 @@ input[type="range"] {
             delta = (t1 - t0) / 1000;
             t0 = t1;
 
-            fetch(FLASK_SERVER + path)
+            fetch(PRIMARY_FLASK_SERVER + path)
                 .then(response => response.json())
                 .then(data => {
                     try {
@@ -996,7 +997,7 @@ input[type="range"] {
             const ele = document.getElementById("invert");
             const value = ele.checked;
             invert = value;
-            fetchAndInfo(FLASK_SERVER + "invert/" + invert);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
             calculate_power();
             calculate_grid();
         }
@@ -1006,7 +1007,7 @@ input[type="range"] {
             output.innerHTML = value + "%";
 
             const decimal = value / 100;
-            fetchAndInfo(FLASK_SERVER + "power_percent/" + decimal);
+            fetchAndInfo(MOTOR_FLASK_SERVER + "power_percent/" + decimal);
 
             calculate_power();
         }
@@ -1025,7 +1026,7 @@ input[type="range"] {
             const value = ele.checked;
             arm_active = value;
 
-            fetchAndInfo(FLASK_SERVER + "arm_active/" + value);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + value);
         }
 
         function showDetectionsCheckbox() {
@@ -1033,7 +1034,7 @@ input[type="range"] {
             const value = ele.checked;
             show_detections = value;
 
-            fetchAndInfo(FLASK_SERVER + "show_detections/" + show_detections);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "show_detections/" + show_detections);
         }
         function setShowDetections(value) {
             const ele = document.getElementById("showDetections");
@@ -1065,7 +1066,7 @@ input[type="range"] {
             const value = ele.checked;
             write_every_frame = value;
 
-            fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "write_every_frame/" + write_every_frame);
         }
 
         function slider(key, float = false) {
@@ -1085,7 +1086,7 @@ input[type="range"] {
             }
 
             const type = CONFIG_TYPE[key];
-            fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + config_sliders[key]);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "config/" + type + "/" + key + "/" + config_sliders[key]);
         }
 
 
@@ -1131,7 +1132,7 @@ input[type="range"] {
 
             const base_path = "power";
             const path = base_path + "/" + speed_left + "/" + speed_right;
-            fetchAndInfo(FLASK_SERVER + path);
+            fetchAndInfo(MOTOR_FLASK_SERVER + path);
         }
 
         function calculate_grid() {
@@ -1186,7 +1187,7 @@ input[type="range"] {
                 range_ele.value = power_percent;
             } else if (key == "h") {
                 run_hazmat = !run_hazmat;
-                fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/hazmat/" + run_hazmat);
 
                 const time_bar_ele = document.getElementById("time-hazmat-bar");
                 if (run_hazmat) {
@@ -1199,7 +1200,7 @@ input[type="range"] {
                 }
             } else if (key == "r") {
                 run_qr = !run_qr;
-                fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/qr/" + run_qr);
 
                 const time_bar_ele = document.getElementById("time-qr-bar");
                 if (run_qr) {
@@ -1212,7 +1213,7 @@ input[type="range"] {
                 }
             } else if (key == "m") {
                 run_motion = !run_motion;
-                fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/motion/" + run_motion);
 
                 const time_bar_ele = document.getElementById("time-motion-bar");
                 if (run_motion) {
@@ -1238,18 +1239,18 @@ input[type="range"] {
                 view_mode = new_view_mode;
                 calculate_grid();
             } else if (key == "c") {
-                fetchAndInfo(FLASK_SERVER + "clear/hazmat");
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "clear/hazmat");
             } else if (key == "x") {
-                fetchAndInfo(FLASK_SERVER + "clear/qr");
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "clear/qr");
             } else if (key == "z") {
                 const base_path = "power";
                 const path = base_path + "/0/0";
-                fetchAndInfo(FLASK_SERVER + path);
+                fetchAndInfo(MOTOR_FLASK_SERVER + path);
             } else if (key == "l") {
                 invert = !invert;
                 const ele = document.getElementById("invert");
                 ele.checked = invert;
-                fetchAndInfo(FLASK_SERVER + "invert/" + invert);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
                 calculate_power();
                 calculate_grid();
             } else if (key == "p") {
@@ -1259,7 +1260,7 @@ input[type="range"] {
                 arm_active = !arm_active;
                 const ele = document.getElementById("armActive");
                 ele.checked = arm_active;
-                fetchAndInfo(FLASK_SERVER + "arm_active/" + arm_active);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
             }
 
             display_keys();
@@ -1278,7 +1279,7 @@ input[type="range"] {
         function visibilitychange(e) {
             const base_path = "power";
             const path = base_path + "/0/0";
-            fetchAndInfo(FLASK_SERVER + path);
+            fetchAndInfo(MOTOR_FLASK_SERVER + path);
 
             keys = {};
             display_keys();

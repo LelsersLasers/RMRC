@@ -13,7 +13,7 @@ import detection.main
 import motors.consts
 import motors.main
 
-import server.arm_server.main
+import server.motor_server.main
 import server.primary_server.main
 
 import camera.consts
@@ -59,12 +59,12 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    arm_server_motor_dq = util.DoubleQueue()
-    arm_server_process = util.create_process(server.arm_server.main.process, (arm_server_motor_dq,), "arm_server")
+    motor_server_motor_dq = util.DoubleQueue()
+    motor_server_process = util.create_process(server.motor_server.main.process, (motor_server_motor_dq,), "motor_server")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    motor_process = util.create_process(motors.main.process, (primary_server_motor_dq, arm_server_motor_dq, no_arm_rest_pos, video_capture_zero), "motor")
+    motor_process = util.create_process(motors.main.process, (primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, video_capture_zero), "motor")
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     util.close_process(detection_process)
     util.close_process(primary_server_process)
-    util.close_process(arm_server_process)
+    util.close_process(motor_server_process)
     util.close_process(motor_process)
     # ------------------------------------------------------------------------ #
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     detection_dq.close()
     primary_server_dq.close()
     primary_server_motor_dq.close()
-    arm_server_motor_dq.close()
+    motor_server_motor_dq.close()
     # ------------------------------------------------------------------------ #
 
     print("Done.")

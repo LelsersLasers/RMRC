@@ -14,9 +14,16 @@ STATE_FROM_SELF = {
         "j3": 1200,
     },
     "arm_reader_fps": 20,
-    "time": time.time(),
+    "arm_time": time.time(),
+
+    "left": 0,
+    "right": 0,
+    "count": 0,
+
+    "power_percent": 0.6,
 }
 
 STATE_FROM_MOTORS = {
     "arm_active": False,
+    "invert": False,
 }

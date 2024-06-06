@@ -44,8 +44,12 @@ def process(primary_server_dq, primary_server_motor_dq):
 
     @app.route("/invert/<value>", methods=["GET"])
     def invert(value):
+        primary_server_motor_ds.s1["invert"] = value == "true"
+        primary_server_motor_ds.put_s1(primary_server_motor_dq)
+
         primary_server_ds.s2["invert"] = value == "true"
         primary_server_ds.put_s2(primary_server_dq)
+        
         return server.util.create_response(value)
     
     @app.route("/show_detections/<value>", methods=["GET"])
@@ -78,27 +82,6 @@ def process(primary_server_dq, primary_server_motor_dq):
         primary_server_motor_ds.s1["write_every_frame"] = value == "true"
         primary_server_motor_ds.put_s1(primary_server_motor_dq)
         return server.util.create_response(value)
-    
-    @app.route("/power_percent/<decimal>", methods=["GET"])
-    def power_percent(decimal):
-        decimal = float(decimal)
-        primary_server_motor_ds.s1["power_percent"] = decimal
-        primary_server_motor_ds.put_s1(primary_server_motor_dq)
-        return server.util.create_response(decimal)
-
-    @app.route("/power/<left>/<right>/", methods=["GET"])
-    def power(left, right):
-        # Has percent power built into values
-        primary_server_motor_ds.s1["left"]  = float(left)
-        primary_server_motor_ds.s1["right"] = float(right)
-        primary_server_motor_ds.s1["count"] += 1
-        primary_server_motor_ds.put_s1(primary_server_motor_dq)
-
-        return server.util.create_response({
-            "left": left,
-            "right": right,
-            "invert": primary_server_ds.s2["invert"],
-        })
     
     @app.route("/arm_active/<value>", methods=["GET"])
     def arm_active(value):

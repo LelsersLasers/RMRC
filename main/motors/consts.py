@@ -8,9 +8,6 @@ MOTOR_TEST_FPS = 10
 
 # ---------------------------------------------------------------------------- #
 STATE_FROM_SERVER = {
-    "left": 0,
-    "right": 0,
-    "count": 0,
     "last_get": time.time(),
     "velocity_limit": {
         "value": 330,
@@ -19,8 +16,8 @@ STATE_FROM_SERVER = {
     "motor_writes": 1,
     "write_every_frame": False,
     "arm_active": False,
+    "invert": False,
     "time_offset": 0,
-    "power_percent": 0.6,
 }
 STATE_FROM_SELF = {
     "motors": {
