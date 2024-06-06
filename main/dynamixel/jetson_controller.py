@@ -139,27 +139,28 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         should_write = arm_active and new_data 
         should_read  = arm_active or (time.time() - self.last_read_arm > 1 / motors.consts.ARM_LOW_READ_RATE)
 
-        for joint, target_pos in target_positions.items():
-            output_joint_id = OUTPUT_JOINT_IDS[joint]
+        if should_write or should_read:
+            for joint, target_pos in target_positions.items():
+                output_joint_id = OUTPUT_JOINT_IDS[joint]
 
-            if should_write:
-                adjusted_target_pos = (self.cycles[joint] - reader_cycles[joint]) * 4096 + target_pos
+                if should_write:
+                    adjusted_target_pos = (self.cycles[joint] - reader_cycles[joint]) * 4096 + target_pos
 
-                dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
-                    self.port_handler,
-                    output_joint_id,
-                    dynamixel.base_controller.ADDR_GOAL_POS,
-                    adjusted_target_pos
-                )
-                self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
+                    dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
+                        self.port_handler,
+                        output_joint_id,
+                        dynamixel.base_controller.ADDR_GOAL_POS,
+                        adjusted_target_pos
+                    )
+                    self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
 
-            if should_read:
-                self.last_read_arm = time.time()
-                
-                read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
-                    self.port_handler,
-                    output_joint_id,
-                    dynamixel.base_controller.ADDR_PRESENT_POS
-                )
-                self.check_error_and_maybe_reboot(output_joint_id)
-                self.joint_statuses[joint] = read_pos
+                if should_read:
+                    self.last_read_arm = time.time()
+                    
+                    read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
+                        self.port_handler,
+                        output_joint_id,
+                        dynamixel.base_controller.ADDR_PRESENT_POS
+                    )
+                    self.check_error_and_maybe_reboot(output_joint_id)
+                    self.joint_statuses[joint] = read_pos
