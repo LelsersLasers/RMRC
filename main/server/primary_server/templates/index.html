@@ -445,6 +445,18 @@ input[type="range"] {
 
             <h4>Config</h4>
 
+            <h5>Frontend</h5>
+
+            <label for="frontend_fps">Frontend Request FPS</label>
+            <output id="frontend_fps-output">30</output>
+            <input type="range" id="frontend_fps" name="frontend_fps" min="5" max="50" step="1" value="30" oninput="frontendFpsSlider()" />
+
+            <h5>Master</h5>
+
+            <label for="master_fps">Master FPS</label>
+            <output id="master_fps-output">200</output>
+            <input type="range" id="master_fps" name="master_fps" min="25" max="500" step="5" value="200" oninput="slider('master_fps', true)" />
+            
             <h5>Motors</h5>
 
             <label for="diagonal">Diagonal Multiplier:</label>
@@ -490,12 +502,6 @@ input[type="range"] {
             <output id="hazmat_angle_change-output">90</output>
             <input type="range" id="hazmat_angle_change" name="hazmat_angle_change" min="0" max="360" step="1" value="90" oninput="slider('hazmat_angle_change')" />
 
-            <h5>Master</h5>
-
-            <label for="master_fps">Master FPS</label>
-            <output id="master_fps-output">200</output>
-            <input type="range" id="master_fps" name="master_fps" min="25" max="500" step="1" value="200" oninput="slider('master_fps', true)" />
-
             <h4>Debug Info</h4>
             <p id="calibration"></p>
 
@@ -508,13 +514,13 @@ input[type="range"] {
         const current_url = window.location.href;
         const PRIMARY_FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
         const MOTOR_FLASK_SERVER = PRIMARY_FLASK_SERVER.replace("5000", "5001");
-        const FRONT_END_FPS = 30;
+
+        const CALIBRATE_FREQUNCE = 2;
 
         const GRID_FRAME_RATIO = 4 / 3;
         const ZOOM_FRAME_RATIO = 1;
 
-        const DELAY = 1000 / FRONT_END_FPS;
-        const CALIBRATE_FREQUENCE = 2 * FRONT_END_FPS;
+        let frontend_fps = 30;
 
         let keys = {}; // keys[key] = true | if key is down
 
@@ -578,16 +584,16 @@ input[type="range"] {
 
         let t0 = now_ms();
         let t1 = now_ms();
-        let delta = DELAY;
+        let delta = 1000 / frontend_fps;
 
-        let delays = [DELAY];
+        let delays = [delta];
         let last_frame = "";
 
         let max_fpses = [1];
         const FPS_RATIO_MAX = 75;
 
         let max_delays = [250];
-        const MAX_LEN = 3 * FRONT_END_FPS;
+        const MAX_LEN = 3;
         const DELAY_RATIO_BASE = 250;
 
         // ms_offset also takes into account ping
@@ -612,7 +618,7 @@ input[type="range"] {
         function try_calibrate() {
             // recalibrate every X seconds
             if (calibrated) {
-                calibrated = !(frames % CALIBRATE_FREQUENCE == 0);
+                calibrated = !(frames % frontend_fps * CALIBRATE_FREQUNCE == 0);
             }
 
             // if we need to calibrate
@@ -678,7 +684,7 @@ input[type="range"] {
                 });
         }
 
-        setInterval(function() {
+        function main_get() {
             const path = "get";
             const start_ms = now_ms();
 
@@ -704,7 +710,7 @@ input[type="range"] {
 
                         const max_fps = Math.max(...fps_values);
                         max_fpses.push(max_fps);
-                        max_fpses = max_fpses.slice(-MAX_LEN);
+                        max_fpses = max_fpses.slice(-MAX_LEN * frontend_fps);
                         const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
 
                         const fps_ids = ["webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend", "frontend"];
@@ -928,7 +934,7 @@ input[type="range"] {
                         const arm_delay = arm_delay_float.toFixed(0);
 
                         delays.push(diff);
-                        delays = delays.slice(-MAX_LEN);
+                        delays = delays.slice(-MAX_LEN * frontend_fps);
                         const average = delays.reduce((a, b) => a + b, 0) / delays.length;
                         const average_delay = average.toFixed(0);
 
@@ -937,7 +943,7 @@ input[type="range"] {
 
                         const max_delay = Math.max(inital_delay, average_delay, ping_delay, arm_delay, DELAY_RATIO_BASE);
                         max_delays.push(max_delay);
-                        max_delays = max_delays.slice(-MAX_LEN);
+                        max_delays = max_delays.slice(-MAX_LEN * frontend_fps);
                         const max_ratio_delay = Math.max(...max_delays);
 
                         const base_key = invert ? "webcam2" : "webcam1";
@@ -990,7 +996,9 @@ input[type="range"] {
                     // Not reset when disconnected, but resent when reconnected
                     // config_sliders, write_every_frame, invert, arm_active, show_detections
                 });
-        }, DELAY);
+            setTimeout(main_get, 1000 / frontend_fps);
+        }
+        setTimeout(main_get, 1000 / frontend_fps);
 
 
         function invertCheckbox() {
@@ -1052,6 +1060,14 @@ input[type="range"] {
             } else {
                 arm_camera_ele.classList.remove("flip");
             }
+        }
+
+        function frontendFpsSlider() {
+            const ele = document.getElementById("frontend_fps");
+            const value = parseInt(ele.value);
+            const output = document.getElementById("frontend_fps-output");
+            output.innerHTML = value;
+            frontend_fps = value;
         }
 
         function diagonalSlider() {
