@@ -515,7 +515,7 @@ input[type="range"] {
         const PRIMARY_FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
         const MOTOR_FLASK_SERVER = PRIMARY_FLASK_SERVER.replace("5000", "5001");
 
-        const CALIBRATE_FREQUNCE = 2;
+        const CALIBRATE_FREQUENCE = 2;
 
         const GRID_FRAME_RATIO = 4 / 3;
         const ZOOM_FRAME_RATIO = 1;
@@ -618,7 +618,7 @@ input[type="range"] {
         function try_calibrate() {
             // recalibrate every X seconds
             if (calibrated) {
-                calibrated = !(frames % frontend_fps * CALIBRATE_FREQUNCE == 0);
+                calibrated = !(frames % (frontend_fps * CALIBRATE_FREQUENCE) == 0);
             }
 
             // if we need to calibrate
