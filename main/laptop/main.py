@@ -13,7 +13,7 @@ def process(no_arm_rest_pos, video_capture_zero):
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
-    base_url = laptop.consts.BASE_ARM_TEST_URL if video_capture_zero else laptop.consts.BASE_ARM_URL
+    base_url = laptop.consts.BASE_MOTOR_TEST_URL if video_capture_zero else laptop.consts.BASE_MOTOR_URL
     have_sent_cycles = False
     last_sent_joints = time.time()
     request_dict = {

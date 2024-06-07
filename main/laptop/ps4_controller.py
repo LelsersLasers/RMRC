@@ -28,7 +28,7 @@ class PS4Controller(pyPS4Controller.controller.Controller):
         }
         self.request_threads = []
 
-        self.base_url = laptop.consts.BASE_PRIMARY_TEST_URL if video_capture_zero else laptop.consts.BASE_PRIMARY_URL
+        self.base_url = laptop.consts.BASE_MOTOR_TEST_URL if video_capture_zero else laptop.consts.BASE_MOTOR_URL
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
