@@ -13,11 +13,11 @@ import pickle
 
 def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, video_capture_zero):
     primary_server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
-    last_count = motors.consts.STATE_FROM_SERVER["count"]
+    last_count = server.motor_server.consts.STATE_FROM_SELF["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
 
     motor_server_motor_ds = shared_util.DoubleState(server.motor_server.consts.STATE_FROM_SELF, server.motor_server.consts.STATE_FROM_MOTORS)
-    last_arm_time = server.motor_server.consts.STATE_FROM_SELF["time"]
+    last_arm_time = server.motor_server.consts.STATE_FROM_SELF["arm_time"]
 
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
@@ -55,7 +55,7 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                     last_velocity_count = primary_server_motor_ds.s1["velocity_limit"]["count"]
                     dxl_controller.velocity_limit = primary_server_motor_ds.s1["velocity_limit"]["value"]
                 if should_write_velocities:
-                    last_count = primary_server_motor_ds.s1["count"]
+                    last_count = motor_server_motor_ds.s1["count"]
 
                     if idle_shutoff:
                         motor_server_motor_ds.s1["left"]  = 0
@@ -81,7 +81,7 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                 # ------------------------------------------------------------ #
 
                 # ------------------------------------------------------------ #
-                new_data = motor_server_motor_ds.s1["time"] > last_arm_time
+                new_data = motor_server_motor_ds.s1["arm_time"] > last_arm_time
                 arm_active = primary_server_motor_ds.s1["arm_active"]
 
                 arm_target_positions = motor_server_motor_ds.s1["arm_target_positions"]
@@ -107,9 +107,9 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                 if new_data:
                     primary_server_motor_ds.s2["arm"]["target"]  = arm_target_display
                     primary_server_motor_ds.s2["arm_reader_fps"] = motor_server_motor_ds.s1["arm_reader_fps"]
-                    primary_server_motor_ds.s2["arm_delay"] = time.time() - motor_server_motor_ds.s1["time"] - primary_server_motor_ds.s1["time_offset"]
+                    primary_server_motor_ds.s2["arm_delay"] = time.time() - motor_server_motor_ds.s1["arm_time"] - primary_server_motor_ds.s1["time_offset"]
 
-                    last_arm_time = motor_server_motor_ds.s1["time"]
+                    last_arm_time = motor_server_motor_ds.s1["arm_time"]
                 # ------------------------------------------------------------ #
             # ---------------------------------------------------------------- #
             else:
@@ -129,7 +129,7 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                 # ------------------------------------------------------------ #
 
                 # ------------------------------------------------------------ #
-                new_data = motor_server_motor_ds.s1["time"] > last_arm_time
+                new_data = motor_server_motor_ds.s1["arm_time"] > last_arm_time
 
                 primary_server_motor_ds.s2["arm"]["active"] = primary_server_motor_ds.s1["arm_active"]
                 motor_server_motor_ds.s2["arm_active"]      = primary_server_motor_ds.s1["arm_active"]
@@ -138,9 +138,9 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
 
                 if new_data:
                     primary_server_motor_ds.s2["arm_reader_fps"] = motor_server_motor_ds.s1["arm_reader_fps"]
-                    primary_server_motor_ds.s2["arm_delay"] = time.time() - motor_server_motor_ds.s1["time"] - primary_server_motor_ds.s1["time_offset"]
+                    primary_server_motor_ds.s2["arm_delay"] = time.time() - motor_server_motor_ds.s1["arm_time"] - primary_server_motor_ds.s1["time_offset"]
 
-                    last_arm_time = motor_server_motor_ds.s1["time"]
+                    last_arm_time = motor_server_motor_ds.s1["arm_time"]
                 
                 arm_target_positions = motor_server_motor_ds.s1["arm_target_positions"]
                 primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions

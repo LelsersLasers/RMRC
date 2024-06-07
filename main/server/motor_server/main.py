@@ -70,4 +70,4 @@ def process(motor_server_motor_dq):
     # ------------------------------------------------------------------------ #
     
 
-    app.run(debug=False, port=server.arm_server.consts.PORT, host="0.0.0.0", threaded=False, processes=1)
+    app.run(debug=False, port=server.motor_server.consts.PORT, host="0.0.0.0", threaded=False, processes=1)
