@@ -123,9 +123,14 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                 primary_server_motor_ds.s2["motors"]["target"]["right"] = motor_server_motor_ds.s1["right"]
 
                 ratio_left  = rand_ratio(0.4)
+                primary_server_motor_ds.s2["motors"]["current"]["left"]   = motor_server_motor_ds.s1["left"]
+                primary_server_motor_ds.s2["motors"]["current"]["left"]  *= ratio_left
+                primary_server_motor_ds.s2["motors"]["current"]["left"]  *= motor_server_motor_ds.s1["power_percent"]
+
                 ratio_right = rand_ratio(0.4)
-                primary_server_motor_ds.s2["motors"]["current"]["left"]  = motor_server_motor_ds.s1["left"]  * ratio_left
-                primary_server_motor_ds.s2["motors"]["current"]["right"] = motor_server_motor_ds.s1["right"] * ratio_right
+                primary_server_motor_ds.s2["motors"]["current"]["right"]  = motor_server_motor_ds.s1["right"]
+                primary_server_motor_ds.s2["motors"]["current"]["right"] *= ratio_right
+                primary_server_motor_ds.s2["motors"]["current"]["right"] *= motor_server_motor_ds.s1["power_percent"]
                 # ------------------------------------------------------------ #
 
                 # ------------------------------------------------------------ #
