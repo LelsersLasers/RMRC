@@ -126,10 +126,18 @@ def process(primary_server_dq, primary_server_motor_dq):
         primary_server_ds.s1["fpses"][-1] = fps_controller.fps()
 
         end = time.time()
+        # print("GET:", (end - start) * 1000, "ms")
 
-        print("GET:", (end - start) * 1000, "ms")
 
-        return server.util.create_response(primary_server_ds.s1)
+        frames_dict = primary_server_ds.s1["frames"].copy()
+        response_dict = primary_server_ds.s1.copy()
+        response_dict["frames"] = frames_dict
+
+        for key in primary_server_ds.s1["frames"]:
+            primary_server_ds.s1["frames"][key] = ""
+
+
+        return server.util.create_response(response_dict)
 
 
     app.run(debug=False, port=server.primary_server.consts.PORT, host="0.0.0.0", threaded=False, processes=1)
