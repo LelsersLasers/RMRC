@@ -224,6 +224,8 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
 
             primary_server_ds.put_s1(primary_server_dq)
 
+            for key in primary_server_ds.s1["frames"]:
+                primary_server_ds.s1["frames"][key] = ""
 
             pass_time = time.time() - start
             times.append(pass_time)
