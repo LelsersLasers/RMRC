@@ -449,7 +449,7 @@ input[type="range"] {
 
             <label for="frontend_fps">Frontend Request FPS</label>
             <output id="frontend_fps-output">30</output>
-            <input type="range" id="frontend_fps" name="frontend_fps" min="5" max="50" step="1" value="30" oninput="frontendFpsSlider()" />
+            <input type="range" id="frontend_fps" name="frontend_fps" min="5" max="50" step="5" value="30" oninput="frontendFpsSlider()" />
 
             <h5>Master</h5>
 
@@ -514,6 +514,9 @@ input[type="range"] {
         const current_url = window.location.href;
         const PRIMARY_FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
         const MOTOR_FLASK_SERVER = PRIMARY_FLASK_SERVER.replace("5000", "5001");
+
+        console.log(`PRIMARY_FLASK_SERVER: ${PRIMARY_FLASK_SERVER}`);
+        console.log(`MOTOR_FLASK_SERVER: ${MOTOR_FLASK_SERVER}`);
 
         const CALIBRATE_FREQUENCE = 2;
 
@@ -1147,7 +1150,7 @@ input[type="range"] {
             }
 
             const base_path = "power";
-            const path = base_path + "/" + speed_left + "/" + speed_right;
+            const path = base_path + "/" + speed_left + "/" + speed_right + "/";
             fetchAndInfo(MOTOR_FLASK_SERVER + path);
         }
 
@@ -1260,7 +1263,7 @@ input[type="range"] {
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "clear/qr");
             } else if (key == "z") {
                 const base_path = "power";
-                const path = base_path + "/0/0";
+                const path = base_path + "/0/0/";
                 fetchAndInfo(MOTOR_FLASK_SERVER + path);
             } else if (key == "l") {
                 invert = !invert;
@@ -1294,7 +1297,7 @@ input[type="range"] {
 
         function visibilitychange(e) {
             const base_path = "power";
-            const path = base_path + "/0/0";
+            const path = base_path + "/0/0/";
             fetchAndInfo(MOTOR_FLASK_SERVER + path);
 
             keys = {};

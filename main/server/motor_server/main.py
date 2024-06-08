@@ -24,7 +24,7 @@ def process(motor_server_motor_dq):
 
     @app.route("/power/<left>/<right>/", methods=["GET"])
     def power(left, right):
-        # Has percent power built into values
+        # Does not percent power built into values
         motor_server_motor_ds.s1["left"]  = float(left)
         motor_server_motor_ds.s1["right"] = float(right)
         motor_server_motor_ds.s1["count"] += 1
