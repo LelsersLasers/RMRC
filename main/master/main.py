@@ -14,6 +14,9 @@ import detection.consts
 import server.primary_server.consts
 import camera.consts
 
+def to_bs64(frame):
+    return base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode()
+
 
 def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
     print("\nControls:")
@@ -98,7 +101,7 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                     frame_read_times[key] = camera_ss.s["time"]
 
                     if key == base_key:
-                        primary_server_ds.s1["frames"]["webcam1"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
+                        primary_server_ds.s1["frames"]["webcam1"] = to_bs64(frames[key])
 
                         if average_frame is None or last_frame is None:
                             average_frame = frames[key].copy().astype("float")
@@ -108,11 +111,11 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                             cv2.accumulateWeighted(last_frame.astype("float"), average_frame, motion_new_frame_weight)
                         last_frame = frames[key]
                     elif key == alt_key:
-                        primary_server_ds.s1["frames"]["webcam2"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
+                        primary_server_ds.s1["frames"]["webcam2"] = to_bs64(frames[key])
                     elif key == "arm":
-                        primary_server_ds.s1["frames"][key] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
+                        primary_server_ds.s1["frames"][key] = to_bs64(frames[key])
                     elif key == "ir" and not primary_server_ds.s2["show_detections"]:
-                        primary_server_ds.s1["frames"]["detection_ir"] = base64.b64encode(cv2.imencode(".jpg", frames[key])[1]).decode()
+                        primary_server_ds.s1["frames"]["detection_ir"] = to_bs64(frames[key])
 
             frame = frames[base_key]            
             # ---------------------------------------------------------------- #
@@ -128,7 +131,7 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                 else:
                     detection_frame = np.zeros_like(frame)
 
-                primary_server_ds.s1["frames"]["detection_ir"] = base64.b64encode(cv2.imencode(".jpg", detection_frame)[1]).decode()
+                primary_server_ds.s1["frames"]["detection_ir"] = to_bs64(detection_frame)
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
