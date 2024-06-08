@@ -1,7 +1,7 @@
 import time
 
 # FPS for when not running detection
-DRY_FPS = 10
+DRY_FPS = 2
 
 
 STATE_FROM_SERVER = {
