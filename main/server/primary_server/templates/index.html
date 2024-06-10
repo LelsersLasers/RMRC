@@ -1188,7 +1188,9 @@ input[type="range"] {
 
             if (e.repeat && key != "z") return;
 
-            if (key == "w" || key == "a" || key == "s" || key == "d") {
+            const motor_keys = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowdown", "arrowright"];
+
+            if (motor_keys.includes(key)) {
                 calculate_power();
             } else if (key == "5") {
                 show_sidebar = !show_sidebar;
