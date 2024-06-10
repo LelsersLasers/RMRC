@@ -601,6 +601,7 @@ input[type="range"] {
 
         // ms_offset also takes into account ping
         let ms_offset = 0;
+        let lowest_calibrated_ping = -1;
         let calibrated = false;
 
         let connected = false;
@@ -673,12 +674,15 @@ input[type="range"] {
                 .then(data => {
                     const now = now_ms();
 
-                    const ping = now - start_ms;
+                    const current_ping = now - start_ms;
+                    if (lowest_calibrated_ping == -1 || current_ping < lowest_calibrated_ping) {
+                        lowest_calibrated_ping = current_ping;
+                    }
 
                     const ms = data * 1000;
                     const diff = now - ms;
 
-                    ms_offset = diff - ping / 2;
+                    ms_offset = diff - lowest_calibrated_ping / 2;
 
                     fetchAndInfo(PRIMARY_FLASK_SERVER + "time_offset/" + ms_offset);
 
