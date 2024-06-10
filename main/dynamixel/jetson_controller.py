@@ -140,7 +140,9 @@ class JetsonController(dynamixel.base_arm.BaseArm):
     def update_arm_positions(self, target_positions, reader_cycles, new_data, arm_active):
         should_write = arm_active and new_data 
         should_read_slow = (time.time() - self.last_read_arm > 1 / motors.consts.ARM_LOW_READ_RATE)
-        next_joint_to_slow_read = OUTPUT_JOINT_IDS.keys()[self.next_joint_index_to_slow_read]
+        
+        joints = list(OUTPUT_JOINT_IDS.keys())
+        next_joint_to_slow_read = joints[self.next_joint_index_to_slow_read]
 
         if should_write or should_read_slow:
             for joint, target_pos in target_positions.items():
