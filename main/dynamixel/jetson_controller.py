@@ -162,12 +162,14 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 if arm_active or (should_read_slow and joint == next_joint_to_slow_read):
                     self.last_read_arm = time.time()
                     
-                    read_pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(
-                        self.port_handler,
-                        output_joint_id,
-                        dynamixel.base_controller.ADDR_PRESENT_POS
-                    )
-                    self.handle_possible_dxl_issues(output_joint_id, dxl_comm_result, dxl_error)
+                    try:
+                        read_pos, _dxl_comm_result, _dxl_error = self.packet_handler.read4ByteTxRx(
+                            self.port_handler,
+                            output_joint_id,
+                            dynamixel.base_controller.ADDR_PRESENT_POS
+                        )
+                    except IndexError:
+                        print(f"IndexError on joint {joint}")
                     self.check_error_and_maybe_reboot(output_joint_id)
                     self.joint_statuses[joint] = read_pos
 
