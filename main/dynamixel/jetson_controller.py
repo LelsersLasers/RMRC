@@ -7,6 +7,7 @@ import dynamixel.base_controller
 import dynamixel.motor_consts
 
 import motors.consts
+import server.motor_server.consts
 
 import time
 
@@ -31,7 +32,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
     def __init__(self, velocity_limit, min_writes):
         super().__init__(OUTPUT_JOINT_IDS)
 
-        self.power_percent = motors.consts.STATE_FROM_SERVER["power_percent"]
+        self.power_percent = server.motor_server.consts.STATE_FROM_SELF["power_percent"]
         self.speeds = { # speeds[side] = %
             "left": 0,
             "right": 0,
