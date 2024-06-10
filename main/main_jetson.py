@@ -40,6 +40,8 @@ if __name__ == "__main__":
     for key in cap_arg_keys:
         camera_sq = util.SingleQueue()
         camera_process = util.create_process(camera.main.process, (camera_sq, key), f"camera_{key}")
+        
+        time.sleep(0.5)
 
         camera_sqs[key] = camera_sq
         camera_processes[key] = camera_process
