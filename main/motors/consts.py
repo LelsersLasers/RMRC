@@ -1,6 +1,6 @@
 import time
 
-ARM_LOW_READ_RATE = 2
+ARM_LOW_READ_RATE = 1 # reads 1 joint a second, every 3 seconds it will have read all 3
 
 MOTOR_SHUTOFF_TIME = 1.0
 MOTOR_TEST_FPS = 10
