@@ -894,6 +894,7 @@ input[type="range"] {
                         for (let i = 0; i < frames_ids.length; i++) {
                             const frame_id = frames_ids[i];
                             const frame = data["frames"][frame_id];
+                            // console.log(frame);
                             if (frame != "") {
                                 const frame_ele = document.getElementById(frame_id);
                                 frame_ele.src = "data:image/jpeg;base64," + frame;

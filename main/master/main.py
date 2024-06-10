@@ -222,10 +222,16 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                         pieces_needed -= 1
                     if pieces_needed == 0: break
 
+
+            # s1_frames_copy = primary_server_ds.s1["frames"].copy()
+            # s1_copy = primary_server_ds.s1.copy()
             primary_server_ds.put_s1(primary_server_dq)
 
-            for key in primary_server_ds.s1["frames"]:
-                primary_server_ds.s1["frames"][key] = ""
+            # primary_server_ds.s1 = primary_server_ds.s1.copy()
+            # for key in s1_frames_copy:
+            #     s1_frames_copy[key] = ""
+            # s1_copy["frames"] = s1_frames_copy
+            # primary_server_ds.s1 = s1_copy
 
             pass_time = time.time() - start
             times.append(pass_time)
