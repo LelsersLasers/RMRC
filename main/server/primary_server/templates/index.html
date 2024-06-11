@@ -687,7 +687,7 @@ input[type="range"] {
                     fetchAndInfo(PRIMARY_FLASK_SERVER + "time_offset/" + ms_offset);
 
                     const calibration_ele = document.getElementById("calibration");
-                    calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
+                    calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS (ping: ${lowest_calibrated_ping.toFixed(0)} MS)`;
                 });
         }
 
