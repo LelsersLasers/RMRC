@@ -675,7 +675,7 @@ input[type="range"] {
                     const now = now_ms();
 
                     const current_ping = now - start_ms;
-                    if (lowest_calibrated_ping == -1 || current_ping < lowest_calibrated_ping) {
+                    if (lowest_calibrated_ping < 0 || current_ping < lowest_calibrated_ping) {
                         lowest_calibrated_ping = current_ping;
                     }
 
