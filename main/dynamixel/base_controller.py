@@ -7,7 +7,7 @@ import dynamixel_sdk
 DEVICE_NAME = "/dev/ttyUSB0"
 PROTOCOL_VERSION = 2.0
 
-BAUDRATE = 57600
+BAUDRATE = 1_000_000
 
 ARM_OPERATING_MODE    = 4 # Extended Position Control Mode
 MOTOR_OPERATING_MODE  = 1 # Velocity Control Mode
