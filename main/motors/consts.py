@@ -17,6 +17,7 @@ STATE_FROM_SERVER = {
     "write_every_frame": False,
     "arm_active": False,
     "invert": False,
+	"high_send_rate": 20,
     "time_offset": 0,
 }
 STATE_FROM_SELF = {

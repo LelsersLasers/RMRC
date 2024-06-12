@@ -18,6 +18,7 @@ def process(no_arm_rest_pos, video_capture_zero):
     last_sent_joints = time.time()
     request_dict = {
         "arm_active": False,
+        "high_send_rate": 20,
         "success": True,
     }
 
@@ -66,7 +67,9 @@ def process(no_arm_rest_pos, video_capture_zero):
                     time.sleep(laptop.consts.GET_FAIL_WAIT)
 
             if have_sent_cycles:
-                if request_dict["arm_active"] or now - last_sent_joints > 1 / laptop.consts.ARM_LOW_SEND_RATE:
+                send_rate = request_dict["high_send_rate"] if request_dict["high_send_rate"] else laptop.consts.ARM_LOW_SEND_RATE
+                should_send = now - last_sent_joints > 1 / send_rate
+                if should_send:
                     last_sent_joints = now
                     t = threading.Thread(target=joints_request, args=(joints_url, request_dict))
                     t.daemon = True
@@ -90,6 +93,7 @@ def joints_request(joints_url, request_dict):
         response = requests.get(joints_url, timeout=laptop.consts.GET_TIMEOUT)
         data = response.json()
         request_dict["arm_active"] = data["arm_active"]
+        request_dict["high_send_rate"] = data["high_send_rate"]
         request_dict["success"] = True
     except requests.exceptions.RequestException as e:
         print(f"{type(e)}: {joints_url}")

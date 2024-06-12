@@ -26,4 +26,5 @@ STATE_FROM_SELF = {
 STATE_FROM_MOTORS = {
     "arm_active": False,
     "invert": False,
+	"high_send_rate": 20,
 }

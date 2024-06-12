@@ -72,8 +72,12 @@ def process(motor_server_motor_dq):
 
         motor_server_motor_ds.update_s2(motor_server_motor_dq)
         arm_active = motor_server_motor_ds.s2["arm_active"]
+        high_send_rate = motor_server_motor_ds.s2["high_send_rate"]
 
-        return server.util.create_response({ "arm_active": arm_active })
+        return server.util.create_response({
+            "arm_active": arm_active,
+            "high_send_rate": high_send_rate,
+        })
     # ------------------------------------------------------------------------ #
     
 

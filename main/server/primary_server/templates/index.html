@@ -478,6 +478,10 @@ input[type="range"] {
 
             <br />
 
+            <label for="high_send_rate">Arm High Send Rate:</label>
+            <output id="high_send_rate-output">20</output>
+            <input type="range" id="high_send_rate" name="high_send_rate" min="1" max="50" step="1" value="20" oninput="slider('high_send_rate')" />
+
             <h5>Motion Detection</h5>
 
             <label for="motion_min_area">Motion Min Area:</label>
@@ -560,6 +564,7 @@ input[type="range"] {
         let CONFIG_TYPE = {
             "velocity_limit": "motor",
             "motor_writes": "motor",
+            "high_send_rate": "motor",
             "motion_min_area": "detection",
             "motion_threshold": "detection",
             "motion_new_frame_weight": "detection",

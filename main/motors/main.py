@@ -101,6 +101,7 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                 motor_server_motor_ds.s2["arm_active"]       = arm_active
 
                 motor_server_motor_ds.s2["invert"] = primary_server_motor_ds.s1["invert"]
+                motor_server_motor_ds.s2["high_send_rate"] = primary_server_motor_ds.s1["high_send_rate"]
 
                 primary_server_motor_ds.s2["arm"]["current"] = dxl_controller.joint_statuses
                 
@@ -140,6 +141,8 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                 motor_server_motor_ds.s2["arm_active"]      = primary_server_motor_ds.s1["arm_active"]
 
                 motor_server_motor_ds.s2["invert"] = primary_server_motor_ds.s1["invert"]
+                motor_server_motor_ds.s2["high_send_rate"] = primary_server_motor_ds.s1["high_send_rate"]
+
 
                 if new_data:
                     primary_server_motor_ds.s2["arm_reader_fps"] = motor_server_motor_ds.s1["arm_reader_fps"]
