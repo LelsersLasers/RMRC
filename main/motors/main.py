@@ -108,7 +108,7 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
                 if new_data:
                     primary_server_motor_ds.s2["arm"]["target"]  = arm_target_display
                     primary_server_motor_ds.s2["arm_reader_fps"] = motor_server_motor_ds.s1["arm_reader_fps"]
-                    primary_server_motor_ds.s2["arm_delay"] = time.time() - motor_server_motor_ds.s1["arm_time"] - primary_server_motor_ds.s1["time_offset"]
+                    primary_server_motor_ds.s2["arm_delay"] = now - motor_server_motor_ds.s1["arm_time"] + primary_server_motor_ds.s1["time_offset"]
 
                     last_arm_time = motor_server_motor_ds.s1["arm_time"]
                 # ------------------------------------------------------------ #
@@ -146,7 +146,7 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
 
                 if new_data:
                     primary_server_motor_ds.s2["arm_reader_fps"] = motor_server_motor_ds.s1["arm_reader_fps"]
-                    primary_server_motor_ds.s2["arm_delay"] = time.time() - motor_server_motor_ds.s1["arm_time"] - primary_server_motor_ds.s1["time_offset"]
+                    primary_server_motor_ds.s2["arm_delay"] = now - motor_server_motor_ds.s1["arm_time"] + primary_server_motor_ds.s1["time_offset"]
 
                     last_arm_time = motor_server_motor_ds.s1["arm_time"]
                 
