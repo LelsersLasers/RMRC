@@ -174,7 +174,6 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
             primary_server_ds.s1["time"] = frame_read_times[base_key]
 
             # "webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend"
-            print(primary_server_ds.s2["camera_mode"])
             if video_capture_zero:
                 fpses = [
                     camera_dses[base_key].s2["fps"],

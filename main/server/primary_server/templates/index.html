@@ -340,19 +340,27 @@ input[type="range"] {
             <label class="pointer" for="showDetections">Show Detections Output:</label>
             <input type="checkbox" id="showDetections" oninput="showDetectionsCheckbox()" />
 
-            <input type="radio" id="cameraMode1" name="age" value="1" checked onchange="cameraModeChange(1)">
-            <label for="cameraMode1">Webcam 1 & Webcam 2</label>
-            <br />
-            <input type="radio" id="cameraMode2" name="age" value="2" onchange="cameraModeChange(2)">
-            <label for="cameraMode2">Webcam 1 & Arm</label>
-            <br/>  
-            <input type="radio" id="age3" name="cameraMode3" value="3" onchange="cameraModeChange(3)">
-            <label for="cameraMode3">Webcam 1 & Webcam 3</label>
-
             <br />
 
             <label class="pointer" for="flipArmCamera">Flip Arm Camera:</label>
             <input type="checkbox" id="flipArmCamera" oninput="flipArmCameraCheckbox()" />
+
+            <br />
+
+            <label for="cameraMode">Camera Mode:</label>
+            <br />
+
+            <input type="radio" id="cameraMode1" name="cameraMode" value="1" checked onchange="cameraModeChange(1)">
+            <label class="pointer"for="cameraMode1">Webcam 1 & Webcam 2</label>
+            <br />
+            <input type="radio" id="cameraMode2" name="cameraMode" value="2" onchange="cameraModeChange(2)">
+            <label class="pointer"for="cameraMode2">Webcam 1 & Arm</label>
+            <br/>  
+            <input type="radio" id="cameraMode3" name="cameraMode" value="3" onchange="cameraModeChange(3)">
+            <label class="pointer" for="cameraMode3">Webcam 2 & Arm</label>
+
+            <br />
+            <br />
 
             <div class="bar" id="fps-webcam1-bar">
                 <span id="fps-webcam1">30 FPS (webcam1)</span>
@@ -662,6 +670,8 @@ input[type="range"] {
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "show_detections/" + show_detections);
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
+
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "camera_mode/" + camera_mode);
 
                 for (const key in config_sliders) {
                     const value = config_sliders[key];
