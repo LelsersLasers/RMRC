@@ -205,7 +205,7 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
             primary_server_ds.s1["stats"]["cpu"] = psutil.cpu_percent()
 
             if gpu_log_file is not None:
-                pieces_needed = 4
+                pieces_needed = 3
                 last_line = master.util.read_last_line(gpu_log_file)
                 pieces = last_line.split()
                 for i, piece in enumerate(pieces):
@@ -218,9 +218,6 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                         pieces_needed -= 1
                     elif piece.startswith("GPU@"):
                         primary_server_ds.s1["temps"]["gpu"] = float(piece.split("@")[1].split("C")[0])
-                        pieces_needed -= 1
-                    elif piece.startswith("AUX@"):
-                        primary_server_ds.s1["temps"]["aux"] = float(piece.split("@")[1].split("C")[0])
                         pieces_needed -= 1
                     if pieces_needed == 0: break
 

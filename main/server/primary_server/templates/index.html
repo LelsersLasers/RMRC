@@ -405,9 +405,6 @@ input[type="range"] {
             <div class="bar" id="temp-gpu-bar">
                 <span id="temp-gpu">0 °C (gpu)</span>
             </div>
-            <div class="bar" id="temp-aux-bar">
-                <span id="temp-aux">0 °C (aux)</span>
-            </div>
 
             <h4>Detected Hazmat Labels:</h4>
             <div class="bar" id="angle-bar">
@@ -870,7 +867,7 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
-                        const temp_ids = ["cpu", "gpu", "aux"];
+                        const temp_ids = ["cpu", "gpu"];
 
                         for (let i = 0; i < temp_ids.length; i++) {
                             const temp_id = temp_ids[i];
