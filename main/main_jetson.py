@@ -33,17 +33,17 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
-    camera_sqs = {}
+    camera_dqs = {}
     camera_processes = {}
 
     cap_arg_keys = [None] if video_capture_zero else camera.consts.CAP_ARGS.keys()
     for key in cap_arg_keys:
-        camera_sq = util.SingleQueue()
-        camera_process = util.create_process(camera.main.process, (camera_sq, key), f"camera_{key}")
+        camera_dq = util.DoubleQueue()
+        camera_process = util.create_process(camera.main.process, (camera_dq, key), f"camera_{key}")
         
         time.sleep(0.5)
 
-        camera_sqs[key] = camera_sq
+        camera_dqs[key] = camera_dq
         camera_processes[key] = camera_process
 
     time.sleep(camera.consts.CAMERA_WAKEUP_TIME * 2)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     print("\nStarting master process...\n")
 
     try:
-        master.main.process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero)
+        master.main.process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero)
     except Exception as e:
         print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRRRRRRRR", e)
         print(traceback.format_exc())
@@ -97,8 +97,8 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------ #
     print("Closing queues...")
 
-    for camera_sq in camera_sqs.values():
-        camera_sq.close()
+    for camera_dq in camera_dqs.values():
+        camera_dq.close()
 
     detection_dq.close()
     primary_server_dq.close()

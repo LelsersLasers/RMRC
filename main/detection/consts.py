@@ -4,7 +4,7 @@ import time
 DRY_FPS = 2
 
 
-STATE_FROM_SERVER = {
+STATE_FROM_MASTER = {
     "frame": None, # latest primary camera frame
     "average_frame": None,
     

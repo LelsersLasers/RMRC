@@ -59,6 +59,13 @@ def process(primary_server_dq, primary_server_motor_dq):
             primary_server_ds.s2["show_detections"] = value == "true"
             primary_server_ds.put_s2(primary_server_dq)
         return server.util.create_response(value)
+    
+    @app.route("/camera_mode/<mode>", methods=["GET"])
+    def camera_mode(mode):
+        with primary_server_s2_lock:
+            primary_server_ds.s2["camera_mode"] = mode
+            primary_server_ds.put_s2(primary_server_dq)
+        return server.util.create_response(mode)
 
     @app.route("/config/<type>/<key>/<value>", methods=["GET"])
     def config(type, key, value):

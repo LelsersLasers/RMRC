@@ -53,4 +53,5 @@ STATE_FROM_SELF = {
     "hazmat_levenshtein_thresh": 0.4,
     "hazmat_angle_change": 90,
     "master_fps": 200,
+    "camera_mode": "1",
 }

@@ -20,7 +20,7 @@ def to_bs64(frame):
     return base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode()
 
 
-def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
+def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
     print("\nControls:")
     print("Hold 'wasd' or arrow keys to move the robot.")
     print("Hold 'z' to set all motor speeds to 0.")
@@ -57,16 +57,16 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
     average_frame = None
     last_frame = None
 
-    detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_SERVER, detection.consts.STATE_FROM_SELF)
+    detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_MASTER, detection.consts.STATE_FROM_SELF)
     primary_server_ds = shared_util.DoubleState(server.primary_server.consts.STATE_FROM_MASTER, server.primary_server.consts.STATE_FROM_SELF)
 
     gpu_log_file = None if video_capture_zero else open(master.consts.GPU_LOG_FILENAME, 'rb')
 
-    camera_sses = {}
+    camera_dses = {}
     frame_read_times = {}
-    for key in camera_sqs.keys():
-        camera_ss = shared_util.SingleState(camera.consts.STATE_FROM_SELF)
-        camera_sses[key] = camera_ss
+    for key in camera_dqs.keys():
+        camera_ds = shared_util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
+        camera_dses[key] = camera_ds
         frame_read_times[key] = 0
 
     last_detection_time = 0
@@ -90,17 +90,17 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
 
             # ---------------------------------------------------------------- #
             frames = {}
-            for key, camera_sq in camera_sqs.items():
-                camera_ss = camera_sses[key]
-                camera_ss.update_s(camera_sq)
-                frames[key] = camera_ss.s["frame"]
+            for key, camera_sq in camera_dqs.items():
+                camera_ds = camera_dses[key]
+                camera_ds.update_s2(camera_sq)
+                frames[key] = camera_ds.s2["frame"]
 
                 if frames[key] is None:
                     frames[key]  = np.zeros((camera.consts.CAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
                     frames[key] += camera.consts.CAMERA_NONE_GREY
 
-                if camera_ss.s["time"] > frame_read_times[key]:
-                    frame_read_times[key] = camera_ss.s["time"]
+                if camera_ds.s2["time"] > frame_read_times[key]:
+                    frame_read_times[key] = camera_ds.s2["time"]
 
                     if key == base_key:
                         primary_server_ds.s1["frames"]["webcam1"] = to_bs64(frames[key])
@@ -174,13 +174,14 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
             primary_server_ds.s1["time"] = frame_read_times[base_key]
 
             # "webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend"
+            print(primary_server_ds.s2["camera_mode"])
             if video_capture_zero:
                 fpses = [
-                    camera_sses[base_key].s["fps"],
-                    camera_sses[base_key].s["fps"],
-                    camera_sses[base_key].s["fps"],
+                    camera_dses[base_key].s2["fps"],
+                    camera_dses[base_key].s2["fps"],
+                    camera_dses[base_key].s2["fps"],
                     detection_ds.s2["fps"],
-                    camera_sses[base_key].s["fps"],
+                    camera_dses[base_key].s2["fps"],
                     fps_controller.fps(),
                     -1,
                     -1,
@@ -188,11 +189,11 @@ def process(detection_dq, primary_server_dq, camera_sqs, video_capture_zero):
                 ]
             else:
                 fpses = [
-                    camera_sses["webcam1"].s["fps"],
-                    camera_sses["webcam2"].s["fps"],
-                    camera_sses["arm"].s["fps"],
+                    camera_dses["webcam1"].s2["fps"],
+                    camera_dses["webcam2"].s2["fps"],
+                    camera_dses["arm"].s2["fps"],
                     detection_ds.s2["fps"],
-                    camera_sses["ir"].s["fps"],
+                    camera_dses["ir"].s2["fps"],
                     fps_controller.fps(),
                     -1,
                     -1,

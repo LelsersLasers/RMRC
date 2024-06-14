@@ -44,10 +44,23 @@ CAP_ARGS = {
 CAMERA_SIZE = (320, 240)
 
 
+CAMERA_WAIT_AFTER_ACTIVE = 3
 CAMERA_WAKEUP_TIME = 1.5
 CAMERA_WAIT_AFTER_FAIL = 1.0
 CAMERA_NONE_GREY = 50
 
+DRY_FPS = 2
+
+MODE_TO_ACTIVE_KEYS = {
+    "1": ["webcam1", "webcam2"],
+    "2": ["webcam1", "arm"],
+    "3": ["webcam2", "arm"],
+}
+
+
+STATE_FROM_MASTER = {
+    "active_keys": MODE_TO_ACTIVE_KEYS["1"],
+}
 
 STATE_FROM_SELF = {
     "frame": None,
