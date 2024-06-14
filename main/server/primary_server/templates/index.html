@@ -607,6 +607,7 @@ input[type="range"] {
         // ms_offset also takes into account ping
         let ms_offset = 0;
         let lowest_calibrated_ping = -1;
+        let LOWEST_PING_BUFFER = 5;
         let calibrated = false;
 
         let connected = false;
@@ -680,19 +681,19 @@ input[type="range"] {
                     const now = now_ms();
 
                     const current_ping = now - start_ms;
-                    if (lowest_calibrated_ping < 0 || current_ping < lowest_calibrated_ping) {
+                    if (lowest_calibrated_ping < 0 || current_ping < lowest_calibrated_ping + LOWEST_PING_BUFFER) {
                         lowest_calibrated_ping = current_ping;
+
+                        const ms = data * 1000;
+                        const diff = now - ms;
+
+                        ms_offset = diff - lowest_calibrated_ping / 2;
+
+                        fetchAndInfo(PRIMARY_FLASK_SERVER + "time_offset/" + ms_offset);
+
+                        const calibration_ele = document.getElementById("calibration");
+                        calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS (ping: ${lowest_calibrated_ping.toFixed(0)} MS)`;
                     }
-
-                    const ms = data * 1000;
-                    const diff = now - ms;
-
-                    ms_offset = diff - lowest_calibrated_ping / 2;
-
-                    fetchAndInfo(PRIMARY_FLASK_SERVER + "time_offset/" + ms_offset);
-
-                    const calibration_ele = document.getElementById("calibration");
-                    calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS (ping: ${lowest_calibrated_ping.toFixed(0)} MS)`;
                 });
         }
 
