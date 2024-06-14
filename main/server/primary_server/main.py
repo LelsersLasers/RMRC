@@ -120,8 +120,6 @@ def process(primary_server_dq, primary_server_motor_dq):
     
     @app.route("/get", methods=["GET"])
     def get():
-        start = time.time()
-
         primary_server_ds.update_s1(primary_server_dq)
         primary_server_motor_ds.update_s2(primary_server_motor_dq)
         
@@ -139,9 +137,6 @@ def process(primary_server_dq, primary_server_motor_dq):
 
         fps_controller.update()
         primary_server_ds.s1["fpses"][-1] = fps_controller.fps()
-
-        end = time.time()
-        print("GET:", (end - start) * 1000, "ms")
 
 
         frames_dict = primary_server_ds.s1["frames"].copy()
