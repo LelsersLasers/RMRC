@@ -5,7 +5,7 @@ import camera.consts
 
 
 def process(camera_dq, key):
-    camera_ds = shared_util.DoubleState(camera.consts.STATE_FROM_SELF)
+    camera_ds = shared_util.DoubleState(camera.consts.STATE_FROM_MASTER, camera.consts.STATE_FROM_SELF)
 
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
@@ -19,7 +19,7 @@ def process(camera_dq, key):
             fps_controller.update()
             camera_ds.s2["fps"] = fps_controller.fps()
             
-            if cap is None and key in camera_ds.s1["active_keys"]:
+            if cap is None and (key in camera_ds.s1["active_keys"] or key is None):
                 # not open and should be open
                 print(f"Opening camera {key}...")
                 time.sleep(camera.consts.CAMERA_WAIT_AFTER_ACTIVE)
@@ -38,12 +38,7 @@ def process(camera_dq, key):
                 print(f"Camera {key} opened.")
 
                 time.sleep(camera.consts.CAMERA_WAKEUP_TIME)
-            elif cap is not None and key not in camera_ds.s1["active_keys"]:
-                # open and should be closed
-                print(f"Releasing camera {key}...")
-                cap.release()
-                cap = None
-            elif cap is not None and key in camera_ds.s1["active_keys"]:
+            elif cap is not None and (key in camera_ds.s1["active_keys"] or key is None):
                 # open and should be open
                 ret, frame = cap.read()
                 if not ret or frame is None:
@@ -58,6 +53,11 @@ def process(camera_dq, key):
 
                 camera_ds.s2["time"] = time.time()
                 camera_ds.s2["frame"] = frame
+            elif cap is not None and key not in camera_ds.s1["active_keys"]:
+                # open and should be closed
+                print(f"Releasing camera {key}...")
+                cap.release()
+                cap = None
             elif cap is None and key not in camera_ds.s1["active_keys"]:
                 # not open and should be closed
                 time.sleep(1 / camera.consts.DRY_FPS)
