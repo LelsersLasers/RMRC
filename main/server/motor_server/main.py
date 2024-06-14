@@ -1,6 +1,8 @@
 import flask
 import logging
 
+import time
+
 import threading
 
 import shared_util
@@ -17,6 +19,15 @@ def process(motor_server_motor_dq):
     motor_server_motor_ds = shared_util.DoubleState(server.motor_server.consts.STATE_FROM_SELF, server.motor_server.consts.STATE_FROM_MOTORS)
 
     motor_server_motor_s1_lock = threading.Lock()
+
+    # ------------------------------------------------------------------------ #
+    @app.route("/server_time", methods=["GET"])
+    def server_time():
+        now = time.time()
+        response = flask.jsonify(now)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+    # ------------------------------------------------------------------------ #
 
     # ------------------------------------------------------------------------ #
     @app.route("/power_percent/<decimal>", methods=["GET"])

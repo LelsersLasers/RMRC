@@ -675,7 +675,7 @@ input[type="range"] {
         function calibrate() {
             const path = "server_time"
             const start_ms = now_ms();
-            fetch(PRIMARY_FLASK_SERVER + path)
+            fetch(MOTOR_FLASK_SERVER + path)
                 .then(response => response.json())
                 .then(data => {
                     const now = now_ms();
