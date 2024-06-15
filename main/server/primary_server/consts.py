@@ -2,10 +2,10 @@ PORT = 5000
 
 STATE_FROM_MASTER = {
     "frames": {
-        "webcam1": "",
-        "arm": "",
-        "webcam2": "",
-        "detection_ir": "",
+        "base_key": "",
+        "alt_key": "",
+        "ir": "",
+        "detection": "",
     },
     
     "hazmats_found": [],
