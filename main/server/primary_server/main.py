@@ -2,6 +2,7 @@ import time
 
 import flask
 import logging
+import json
 
 import threading
 
@@ -113,34 +114,40 @@ def process(primary_server_dq, primary_server_motor_dq):
     
     @app.route("/get", methods=["GET"])
     def get():
-        primary_server_ds.update_s1(primary_server_dq)
-        primary_server_motor_ds.update_s2(primary_server_motor_dq)
-        
-        # Note: a pickled dict is directly put into q2 instead of the original dict
-        unpickled_server_motor_ds_s2 = pickle.loads(primary_server_motor_ds.s2)
+        def generate():
+            while True:
+                primary_server_ds.update_s1(primary_server_dq)
+                primary_server_motor_ds.update_s2(primary_server_motor_dq)
+                
+                # Note: a pickled dict is directly put into q2 instead of the original dict
+                unpickled_server_motor_ds_s2 = pickle.loads(primary_server_motor_ds.s2)
 
-        with primary_server_motor_s1_lock:
-            primary_server_motor_ds.s1["last_get"] = time.time()
-            primary_server_motor_ds.put_s1(primary_server_motor_dq)
+                with primary_server_motor_s1_lock:
+                    primary_server_motor_ds.s1["last_get"] = time.time()
+                    primary_server_motor_ds.put_s1(primary_server_motor_dq)
 
-        # combine main info with motor info
-        primary_server_ds.s1.update(unpickled_server_motor_ds_s2)
-        primary_server_ds.s1["fpses"][-3] = unpickled_server_motor_ds_s2["motor_fps"]
-        primary_server_ds.s1["fpses"][-2] = unpickled_server_motor_ds_s2["arm_reader_fps"]
+                # combine main info with motor info
+                primary_server_ds.s1.update(unpickled_server_motor_ds_s2)
+                primary_server_ds.s1["fpses"][-3] = unpickled_server_motor_ds_s2["motor_fps"]
+                primary_server_ds.s1["fpses"][-2] = unpickled_server_motor_ds_s2["arm_reader_fps"]
 
-        fps_controller.update()
-        primary_server_ds.s1["fpses"][-1] = fps_controller.fps()
-
-
-        frames_dict = primary_server_ds.s1["frames"].copy()
-        response_dict = primary_server_ds.s1.copy()
-        response_dict["frames"] = frames_dict
-
-        for key in primary_server_ds.s1["frames"]:
-            primary_server_ds.s1["frames"][key] = ""
+                fps_controller.update()
+                primary_server_ds.s1["fpses"][-1] = fps_controller.fps()
 
 
-        return server.util.create_response(response_dict)
+                frames_dict = primary_server_ds.s1["frames"].copy()
+                response_dict = primary_server_ds.s1.copy()
+                response_dict["frames"] = frames_dict
+
+                for key in primary_server_ds.s1["frames"]:
+                    primary_server_ds.s1["frames"][key] = ""
+
+                # yield response_dict
+                yield json.dumps(response_dict)
+                time.sleep(1/30)
+
+            return flask.Response(generate(), mimetype="application/json", headers={"Access-Control-Allow-Origin": "*"})
+            # return server.util.create_response(response_dict)
 
 
     app.run(debug=False, port=server.primary_server.consts.PORT, host="0.0.0.0", threaded=True, processes=1)

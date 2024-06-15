@@ -709,323 +709,341 @@ input[type="range"] {
                 });
         }
 
-        function main_get() {
+        async function main_get() {
             const path = "get";
-            const start_ms = now_ms();
-
-            t1 = start_ms;
-            delta = (t1 - t0) / 1000;
-            t0 = t1;
-
-            fetch(PRIMARY_FLASK_SERVER + path)
-                .then(response => response.json())
-                .then(data => {
-                    try {
-                        try_connect();
-                        try_calibrate();
-
-                        frames += 1;
-
-                        const now = now_ms();
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const fpses = data["fpses"];
-                        const fps_values = [...fpses, 1 / delta];
-
-                        const max_fps = Math.max(...fps_values);
-                        max_fpses.push(max_fps);
-                        max_fpses = max_fpses.slice(-MAX_LEN * frontend_fps);
-                        const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
-
-                        const fps_ids = ["webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend", "frontend"];
-
-                        for (let i = 0; i < fps_ids.length; i++) {
-                            const fps_id = fps_ids[i];
-                            const fps = fps_values[i];
-                            const ele_id = "fps-" + fps_id;
-
-                            const fps_ele = document.getElementById(ele_id);
-                            fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
-
-                            const fps_bar = document.getElementById(ele_id + "-bar");
-                            const ratio = Math.min(fps / max_ratio_fps, 1.0);
-                            fps_bar.style.width = ratio * 100 + "%";
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const invert_mod = invert ? -1 : 1;
-
-                        const motors = data["motors"];
-                        const motors_ids = ["left", "right"];
-                        for (let i = 0; i < motors_ids.length; i++) {
-                            const motors_id = motors_ids[i];
-
-                            const target  = motors["target"][motors_id]  * 100 * invert_mod * power_percent / 100;
-                            const current = motors["current"][motors_id] * 100 * invert_mod;
-
-                            const current_abs = Math.abs(current);
-                            const target_abs  = Math.abs(target);
-
-                            const outer_width = Math.max(current_abs, target_abs);
-                            const inner_width_raw = Math.min(current_abs, target_abs);
-                            const inner_width = inner_width_raw / outer_width * 100;
-
-                            const output_id = invert ? (motors_id == "left" ? "right" : "left") : motors_id;
-                            const outer_ele = document.getElementById(output_id + "-outer-bar");
-                            outer_ele.style.width = outer_width + "%";
-                            const inner_ele = document.getElementById(output_id + "-inner-bar");
-                            inner_ele.style.width = inner_width + "%";
-
-                            const motor_ele = document.getElementById("motor-" + output_id);
-
-                            // 7: 0-100 (3) + "." + 2 decimal places + sign
-                            const current_text = current.toFixed(2).padStart(7, " ");
-                            const target_text  = target .toFixed(2).padStart(7, " ");
-                            motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${output_id})`;
-
-                            let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
-                            let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
-
-                            target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
-                            current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
-
-                            if (target < 0)  { target_ele.classList.add("backward-dark");   }
-                            else             { target_ele.classList.add("forward-dark");    }
-                            if (current < 0) { current_ele.classList.add("backward-light"); }
-                            else             { current_ele.classList.add("forward-light");  }
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const arm = data["arm"];
-                        const arm_ids = ["j1", "j2", "j3"];
-                        for (let i = 0; i < arm_ids.length; i++) {
-                            const arm_id = arm_ids[i];
-
-                            const target  = parseFloat(arm["target"][arm_id]);
-                            const current = parseFloat(arm["current"][arm_id]);
-
-                            const current_abs = Math.abs(current) / 4096 * 100;
-                            const target_abs  = Math.abs(target)  / 4096 * 100;
-
-                            const outer_width = Math.max(current_abs, target_abs);
-                            const inner_width_raw = Math.min(current_abs, target_abs);
-                            const inner_width = inner_width_raw / outer_width * 100;
-
-                            const outer_ele = document.getElementById(arm_id + "-outer-bar");
-                            outer_ele.style.width = outer_width + "%";
-                            const inner_ele = document.getElementById(arm_id + "-inner-bar");
-                            inner_ele.style.width = inner_width + "%";
-
-                            const arm_ele = document.getElementById("arm-" + arm_id);
-
-                            // 5: 0-4096 (4)
-                            const current_text = current.toFixed(0).padStart(4, " ");
-                            const target_text  = target .toFixed(0).padStart(4, " ");
-                            arm_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
-
-                            let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
-                            let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
-
-                            target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
-                            current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
-
-                            if (!arm["active"]) { target_ele.classList.add("backward-dark");   }
-                            else                { target_ele.classList.add("forward-dark");    }
-                            if (!arm["active"]) { current_ele.classList.add("backward-light"); }
-                            else                { current_ele.classList.add("forward-light");  }
-                        }
-                        // -------------------------------------------------- //
-                        
-                        // -------------------------------------------------- //
-                        const stats_ids = ["cpu", "gpu", "ram"];
-
-                        for (let i = 0; i < stats_ids.length; i++) {
-                            const stats_id = stats_ids[i];
-                            const stat = data["stats"][stats_id];
-
-                            const ele_id = "stats-" + stats_id;
-                            const stat_ele = document.getElementById(ele_id);
-
-                            if (stats_id == "ram") {
-                                const swap = data["stats"]["swap"];
-                                stat_ele.innerHTML = `${stat.toFixed(1)}% (${swap.toFixed(1)}%) (ram/swap)`;
-                            } else {
-                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
-                            }
-
-                            const stat_bar = document.getElementById(ele_id + "-bar");
-                            stat_bar.style.width = stat + "%";
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const time_ids = ["hazmat", "qr", "motion"];
-
-                        for (let i = 0; i < time_ids.length; i++) {
-                            const time_id = time_ids[i];
-                            const time = data["time_bars"][time_id];
-                            const time_value = time > 0 ? time * 1000 : -1;
-
-                            const ele_id = "time-" + time_id;
-
-                            const time_ele = document.getElementById(ele_id);
-                            time_ele.innerHTML = `${time_value.toFixed(0)} MS (${time_id})`;
-
-                            const time_bar = document.getElementById(ele_id + "-bar");
-                            const ratio = time_value / TIME_SCALES[time_id];
-                            const width = time > 0 ? (ratio * 100) : 100;
-                            time_bar.style.width = width + "%";
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const temp_ids = ["cpu", "gpu"];
-
-                        for (let i = 0; i < temp_ids.length; i++) {
-                            const temp_id = temp_ids[i];
-                            const temp = data["temps"][temp_id];
-
-                            const ele_id = "temp-" + temp_id;
-                            const temp_ele = document.getElementById(ele_id);
-
-                            temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
-
-                            const temp_bar = document.getElementById(ele_id + "-bar");
-                            temp_bar.style.width = temp + "%";
-
-                            const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
-                            temp_bar.classList.remove("temp-cold", "temp-cool", "temp-mid", "temp-warm", "temp-hot", "temp-boil");
-                            temp_bar.classList.add("temp-" + temp_level);
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const angle = data["angle"] == 0 ? 360 : data["angle"];
-                        const angle_ele = document.getElementById("angle");
-                        angle_ele.innerHTML = `${angle.toFixed(0)}°`;
-
-                        const angle_bar = document.getElementById("angle-bar");
-                        angle_bar.style.width = (angle / 360) * 100 + "%";
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const frames_ids = ["base_key", "alt_key", "ir", "detection"];
-                        for (let i = 0; i < frames_ids.length; i++) {
-                            const frame_id = frames_ids[i];
-                            const frame = data["frames"][frame_id];
-                            // console.log(frame);
-                            if (frame != "") {
-                                const frame_ele = document.getElementById(frame_id);
-                                frame_ele.src = "data:image/jpeg;base64," + frame;
-                            }
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const hazmats_ele = document.getElementById("found-hazmat");
-                        const hazmats = [...new Set(data["hazmats_found"])];
-                        hazmats_ele.innerHTML = hazmats.sort().join("<br />");
-
-                        const qrs_ele = document.getElementById("found-qr");
-                        const qrs = [...new Set(data["qr_found"])];
-                        qrs_ele.innerHTML = qrs.sort().join("<br />");
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const ratio = (view_mode == 0 || super_zoom) ? GRID_FRAME_RATIO : ZOOM_FRAME_RATIO;
-
-                        const EM = 16; // 1em = 16px (usually)
-                        const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - (show_sidebar ? 3 : 2) * EM;
-                        const max_h = window.innerHeight - 2 * EM;
-
-                        const w = Math.min(max_w, max_h * ratio);
-                        const h = Math.min(max_h, max_w / ratio);
-                        
-                        const frameholder_ele = document.getElementById("frameholder");
-                        frameholder_ele.style.width = w + "px";
-                        frameholder_ele.style.height = h + "px";
-
-                        const sidebar_w = (window.innerWidth - w - 5 * EM) * (show_sidebar ? 1 : 0);
-                        const sidebar_ele = document.getElementById("sidebar");
-                        sidebar_ele.style.width = sidebar_w + "px";
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const ms = data["time"] * 1000;
-                        const diff = now - ms - ms_offset;
-                        const inital_delay = diff.toFixed(0);
-
-                        const arm_delay_float = data["arm_delay"] * 1000;
-                        const arm_delay = arm_delay_float.toFixed(0);
-
-                        delays.push(diff);
-                        delays = delays.slice(-MAX_LEN * frontend_fps);
-                        const average = delays.reduce((a, b) => a + b, 0) / delays.length;
-                        const average_delay = average.toFixed(0);
-
-                        const ping = now - start_ms;
-                        const ping_delay = ping.toFixed(0);
-
-                        const max_delay = Math.max(inital_delay, average_delay, ping_delay, arm_delay, DELAY_RATIO_BASE);
-                        max_delays.push(max_delay);
-                        max_delays = max_delays.slice(-MAX_LEN * frontend_fps);
-                        const max_ratio_delay = Math.max(...max_delays);
-
-                        if (last_frame != data["frames"]["base_key"]) {
-                            last_frame = data["frames"]["base_key"];
-
-                            const delay_inital_ele = document.getElementById("delay-inital");
-                            delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
-                            const delaybar_inital = document.getElementById("delay-inital-bar");
-                            delaybar_inital.style.width = (inital_delay / max_ratio_delay) * 100 + "%";
-                        }
-
-                        const delay_ids = ["total", "ping", "arm"];
-                        const delay_values = [average_delay, ping_delay, arm_delay];
-                        for (let i = 0; i < delay_ids.length; i++) {
-                            const delay_id = delay_ids[i];
-                            const delay_value = delay_values[i];
-
-                            const delay_ele = document.getElementById("delay-" + delay_id);
-                            delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
-                            const delaybar = document.getElementById("delay-" + delay_id + "-bar");
-                            delaybar.style.width = (delay_value / max_ratio_delay) * 100 + "%";
-                        }
-                        // -------------------------------------------------- //
-                    } catch (e) {
-                        console.log(e);
-                    }
-                })
-                .catch(e => {
-                    console.log(`fetch 'get' failed: ${e}`);
-                    
-                    calibrated = false;
-                    connected = false;
-
-                    run_hazmat = false;
-                    run_qr = false;
-                    run_motion = false;
-
-                    const time_bar_ids = ["hazmat", "qr", "motion"];
-                    for (let i = 0; i < time_bar_ids.length; i++) {
-                        const time_bar_id = time_bar_ids[i];
-                        const time_bar_ele = document.getElementById("time-" + time_bar_id + "-bar");
-                        time_bar_ele.classList.remove("time-bar-active");
-                        time_bar_ele.classList.add("time-bar-idle");
-                    }
-
-                    keys = {};
-                    display_keys();
-                    
-                    // Not reset when disconnected, but resent when reconnected
-                    // config_sliders, write_every_frame, invert, arm_active, camera_mode, power_percent
-                });
-            setTimeout(main_get, 1000 / frontend_fps);
+            const response = fetch(PRIMARY_FLASK_SERVER + path);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const text = decoder.decode(value, { stream: true });
+                const json = JSON.parse(text);
+                console.log(json);
+            }
         }
-        setTimeout(main_get, 1000 / frontend_fps);
+
+        main_get();
+
+        // function main_get() {
+        //     const path = "get";
+        //     const start_ms = now_ms();
+
+        //     t1 = start_ms;
+        //     delta = (t1 - t0) / 1000;
+        //     t0 = t1;
+
+        //     fetch(PRIMARY_FLASK_SERVER + path)
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             try {
+        //                 try_connect();
+        //                 try_calibrate();
+
+        //                 frames += 1;
+
+        //                 const now = now_ms();
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const fpses = data["fpses"];
+        //                 const fps_values = [...fpses, 1 / delta];
+
+        //                 const max_fps = Math.max(...fps_values);
+        //                 max_fpses.push(max_fps);
+        //                 max_fpses = max_fpses.slice(-MAX_LEN * frontend_fps);
+        //                 const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
+
+        //                 const fps_ids = ["webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend", "frontend"];
+
+        //                 for (let i = 0; i < fps_ids.length; i++) {
+        //                     const fps_id = fps_ids[i];
+        //                     const fps = fps_values[i];
+        //                     const ele_id = "fps-" + fps_id;
+
+        //                     const fps_ele = document.getElementById(ele_id);
+        //                     fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
+
+        //                     const fps_bar = document.getElementById(ele_id + "-bar");
+        //                     const ratio = Math.min(fps / max_ratio_fps, 1.0);
+        //                     fps_bar.style.width = ratio * 100 + "%";
+        //                 }
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const invert_mod = invert ? -1 : 1;
+
+        //                 const motors = data["motors"];
+        //                 const motors_ids = ["left", "right"];
+        //                 for (let i = 0; i < motors_ids.length; i++) {
+        //                     const motors_id = motors_ids[i];
+
+        //                     const target  = motors["target"][motors_id]  * 100 * invert_mod * power_percent / 100;
+        //                     const current = motors["current"][motors_id] * 100 * invert_mod;
+
+        //                     const current_abs = Math.abs(current);
+        //                     const target_abs  = Math.abs(target);
+
+        //                     const outer_width = Math.max(current_abs, target_abs);
+        //                     const inner_width_raw = Math.min(current_abs, target_abs);
+        //                     const inner_width = inner_width_raw / outer_width * 100;
+
+        //                     const output_id = invert ? (motors_id == "left" ? "right" : "left") : motors_id;
+        //                     const outer_ele = document.getElementById(output_id + "-outer-bar");
+        //                     outer_ele.style.width = outer_width + "%";
+        //                     const inner_ele = document.getElementById(output_id + "-inner-bar");
+        //                     inner_ele.style.width = inner_width + "%";
+
+        //                     const motor_ele = document.getElementById("motor-" + output_id);
+
+        //                     // 7: 0-100 (3) + "." + 2 decimal places + sign
+        //                     const current_text = current.toFixed(2).padStart(7, " ");
+        //                     const target_text  = target .toFixed(2).padStart(7, " ");
+        //                     motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${output_id})`;
+
+        //                     let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
+        //                     let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
+
+        //                     target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+        //                     current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+
+        //                     if (target < 0)  { target_ele.classList.add("backward-dark");   }
+        //                     else             { target_ele.classList.add("forward-dark");    }
+        //                     if (current < 0) { current_ele.classList.add("backward-light"); }
+        //                     else             { current_ele.classList.add("forward-light");  }
+        //                 }
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const arm = data["arm"];
+        //                 const arm_ids = ["j1", "j2", "j3"];
+        //                 for (let i = 0; i < arm_ids.length; i++) {
+        //                     const arm_id = arm_ids[i];
+
+        //                     const target  = parseFloat(arm["target"][arm_id]);
+        //                     const current = parseFloat(arm["current"][arm_id]);
+
+        //                     const current_abs = Math.abs(current) / 4096 * 100;
+        //                     const target_abs  = Math.abs(target)  / 4096 * 100;
+
+        //                     const outer_width = Math.max(current_abs, target_abs);
+        //                     const inner_width_raw = Math.min(current_abs, target_abs);
+        //                     const inner_width = inner_width_raw / outer_width * 100;
+
+        //                     const outer_ele = document.getElementById(arm_id + "-outer-bar");
+        //                     outer_ele.style.width = outer_width + "%";
+        //                     const inner_ele = document.getElementById(arm_id + "-inner-bar");
+        //                     inner_ele.style.width = inner_width + "%";
+
+        //                     const arm_ele = document.getElementById("arm-" + arm_id);
+
+        //                     // 5: 0-4096 (4)
+        //                     const current_text = current.toFixed(0).padStart(4, " ");
+        //                     const target_text  = target .toFixed(0).padStart(4, " ");
+        //                     arm_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
+
+        //                     let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
+        //                     let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
+
+        //                     target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+        //                     current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+
+        //                     if (!arm["active"]) { target_ele.classList.add("backward-dark");   }
+        //                     else                { target_ele.classList.add("forward-dark");    }
+        //                     if (!arm["active"]) { current_ele.classList.add("backward-light"); }
+        //                     else                { current_ele.classList.add("forward-light");  }
+        //                 }
+        //                 // -------------------------------------------------- //
+                        
+        //                 // -------------------------------------------------- //
+        //                 const stats_ids = ["cpu", "gpu", "ram"];
+
+        //                 for (let i = 0; i < stats_ids.length; i++) {
+        //                     const stats_id = stats_ids[i];
+        //                     const stat = data["stats"][stats_id];
+
+        //                     const ele_id = "stats-" + stats_id;
+        //                     const stat_ele = document.getElementById(ele_id);
+
+        //                     if (stats_id == "ram") {
+        //                         const swap = data["stats"]["swap"];
+        //                         stat_ele.innerHTML = `${stat.toFixed(1)}% (${swap.toFixed(1)}%) (ram/swap)`;
+        //                     } else {
+        //                         stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
+        //                     }
+
+        //                     const stat_bar = document.getElementById(ele_id + "-bar");
+        //                     stat_bar.style.width = stat + "%";
+        //                 }
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const time_ids = ["hazmat", "qr", "motion"];
+
+        //                 for (let i = 0; i < time_ids.length; i++) {
+        //                     const time_id = time_ids[i];
+        //                     const time = data["time_bars"][time_id];
+        //                     const time_value = time > 0 ? time * 1000 : -1;
+
+        //                     const ele_id = "time-" + time_id;
+
+        //                     const time_ele = document.getElementById(ele_id);
+        //                     time_ele.innerHTML = `${time_value.toFixed(0)} MS (${time_id})`;
+
+        //                     const time_bar = document.getElementById(ele_id + "-bar");
+        //                     const ratio = time_value / TIME_SCALES[time_id];
+        //                     const width = time > 0 ? (ratio * 100) : 100;
+        //                     time_bar.style.width = width + "%";
+        //                 }
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const temp_ids = ["cpu", "gpu"];
+
+        //                 for (let i = 0; i < temp_ids.length; i++) {
+        //                     const temp_id = temp_ids[i];
+        //                     const temp = data["temps"][temp_id];
+
+        //                     const ele_id = "temp-" + temp_id;
+        //                     const temp_ele = document.getElementById(ele_id);
+
+        //                     temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
+
+        //                     const temp_bar = document.getElementById(ele_id + "-bar");
+        //                     temp_bar.style.width = temp + "%";
+
+        //                     const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
+        //                     temp_bar.classList.remove("temp-cold", "temp-cool", "temp-mid", "temp-warm", "temp-hot", "temp-boil");
+        //                     temp_bar.classList.add("temp-" + temp_level);
+        //                 }
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const angle = data["angle"] == 0 ? 360 : data["angle"];
+        //                 const angle_ele = document.getElementById("angle");
+        //                 angle_ele.innerHTML = `${angle.toFixed(0)}°`;
+
+        //                 const angle_bar = document.getElementById("angle-bar");
+        //                 angle_bar.style.width = (angle / 360) * 100 + "%";
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const frames_ids = ["base_key", "alt_key", "ir", "detection"];
+        //                 for (let i = 0; i < frames_ids.length; i++) {
+        //                     const frame_id = frames_ids[i];
+        //                     const frame = data["frames"][frame_id];
+        //                     // console.log(frame);
+        //                     if (frame != "") {
+        //                         const frame_ele = document.getElementById(frame_id);
+        //                         frame_ele.src = "data:image/jpeg;base64," + frame;
+        //                     }
+        //                 }
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const hazmats_ele = document.getElementById("found-hazmat");
+        //                 const hazmats = [...new Set(data["hazmats_found"])];
+        //                 hazmats_ele.innerHTML = hazmats.sort().join("<br />");
+
+        //                 const qrs_ele = document.getElementById("found-qr");
+        //                 const qrs = [...new Set(data["qr_found"])];
+        //                 qrs_ele.innerHTML = qrs.sort().join("<br />");
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const ratio = (view_mode == 0 || super_zoom) ? GRID_FRAME_RATIO : ZOOM_FRAME_RATIO;
+
+        //                 const EM = 16; // 1em = 16px (usually)
+        //                 const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - (show_sidebar ? 3 : 2) * EM;
+        //                 const max_h = window.innerHeight - 2 * EM;
+
+        //                 const w = Math.min(max_w, max_h * ratio);
+        //                 const h = Math.min(max_h, max_w / ratio);
+                        
+        //                 const frameholder_ele = document.getElementById("frameholder");
+        //                 frameholder_ele.style.width = w + "px";
+        //                 frameholder_ele.style.height = h + "px";
+
+        //                 const sidebar_w = (window.innerWidth - w - 5 * EM) * (show_sidebar ? 1 : 0);
+        //                 const sidebar_ele = document.getElementById("sidebar");
+        //                 sidebar_ele.style.width = sidebar_w + "px";
+        //                 // -------------------------------------------------- //
+
+        //                 // -------------------------------------------------- //
+        //                 const ms = data["time"] * 1000;
+        //                 const diff = now - ms - ms_offset;
+        //                 const inital_delay = diff.toFixed(0);
+
+        //                 const arm_delay_float = data["arm_delay"] * 1000;
+        //                 const arm_delay = arm_delay_float.toFixed(0);
+
+        //                 delays.push(diff);
+        //                 delays = delays.slice(-MAX_LEN * frontend_fps);
+        //                 const average = delays.reduce((a, b) => a + b, 0) / delays.length;
+        //                 const average_delay = average.toFixed(0);
+
+        //                 const ping = now - start_ms;
+        //                 const ping_delay = ping.toFixed(0);
+
+        //                 const max_delay = Math.max(inital_delay, average_delay, ping_delay, arm_delay, DELAY_RATIO_BASE);
+        //                 max_delays.push(max_delay);
+        //                 max_delays = max_delays.slice(-MAX_LEN * frontend_fps);
+        //                 const max_ratio_delay = Math.max(...max_delays);
+
+        //                 if (last_frame != data["frames"]["base_key"]) {
+        //                     last_frame = data["frames"]["base_key"];
+
+        //                     const delay_inital_ele = document.getElementById("delay-inital");
+        //                     delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
+        //                     const delaybar_inital = document.getElementById("delay-inital-bar");
+        //                     delaybar_inital.style.width = (inital_delay / max_ratio_delay) * 100 + "%";
+        //                 }
+
+        //                 const delay_ids = ["total", "ping", "arm"];
+        //                 const delay_values = [average_delay, ping_delay, arm_delay];
+        //                 for (let i = 0; i < delay_ids.length; i++) {
+        //                     const delay_id = delay_ids[i];
+        //                     const delay_value = delay_values[i];
+
+        //                     const delay_ele = document.getElementById("delay-" + delay_id);
+        //                     delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
+        //                     const delaybar = document.getElementById("delay-" + delay_id + "-bar");
+        //                     delaybar.style.width = (delay_value / max_ratio_delay) * 100 + "%";
+        //                 }
+        //                 // -------------------------------------------------- //
+        //             } catch (e) {
+        //                 console.log(e);
+        //             }
+        //         })
+        //         .catch(e => {
+        //             console.log(`fetch 'get' failed: ${e}`);
+                    
+        //             calibrated = false;
+        //             connected = false;
+
+        //             run_hazmat = false;
+        //             run_qr = false;
+        //             run_motion = false;
+
+        //             const time_bar_ids = ["hazmat", "qr", "motion"];
+        //             for (let i = 0; i < time_bar_ids.length; i++) {
+        //                 const time_bar_id = time_bar_ids[i];
+        //                 const time_bar_ele = document.getElementById("time-" + time_bar_id + "-bar");
+        //                 time_bar_ele.classList.remove("time-bar-active");
+        //                 time_bar_ele.classList.add("time-bar-idle");
+        //             }
+
+        //             keys = {};
+        //             display_keys();
+                    
+        //             // Not reset when disconnected, but resent when reconnected
+        //             // config_sliders, write_every_frame, invert, arm_active, camera_mode, power_percent
+        //         });
+        //     setTimeout(main_get, 1000 / frontend_fps);
+        // }
+        // setTimeout(main_get, 1000 / frontend_fps);
 
 
         function invertCheckbox() {
