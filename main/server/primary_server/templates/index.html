@@ -711,17 +711,28 @@ input[type="range"] {
 
         async function main_get() {
             const path = "get";
-            const response = fetch(PRIMARY_FLASK_SERVER + path);
+            const response = await fetch(PRIMARY_FLASK_SERVER + path);
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+
+            let buffer = "";
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
+                buffer += decoder.decode(value, { stream: true });
 
-                const text = decoder.decode(value, { stream: true });
-                const json = JSON.parse(text);
-                console.log(json);
+                let boundary = buffer.indexOf("\n");
+                while (boundary != -1) {
+                    const chunk = buffer.slice(0, boundary).trim();
+                    buffer = buffer.slice(boundary + 1);
+
+                    if (chunk) {
+                        const data = JSON.parse(chunk);
+                    }
+
+                    boundary = buffer.indexOf("\n");
+                }
             }
         }
 

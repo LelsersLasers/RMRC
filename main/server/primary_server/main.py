@@ -143,11 +143,10 @@ def process(primary_server_dq, primary_server_motor_dq):
                     primary_server_ds.s1["frames"][key] = ""
 
                 # yield response_dict
-                yield json.dumps(response_dict)
+                yield json.dumps(response_dict) + "\n"
                 time.sleep(1/30)
 
-            return flask.Response(generate(), mimetype="application/json", headers={"Access-Control-Allow-Origin": "*"})
-            # return server.util.create_response(response_dict)
+        return generate(), {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
 
 
     app.run(debug=False, port=server.primary_server.consts.PORT, host="0.0.0.0", threaded=True, processes=1)
