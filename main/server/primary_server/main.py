@@ -142,6 +142,8 @@ def process(primary_server_dq, primary_server_motor_dq):
                 fps_controller.update()
                 primary_server_ds.s1["fpses"][-1] = fps_controller.fps()
 
+                primary_server_ds.s1["ping_time"] = time.time()
+
 
                 frames_dict = primary_server_ds.s1["frames"].copy()
                 response_dict = primary_server_ds.s1.copy()
@@ -150,7 +152,6 @@ def process(primary_server_dq, primary_server_motor_dq):
                 for key in primary_server_ds.s1["frames"]:
                     primary_server_ds.s1["frames"][key] = ""
 
-                # yield response_dict
                 yield json.dumps(response_dict) + "\n"
 
                 pass_time = time.time() - start

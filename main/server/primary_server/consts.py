@@ -1,3 +1,5 @@
+import time
+
 TIMES_TO_KEEP = 10
 
 PORT = 5000
@@ -9,6 +11,8 @@ STATE_FROM_MASTER = {
         "ir": "",
         "detection": "",
     },
+	"time": time.time(),
+	"ping_time": time.time(),
     
     "hazmats_found": [],
     "qr_found": [],
@@ -35,7 +39,7 @@ STATE_FROM_MASTER = {
         "hazmat": 0,
         "qr": 0,
         "motion": 0,
-    }
+    },
 }
 STATE_FROM_SELF = {
     "run": {

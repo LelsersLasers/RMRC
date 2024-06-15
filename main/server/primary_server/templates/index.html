@@ -1022,8 +1022,7 @@ input[type="range"] {
                 const average = delays.reduce((a, b) => a + b, 0) / delays.length;
                 const average_delay = average.toFixed(0);
 
-                // const ping = now - start_ms;
-                const ping = now - now;
+                const ping = now - data["ping_time"] * 1000 - ms_offset;
                 const ping_delay = ping.toFixed(0);
 
                 const max_delay = Math.max(inital_delay, average_delay, ping_delay, arm_delay, DELAY_RATIO_BASE);
