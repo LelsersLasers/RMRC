@@ -1,13 +1,13 @@
 import time
 
 # FPS for when not running detection
-DRY_FPS = 10
+DRY_FPS = 2
 
 
-STATE_FROM_SERVER = {
+STATE_FROM_MASTER = {
     "frame": None, # latest primary camera frame
-	"average_frame": None,
-	
+    "average_frame": None,
+    
     "run": {
         "hazmat": False,
         "qr": False,
@@ -17,10 +17,10 @@ STATE_FROM_SERVER = {
         "hazmat": 0,
         "qr": 0,
     },
-	
+    
     "hazmat_levenshtein_thresh": 0.4,
     "hazmat_angle_change": 90,
-	
+    
     "motion_min_area": 500,
     "motion_threshold": 65,
     "motion_new_frame_weight": 0.4,

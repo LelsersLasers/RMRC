@@ -7,7 +7,7 @@
     <title>Knight Sky Control Panel</title>
     <meta
         name="description"
-        content="Camera feeds: 2 webcams, ir, and hazmat"
+        content="Main operating interface for The Bishop's School's Knight Sky RMRC robot"
     />
 
     <!-- Favicon -->
@@ -33,16 +33,19 @@ img {
     height: 100%;
 }
 
-.webcam1  { grid-column: 1/ 7; grid-row: 1/ 7; }
-.detection{ grid-column: 7/13; grid-row: 1/ 7; }
-.webcam2  { grid-column: 1/ 7; grid-row: 7/13; }
-.ir       { grid-column: 7/13; grid-row: 7/13; }
-.zoom     { grid-column: 1/13; grid-row: 4/13; }
-.slot1    { grid-column: 1/ 5; grid-row: 1/ 4; }
-.slot2    { grid-column: 5/ 9; grid-row: 1/ 4; }
-.slot3    { grid-column: 9/13; grid-row: 1/ 4; }
-.super    { grid-column: 1/13; grid-row: 1/13; }
-.none     { display: none; }
+.base_key  { grid-column: 1/ 7; grid-row: 1/ 7; }
+.alt_key   { grid-column: 7/13; grid-row: 1/ 7; }
+.ir        { grid-column: 1/ 7; grid-row: 7/13; }
+.detection { grid-column: 7/13; grid-row: 7/13; }
+.zoom      { grid-column: 1/13; grid-row: 4/13; }
+.slot1     { grid-column: 1/ 5; grid-row: 1/ 4; }
+.slot2     { grid-column: 5/ 9; grid-row: 1/ 4; }
+.slot3     { grid-column: 9/13; grid-row: 1/ 4; }
+.super     { grid-column: 1/13; grid-row: 1/13; }
+.none      { display: none; }
+.flip      { transform: scale(-1); }
+/* .flip         { transform: rotateX(180deg); } */
+
 
 #frameholder {
     display: grid;
@@ -134,7 +137,8 @@ span {
 
 #delay-inital-bar { background-color: #BF616A; }
 #delay-total-bar  { background-color: #BF616A; }
-#delay-ping-bar   { background-color: #BF616A; }
+#delay-ping-bar   { background-color: #D08770; }
+#delay-arm-bar    { background-color: #A3BE8C; }
 
 
 .forward-light  { background-color: #bfd1ae; }
@@ -142,20 +146,23 @@ span {
 .backward-light { background-color: #d29097; }
 .backward-dark  { background-color: #BF616A; }
 
-#fps-webcam1-bar  { background-color: #5E81AC; }
-#fps-detection-bar{ background-color: #81A1C1; }
-#fps-webcam2-bar  { background-color: #88C0D0; }
-#fps-ir-bar       { background-color: #8FBCBB; }
-#fps-master-bar   { background-color: #A3BE8C; }
-#fps-motor-bar    { background-color: #D08770; }
-#fps-backend-bar  { background-color: #BF616A; }
-#fps-frontend-bar { background-color: #B48EAD; }
+
+#fps-webcam1-bar   { background-color: #5E81AC; }
+#fps-webcam2-bar   { background-color: #81A1C1; }
+#fps-arm-bar       { background-color: #88C0D0; }
+#fps-detection-bar { background-color: #8FBCBB; }
+#fps-ir-bar        { background-color: #8FBCBB; }
+#fps-master-bar    { background-color: #A3BE8C; }
+#fps-motor-bar     { background-color: #BF616A; }
+#fps-armreader-bar { background-color: #D08770; }
+#fps-backend-bar   { background-color: #EBCB8B; }
+#fps-frontend-bar  { background-color: #B48EAD; }
 
 #stats-cpu-bar { background-color: #D08770; }
 #stats-gpu-bar { background-color: #D08770; }
 #stats-ram-bar { background-color: #EBCB8B; }
 
-.time-bar-idle	{ background-color: #5E81AC; }
+.time-bar-idle	 { background-color: #5E81AC; }
 .time-bar-active { background-color: #A3BE8C; }
 
 .temp-cold { background-color: #B48EAD; }
@@ -251,10 +258,10 @@ input[type="range"] {
     <div id="main">
         <div id="mainbar">
             <div id="frameholder">
-                <img id="webcam1" class="webcam1" />
+                <img id="base_key"  class="base_key"      />
+                <img id="alt_key"   class="alt_key"          />
+                <img id="ir"        class="ir"      />
                 <img id="detection" class="detection" />
-                <img id="webcam2" class="webcam2" />
-                <img id="ir" class="ir" />
             </div>
         <div id="sidebar">
             <h4>Delays</h4>
@@ -266,6 +273,9 @@ input[type="range"] {
             </div>
             <div class="bar" id="delay-ping-bar">
                 <span id="delay-ping">20 MS (ping)</span>
+            </div>
+            <div class="bar" id="delay-arm-bar">
+                <span id="delay-arm">50 MS (arm)</span>
             </div>
 
             <h4>Motors</h4>
@@ -294,24 +304,85 @@ input[type="range"] {
                 </div>
             </div>
 
+            <h4>Arm</h4>
+
+            <label class="pointer" for="armActive">Arm active:</label>
+            <input type="checkbox" id="armActive" oninput="armActiveCheckbox()" />
+
+            <br />
+
+            <div class="threebar-base blankbar" id="j1-outline-bar">
+                <div class="threebar-base" id="j1-outer-bar">
+                    <div class="threebar-base innerbar" id="j1-inner-bar">
+                        <span class="mono" id="arm-j1">   0 ~    0 (j1)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threebar-base blankbar" id="j2-outline-bar">
+                <div class="threebar-base" id="j2-outer-bar">
+                    <div class="threebar-base innerbar" id="j2-inner-bar">
+                        <span class="mono" id="arm-j2">   0 ~    0 (j2)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threebar-base blankbar" id="j3-outline-bar">
+                <div class="threebar-base" id="j3-outer-bar">
+                    <div class="threebar-base innerbar" id="j3-inner-bar">
+                        <span class="mono" id="arm-j3">   0 ~    0 (j3)</span>
+                    </div>
+                </div>
+            </div>
+
             <h4>FPS's</h4>
+
+            <label class="pointer" for="flipAltKey">Flip Alt Key:</label>
+            <input type="checkbox" id="flipAltKey" oninput="flipAltKeyCheckbox()" />
+
+            <br />
+
+            <label for="cameraMode">Camera Mode:</label>
+            <br />
+
+            <input type="radio" id="cameraMode1" name="cameraMode" value="1" checked onchange="cameraModeChange(1)">
+            <label class="pointer"for="cameraMode1">Webcam 1 & Webcam 2</label>
+            <br />
+            <input type="radio" id="cameraMode2" name="cameraMode" value="2" onchange="cameraModeChange(2)">
+            <label class="pointer"for="cameraMode2">Webcam 1 & Arm</label>
+            <br/>  
+            <input type="radio" id="cameraMode3" name="cameraMode" value="3" onchange="cameraModeChange(3)">
+            <label class="pointer"for="cameraMode3">Arm & Webcam 1</label>
+            <br/>  
+            <input type="radio" id="cameraMode4" name="cameraMode" value="4" onchange="cameraModeChange(4)">
+            <label class="pointer" for="cameraMode4">Webcam 2 & Arm</label>
+
+            <br />
+            <br />
+
             <div class="bar" id="fps-webcam1-bar">
                 <span id="fps-webcam1">30 FPS (webcam1)</span>
-            </div>
-            <div class="bar" id="fps-detection-bar">
-                <span id="fps-detection">10 FPS (detection)</span>
             </div>
             <div class="bar" id="fps-webcam2-bar">
                 <span id="fps-webcam2">30 FPS (webcam2)</span>
             </div>
+            <div class="bar" id="fps-arm-bar">
+                <span id="fps-arm">30 FPS (arm)</span>
+            </div>
+            <div class="bar" id="fps-detection-bar">
+                <span id="fps-detection">10 FPS (detection)</span>
+            </div>
             <div class="bar" id="fps-ir-bar">
-                <span id="fps-ir">10 FPS (ir)</span>
+                <span id="fps-ir">20 FPS (ir)</span>
             </div>
             <div class="bar" id="fps-master-bar">
                 <span id="fps-master">200 FPS (master)</span>
             </div>
             <div class="bar" id="fps-motor-bar">
                 <span id="fps-motor">20 FPS (motor)</span>
+            </div>
+            <div class="bar" id="fps-armreader-bar">
+                <span id="fps-armreader">20 FPS (armreader)</span>
             </div>
             <div class="bar" id="fps-backend-bar">
                 <span id="fps-backend">30 FPS (backend)</span>
@@ -349,9 +420,6 @@ input[type="range"] {
             <div class="bar" id="temp-gpu-bar">
                 <span id="temp-gpu">0 °C (gpu)</span>
             </div>
-            <div class="bar" id="temp-aux-bar">
-                <span id="temp-aux">0 °C (aux)</span>
-            </div>
 
             <h4>Detected Hazmat Labels:</h4>
             <div class="bar" id="angle-bar">
@@ -367,13 +435,18 @@ input[type="range"] {
             <p>
                 Hold <kbd>wasd</kbd> or arrow keys to move the robot.<br />
                 Hold <kbd>z</kbd> to set all motor speeds to 0.<br />
+                Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
+                
                 Press <kbd>h</kbd> to toggle running hazmat detection.<br />
                 Press <kbd>r</kbd> to toggle running QR detection.<br />
                 Press <kbd>m</kbd> to toggle running motion detection.<br />
+                
                 Press <kbd>c</kbd> to clear all found hazmat labels.<br />
                 Press <kbd>x</kbd> to clear all found QR codes.<br />
-                Press <kbd>t</kbd>/<kbd>T</kbd> to increase/decrease power by 20%.<br />
+                
                 Press <kbd>l</kbd> to invert controls.<br />
+                Press <kbd>o</kbd> to toggle arm active.<br />
+                
                 Press <kbd>1-4</kbd> to switched focused feed.<br />
                 Press <kbd>1-4</kbd> again to super zoom on focused feed.<br />
                 Press <kbd>0</kbd> to show camera grid.<br />
@@ -383,6 +456,18 @@ input[type="range"] {
 
             <h4>Config</h4>
 
+            <h5>Backend</h5>
+
+            <label for="backend_fps">Backend Streaming FPS</label>
+            <output id="backend_fps-output">30</output>
+            <input type="range" id="backend_fps" name="backend_fps" min="5" max="60" step="5" value="30" oninput="slider('backend_fps')" />
+
+            <h5>Master</h5>
+
+            <label for="master_fps">Master FPS</label>
+            <output id="master_fps-output">200</output>
+            <input type="range" id="master_fps" name="master_fps" min="5" max="500" step="5" value="200" oninput="slider('master_fps', true)" />
+            
             <h5>Motors</h5>
 
             <label for="diagonal">Diagonal Multiplier:</label>
@@ -403,6 +488,10 @@ input[type="range"] {
             <input type="checkbox" id="writeEveryFrame" oninput="writeEveryFrameCheckbox()" />
 
             <br />
+
+            <label for="high_send_rate">Arm High Send Rate:</label>
+            <output id="high_send_rate-output">20</output>
+            <input type="range" id="high_send_rate" name="high_send_rate" min="1" max="50" step="1" value="20" oninput="slider('high_send_rate')" />
 
             <h5>Motion Detection</h5>
 
@@ -428,12 +517,6 @@ input[type="range"] {
             <output id="hazmat_angle_change-output">90</output>
             <input type="range" id="hazmat_angle_change" name="hazmat_angle_change" min="0" max="360" step="1" value="90" oninput="slider('hazmat_angle_change')" />
 
-            <h5>Master</h5>
-
-            <label for="master_fps">Master FPS</label>
-            <output id="master_fps-output">200</output>
-            <input type="range" id="master_fps" name="master_fps" min="25" max="500" step="1" value="200" oninput="slider('master_fps', true)" />
-
             <h4>Debug Info</h4>
             <p id="calibration"></p>
 
@@ -444,14 +527,16 @@ input[type="range"] {
 
     <script>
         const current_url = window.location.href;
-        const FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
-        const FRONT_END_FPS = 30;
+        const PRIMARY_FLASK_SERVER = current_url.endsWith("/") ? current_url : current_url + "/";
+        const MOTOR_FLASK_SERVER = PRIMARY_FLASK_SERVER.replace("5000", "5001");
+
+        console.log(`PRIMARY_FLASK_SERVER: ${PRIMARY_FLASK_SERVER}`);
+        console.log(`MOTOR_FLASK_SERVER: ${MOTOR_FLASK_SERVER}`);
+
+        const CALIBRATE_FREQUENCE = 2;
 
         const GRID_FRAME_RATIO = 4 / 3;
         const ZOOM_FRAME_RATIO = 1;
-
-        const DELAY = 1000 / FRONT_END_FPS;
-        const CALIBRATE_FREQUENCE = 2 * FRONT_END_FPS;
 
         let keys = {}; // keys[key] = true | if key is down
 
@@ -464,8 +549,12 @@ input[type="range"] {
         let view_mode = 0;
         let super_zoom = false;
 
-        const POWER_STATE_STEP = 20;
-        let power_state = 100;
+        let camera_mode = 1;
+
+        const POWER_PERCENT_STEP = 20;
+        let power_percent = 60;
+
+        let arm_active = false;
 
         let diagonal_multiplier = 0.4;
 
@@ -480,16 +569,19 @@ input[type="range"] {
             "hazmat_levenshtein_thresh": 0.4,
             "hazmat_angle_change": 90,
             "master_fps": 200,
+            "backend_fps": 30,
         };
         let CONFIG_TYPE = {
             "velocity_limit": "motor",
             "motor_writes": "motor",
+            "high_send_rate": "motor",
             "motion_min_area": "detection",
             "motion_threshold": "detection",
             "motion_new_frame_weight": "detection",
             "hazmat_levenshtein_thresh": "detection",
             "hazmat_angle_change": "detection",
             "master_fps": "master",
+            "backend_fps": "backend",
         };
 
         const TIME_SCALES = {
@@ -499,31 +591,34 @@ input[type="range"] {
         };
 
         const TEMP_CUTOFFS = {
-            "cold": 30,
-            "cool": 50,
-            "mid": 70,
-            "warm": 88,
-            "hot": 94,
-            "boil": 105,
+            "cold": 35,
+            "cool": 55,
+            "mid":  70,
+            "warm": 80,
+            "hot":  90,
+            "boil": 94,
         };
 
         let show_sidebar = true;
 
         let t0 = now_ms();
         let t1 = now_ms();
-        let delta = DELAY;
+        let delta = 1000 / config_sliders["backend_fps"];
 
-        let delays = [DELAY];
+        let delays = [delta];
         let last_frame = "";
 
         let max_fpses = [1];
         const FPS_RATIO_MAX = 75;
 
         let max_delays = [250];
-        const MAX_LEN = 3 * FRONT_END_FPS;
+        const MAX_LEN = 3;
         const DELAY_RATIO_BASE = 250;
 
+        // ms_offset also takes into account ping
         let ms_offset = 0;
+        let lowest_calibrated_ping = -1;
+        let LOWEST_PING_BUFFER = 5;
         let calibrated = false;
 
         let connected = false;
@@ -534,7 +629,7 @@ input[type="range"] {
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    const print_url = url.replace(FLASK_SERVER, "");
+                    const print_url = url.replace(PRIMARY_FLASK_SERVER, "").replace(MOTOR_FLASK_SERVER, "");
                     const print_data = JSON.stringify(data);
                     console.info(`'${print_url}': ${print_data}`);
                 });
@@ -544,7 +639,7 @@ input[type="range"] {
         function try_calibrate() {
             // recalibrate every X seconds
             if (calibrated) {
-                calibrated = !(frames % CALIBRATE_FREQUENCE == 0);
+                calibrated = !(frames % (config_sliders["backend_fps"] * CALIBRATE_FREQUENCE) == 0);
             }
 
             // if we need to calibrate
@@ -563,18 +658,21 @@ input[type="range"] {
 
             try {
                 powerSlider();
-                fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
-                fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
-                fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/hazmat/" + run_hazmat);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/qr/" + run_qr);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/motion/" + run_motion);
 
-                fetchAndInfo(FLASK_SERVER + "invert/" + invert);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
+
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "camera_mode/" + camera_mode);
 
                 for (const key in config_sliders) {
                     const value = config_sliders[key];
                     const type = CONFIG_TYPE[key];
-                    fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + value);
+                    fetchAndInfo(PRIMARY_FLASK_SERVER + "config/" + type + "/" + key + "/" + value);
                 }
-                fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "write_every_frame/" + write_every_frame);
 
                 connected = true;
             } catch (e) {
@@ -587,320 +685,430 @@ input[type="range"] {
         }
 
         function calibrate() {
-            const path = "calibrate"
+            const path = "server_time"
             const start_ms = now_ms();
-            fetch(FLASK_SERVER + path)
+            fetch(MOTOR_FLASK_SERVER + path)
                 .then(response => response.json())
                 .then(data => {
                     const now = now_ms();
 
-                    const ping = now - start_ms;
+                    const current_ping = now - start_ms;
+                    if (lowest_calibrated_ping < 0 || current_ping < lowest_calibrated_ping + LOWEST_PING_BUFFER) {
+                        lowest_calibrated_ping = current_ping;
 
-                    const ms = data * 1000;
-                    const diff = now - ms;
+                        const ms = data * 1000;
+                        const diff = now - ms;
 
-                    ms_offset = diff - ping / 2;
+                        ms_offset = diff - lowest_calibrated_ping / 2;
 
-                    const calibration_ele = document.getElementById("calibration");
-                    calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS`;
+                        fetchAndInfo(PRIMARY_FLASK_SERVER + "time_offset/" + ms_offset);
+
+                        const calibration_ele = document.getElementById("calibration");
+                        calibration_ele.innerHTML = `Calibrated: ${ms_offset.toFixed(0)} MS (ping: ${lowest_calibrated_ping.toFixed(0)} MS)`;
+                    }
                 });
         }
 
+
+        main_get();
         setInterval(function() {
-            const path = "get";
-            const start_ms = now_ms();
+            if (!connected) {
+                main_get();
+            }
+        }, 1000);
 
-            t1 = start_ms;
-            delta = (t1 - t0) / 1000;
-            t0 = t1;
+        async function main_get() {
+            console.log("Trying to start main_get stream");
+            try {
+                const path = "get";
+                const response = await fetch(PRIMARY_FLASK_SERVER + path);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
 
-            fetch(FLASK_SERVER + path)
-                .then(response => response.json())
-                .then(data => {
-                    try {
-                        try_connect();
-                        try_calibrate();
+                let buffer = "";
 
-                        frames += 1;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
 
-                        const now = now_ms();
-                        // -------------------------------------------------- //
+                    let boundary = buffer.indexOf("\n");
+                    while (boundary != -1) {
+                        const chunk = buffer.slice(0, boundary).trim();
+                        buffer = buffer.slice(boundary + 1);
 
-                        // -------------------------------------------------- //
-                        const fpses = data["fpses"];
-                        const fps_values = [...fpses, 1 / delta];
-
-                        const max_fps = Math.max(...fps_values);
-                        max_fpses.push(max_fps);
-                        max_fpses = max_fpses.slice(-MAX_LEN);
-                        const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
-
-                        const fps_ids = ["webcam1", "detection", "webcam2", "ir", "master", "motor", "backend", "frontend"];
-
-                        for (let i = 0; i < fps_ids.length; i++) {
-                            const fps_id = fps_ids[i];
-                            const fps = fps_values[i];
-                            const ele_id = "fps-" + fps_id;
-
-                            const fps_ele = document.getElementById(ele_id);
-                            fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
-
-                            const fps_bar = document.getElementById(ele_id + "-bar");
-                            const ratio = Math.min(fps / max_ratio_fps, 1.0);
-                            fps_bar.style.width = ratio * 100 + "%";
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const invert_mod = invert ? -1 : 1;
-
-                        const motors = data["motors"];
-                        const motors_ids = ["left", "right"];
-                        for (let i = 0; i < motors_ids.length; i++) {
-                            const motors_id = motors_ids[i];
-
-                            const target  = motors["target"][motors_id]  * 100 * invert_mod;
-                            const current = motors["current"][motors_id] * 100 * invert_mod;
-
-                            const current_abs = Math.abs(current);
-                            const target_abs  = Math.abs(target);
-
-                            const outer_width = Math.max(current_abs, target_abs);
-                            const inner_width_raw = Math.min(current_abs, target_abs);
-                            const inner_width = inner_width_raw / outer_width * 100;
-
-                            const output_id = invert ? (motors_id == "left" ? "right" : "left") : motors_id;
-                            const outer_ele = document.getElementById(output_id + "-outer-bar");
-                            outer_ele.style.width = outer_width + "%";
-                            const inner_ele = document.getElementById(output_id + "-inner-bar");
-                            inner_ele.style.width = inner_width + "%";
-
-                            const motor_ele = document.getElementById("motor-" + output_id);
-
-                            // 7: 0-100 (3) + "." + 2 decimal places + sign
-                            const current_text = current.toFixed(2).padStart(7, " ");
-                            const target_text  = target.toFixed(2).padStart(7, " ");
-                            motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${output_id})`;
-
-                            let target_ele = outer_ele;
-                            let current_ele = inner_ele;
-                            if (current_abs > target_abs) {
-                                target_ele = inner_ele;
-                                current_ele = outer_ele;
-                            }
-
-                            target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
-                            current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
-
-                            if (target < 0)  { target_ele.classList.add("backward-light"); }
-                            else             { target_ele.classList.add("forward-light");  }
-                            if (current < 0) { current_ele.classList.add("backward-light"); }
-                            else             { current_ele.classList.add("forward-light");  }
-                        }
-                        // -------------------------------------------------- //
-                        
-                        // -------------------------------------------------- //
-                        const stats_ids = ["cpu", "gpu", "ram"];
-
-                        for (let i = 0; i < stats_ids.length; i++) {
-                            const stats_id = stats_ids[i];
-                            const stat = data["stats"][stats_id];
-
-                            const ele_id = "stats-" + stats_id;
-                            const stat_ele = document.getElementById(ele_id);
-
-                            if (stats_id == "ram") {
-                                const swap = data["stats"]["swap"];
-                                stat_ele.innerHTML = `${stat.toFixed(1)}% (${swap.toFixed(1)}%) (ram/swap)`;
-                            } else {
-                                stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
-                            }
-
-                            const stat_bar = document.getElementById(ele_id + "-bar");
-                            stat_bar.style.width = stat + "%";
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const time_ids = ["hazmat", "qr", "motion"];
-
-                        for (let i = 0; i < time_ids.length; i++) {
-                            const time_id = time_ids[i];
-                            const time = data["time_bars"][time_id];
-                            const time_value = time > 0 ? time * 1000 : -1;
-
-                            const ele_id = "time-" + time_id;
-
-                            const time_ele = document.getElementById(ele_id);
-                            time_ele.innerHTML = `${time_value.toFixed(0)} MS (${time_id})`;
-
-                            const time_bar = document.getElementById(ele_id + "-bar");
-                            const ratio = time_value / TIME_SCALES[time_id];
-                            const width = time > 0 ? (ratio * 100) : 100;
-                            time_bar.style.width = width + "%";
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const temp_ids = ["cpu", "gpu", "aux"];
-
-                        for (let i = 0; i < temp_ids.length; i++) {
-                            const temp_id = temp_ids[i];
-                            const temp = data["temps"][temp_id];
-
-                            const ele_id = "temp-" + temp_id;
-                            const temp_ele = document.getElementById(ele_id);
-
-                            temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
-
-                            const temp_bar = document.getElementById(ele_id + "-bar");
-                            temp_bar.style.width = temp + "%";
-
-                            const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
-                            temp_bar.classList.remove("temp-cold", "temp-cool", "temp-mid", "temp-warm", "temp-hot", "temp-boil");
-                            temp_bar.classList.add("temp-" + temp_level);
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const angle = data["angle"] == 0 ? 360 : data["angle"];
-                        const angle_ele = document.getElementById("angle");
-                        angle_ele.innerHTML = `${angle.toFixed(0)}°`;
-
-                        const angle_bar = document.getElementById("angle-bar");
-                        angle_bar.style.width = (angle / 360) * 100 + "%";
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const frames_ids = ["webcam1", "detection", "webcam2", "ir"];
-                        for (let i = 0; i < frames_ids.length; i++) {
-                            const frame_id = frames_ids[i];
-                            const frame = data["frames"][frame_id];
-                            const frame_ele = document.getElementById(frame_id);
-                            frame_ele.src = "data:image/jpeg;base64," + frame;
-                        }
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const hazmats_ele = document.getElementById("found-hazmat");
-                        const hazmats = [...new Set(data["hazmats_found"])];
-                        hazmats_ele.innerHTML = hazmats.sort().join("<br />");
-
-                        const qrs_ele = document.getElementById("found-qr");
-                        const qrs = [...new Set(data["qr_found"])];
-                        qrs_ele.innerHTML = qrs.sort().join("<br />");
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const ratio = (view_mode == 0 || super_zoom) ? GRID_FRAME_RATIO : ZOOM_FRAME_RATIO;
-
-                        const EM = 16; // 1em = 16px (usually)
-                        const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - (show_sidebar ? 3 : 2) * EM;
-                        const max_h = window.innerHeight - 2 * EM;
-
-                        const w = Math.min(max_w, max_h * ratio);
-                        const h = Math.min(max_h, max_w / ratio);
-                        
-                        const frameholder_ele = document.getElementById("frameholder");
-                        frameholder_ele.style.width = w + "px";
-                        frameholder_ele.style.height = h + "px";
-
-                        const sidebar_w = (window.innerWidth - w - 5 * EM) * (show_sidebar ? 1 : 0);
-                        const sidebar_ele = document.getElementById("sidebar");
-                        sidebar_ele.style.width = sidebar_w + "px";
-                        // -------------------------------------------------- //
-
-                        // -------------------------------------------------- //
-                        const ms = data["time"] * 1000;
-                        const diff = now - ms - ms_offset;
-                        const inital_delay = diff.toFixed(0);
-
-                        delays.push(diff);
-                        delays = delays.slice(-MAX_LEN);
-                        const average = delays.reduce((a, b) => a + b, 0) / delays.length;
-                        const average_delay = average.toFixed(0);
-
-                        const ping = now - start_ms;
-                        const ping_delay = ping.toFixed(0);
-
-                        const max_delay = Math.max(inital_delay, average_delay, ping_delay, DELAY_RATIO_BASE);
-                        max_delays.push(max_delay);
-                        max_delays = max_delays.slice(-MAX_LEN);
-                        const max_ratio_delay = Math.max(...max_delays);
-
-                        const base_key = invert ? "webcam2" : "webcam1";
-                        if (last_frame != data["frames"][base_key]) {
-                            last_frame = data["frames"][base_key];
-
-                            const delay_inital_ele = document.getElementById("delay-inital");
-                            delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
-                            const delaybar_inital = document.getElementById("delay-inital-bar");
-                            delaybar_inital.style.width = (inital_delay / max_ratio_delay) * 100 + "%";
+                        if (chunk) {
+                            const data = JSON.parse(chunk);
+                            handle_get_data(data);
                         }
 
-                        const delay_total_ele = document.getElementById("delay-total");
-                        delay_total_ele.innerHTML = average_delay + " MS (average)";
-                        const delaybar_total = document.getElementById("delay-total-bar");
-                        delaybar_total.style.width = (average_delay / max_ratio_delay) * 100 + "%";
-
-                        const delay_ping_ele = document.getElementById("delay-ping")
-                        delay_ping_ele.innerHTML = ping_delay + " MS (ping)";
-                        const delaybar_ping = document.getElementById("delay-ping-bar");
-                        delaybar_ping.style.width = (ping_delay / max_ratio_delay) * 100 + "%";
-                        // -------------------------------------------------- //
-                    } catch (e) {
-                        console.log(e);
+                        boundary = buffer.indexOf("\n");
                     }
-                })
-                .catch(e => {
-                    console.log(`fetch 'get' failed: ${e}`);
-                    
-                    calibrated = false;
-                    connected = false;
+                }
+            } catch (e) {
+                console.log(`main_get failed: ${e}`);
 
-                    run_hazmat = false;
-                    run_qr = false;
-                    run_motion = false;
+                calibrated = false;
+                connected = false;
 
-                    const time_bar_ids = ["hazmat", "qr", "motion"];
-                    for (let i = 0; i < time_bar_ids.length; i++) {
-                        const time_bar_id = time_bar_ids[i];
-                        const time_bar_ele = document.getElementById("time-" + time_bar_id + "-bar");
-                        time_bar_ele.classList.remove("time-bar-active");
-                        time_bar_ele.classList.add("time-bar-idle");
+                run_hazmat = false;
+                run_qr = false;
+                run_motion = false;
+
+                const time_bar_ids = ["hazmat", "qr", "motion"];
+                for (let i = 0; i < time_bar_ids.length; i++) {
+                    const time_bar_id = time_bar_ids[i];
+                    const time_bar_ele = document.getElementById("time-" + time_bar_id + "-bar");
+                    time_bar_ele.classList.remove("time-bar-active");
+                    time_bar_ele.classList.add("time-bar-idle");
+                }
+
+                keys = {};
+                display_keys();
+                
+                // Not reset when disconnected, but resent when reconnected
+                // config_sliders, write_every_frame, invert, arm_active, camera_mode, power_percent
+            }
+        }
+
+        function handle_get_data(data) {
+            try {
+                try_connect();
+                try_calibrate();
+
+                frames += 1;
+
+                const now = now_ms();
+
+                t1 = now_ms();
+                delta = (t1 - t0) / 1000;
+                t0 = t1;
+
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const fpses = data["fpses"];
+                const fps_values = [...fpses, 1 / delta];
+
+                const max_fps = Math.max(...fps_values);
+                max_fpses.push(max_fps);
+                max_fpses = max_fpses.slice(-MAX_LEN * config_sliders["backend_fps"]);
+                const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
+
+                const fps_ids = ["webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend", "frontend"];
+
+                for (let i = 0; i < fps_ids.length; i++) {
+                    const fps_id = fps_ids[i];
+                    const fps = fps_values[i];
+                    const ele_id = "fps-" + fps_id;
+
+                    const fps_ele = document.getElementById(ele_id);
+                    fps_ele.innerHTML = `${fps.toFixed(0)} FPS (${fps_id})`;
+
+                    const fps_bar = document.getElementById(ele_id + "-bar");
+                    const ratio = Math.min(fps / max_ratio_fps, 1.0);
+                    fps_bar.style.width = ratio * 100 + "%";
+                }
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const invert_mod = invert ? -1 : 1;
+
+                const motors = data["motors"];
+                const motors_ids = ["left", "right"];
+                for (let i = 0; i < motors_ids.length; i++) {
+                    const motors_id = motors_ids[i];
+
+                    const target  = motors["target"][motors_id]  * 100 * invert_mod * power_percent / 100;
+                    const current = motors["current"][motors_id] * 100 * invert_mod;
+
+                    const current_abs = Math.abs(current);
+                    const target_abs  = Math.abs(target);
+
+                    const outer_width = Math.max(current_abs, target_abs);
+                    const inner_width_raw = Math.min(current_abs, target_abs);
+                    const inner_width = inner_width_raw / outer_width * 100;
+
+                    const output_id = invert ? (motors_id == "left" ? "right" : "left") : motors_id;
+                    const outer_ele = document.getElementById(output_id + "-outer-bar");
+                    outer_ele.style.width = outer_width + "%";
+                    const inner_ele = document.getElementById(output_id + "-inner-bar");
+                    inner_ele.style.width = inner_width + "%";
+
+                    const motor_ele = document.getElementById("motor-" + output_id);
+
+                    // 7: 0-100 (3) + "." + 2 decimal places + sign
+                    const current_text = current.toFixed(2).padStart(7, " ");
+                    const target_text  = target .toFixed(2).padStart(7, " ");
+                    motor_ele.innerHTML = `${current_text}% ~ ${target_text}% (${output_id})`;
+
+                    let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
+                    let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
+
+                    target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+                    current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+
+                    if (target < 0)  { target_ele.classList.add("backward-dark");   }
+                    else             { target_ele.classList.add("forward-dark");    }
+                    if (current < 0) { current_ele.classList.add("backward-light"); }
+                    else             { current_ele.classList.add("forward-light");  }
+                }
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const arm = data["arm"];
+                const arm_ids = ["j1", "j2", "j3"];
+                for (let i = 0; i < arm_ids.length; i++) {
+                    const arm_id = arm_ids[i];
+
+                    const target  = parseFloat(arm["target"][arm_id]);
+                    const current = parseFloat(arm["current"][arm_id]);
+
+                    const current_abs = Math.abs(current) / 4096 * 100;
+                    const target_abs  = Math.abs(target)  / 4096 * 100;
+
+                    const outer_width = Math.max(current_abs, target_abs);
+                    const inner_width_raw = Math.min(current_abs, target_abs);
+                    const inner_width = inner_width_raw / outer_width * 100;
+
+                    const outer_ele = document.getElementById(arm_id + "-outer-bar");
+                    outer_ele.style.width = outer_width + "%";
+                    const inner_ele = document.getElementById(arm_id + "-inner-bar");
+                    inner_ele.style.width = inner_width + "%";
+
+                    const arm_ele = document.getElementById("arm-" + arm_id);
+
+                    // 5: 0-4096 (4)
+                    const current_text = current.toFixed(0).padStart(4, " ");
+                    const target_text  = target .toFixed(0).padStart(4, " ");
+                    arm_ele.innerHTML = `${current_text} ~ ${target_text} (${arm_id})`;
+
+                    let target_ele  = current_abs > target_abs ? inner_ele : outer_ele;
+                    let current_ele = current_abs > target_abs ? outer_ele : inner_ele;
+
+                    target_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+                    current_ele.classList.remove("forward-light", "backward-light", "forward-dark", "backward-dark");
+
+                    if (!arm["active"]) { target_ele.classList.add("backward-dark");   }
+                    else                { target_ele.classList.add("forward-dark");    }
+                    if (!arm["active"]) { current_ele.classList.add("backward-light"); }
+                    else                { current_ele.classList.add("forward-light");  }
+                }
+                // -------------------------------------------------- //
+                
+                // -------------------------------------------------- //
+                const stats_ids = ["cpu", "gpu", "ram"];
+
+                for (let i = 0; i < stats_ids.length; i++) {
+                    const stats_id = stats_ids[i];
+                    const stat = data["stats"][stats_id];
+
+                    const ele_id = "stats-" + stats_id;
+                    const stat_ele = document.getElementById(ele_id);
+
+                    if (stats_id == "ram") {
+                        const swap = data["stats"]["swap"];
+                        stat_ele.innerHTML = `${stat.toFixed(1)}% (${swap.toFixed(1)}%) (ram/swap)`;
+                    } else {
+                        stat_ele.innerHTML = `${stat.toFixed(0)}% (${stats_id})`;
                     }
 
-                    keys = {};
-                    display_keys();
-                    
-                    // Note: config_sliders, write_every_frame, invert not reset when disconnected
-                    // but resent when reconnected
-                });
-        }, DELAY);
+                    const stat_bar = document.getElementById(ele_id + "-bar");
+                    stat_bar.style.width = stat + "%";
+                }
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const time_ids = ["hazmat", "qr", "motion"];
+
+                for (let i = 0; i < time_ids.length; i++) {
+                    const time_id = time_ids[i];
+                    const time = data["time_bars"][time_id];
+                    const time_value = time > 0 ? time * 1000 : -1;
+
+                    const ele_id = "time-" + time_id;
+
+                    const time_ele = document.getElementById(ele_id);
+                    time_ele.innerHTML = `${time_value.toFixed(0)} MS (${time_id})`;
+
+                    const time_bar = document.getElementById(ele_id + "-bar");
+                    const ratio = time_value / TIME_SCALES[time_id];
+                    const width = time > 0 ? (ratio * 100) : 100;
+                    time_bar.style.width = width + "%";
+                }
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const temp_ids = ["cpu", "gpu"];
+
+                for (let i = 0; i < temp_ids.length; i++) {
+                    const temp_id = temp_ids[i];
+                    const temp = data["temps"][temp_id];
+
+                    const ele_id = "temp-" + temp_id;
+                    const temp_ele = document.getElementById(ele_id);
+
+                    temp_ele.innerHTML = `${temp.toFixed(1)} °C (${temp_id})`;
+
+                    const temp_bar = document.getElementById(ele_id + "-bar");
+                    temp_bar.style.width = temp + "%";
+
+                    const temp_level = Object.keys(TEMP_CUTOFFS).find(key => temp < TEMP_CUTOFFS[key]);
+                    temp_bar.classList.remove("temp-cold", "temp-cool", "temp-mid", "temp-warm", "temp-hot", "temp-boil");
+                    temp_bar.classList.add("temp-" + temp_level);
+                }
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const angle = data["angle"] == 0 ? 360 : data["angle"];
+                const angle_ele = document.getElementById("angle");
+                angle_ele.innerHTML = `${angle.toFixed(0)}°`;
+
+                const angle_bar = document.getElementById("angle-bar");
+                angle_bar.style.width = (angle / 360) * 100 + "%";
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const frames_ids = ["base_key", "alt_key", "ir", "detection"];
+                for (let i = 0; i < frames_ids.length; i++) {
+                    const frame_id = frames_ids[i];
+                    const frame = data["frames"][frame_id];
+                    if (frame != "") {
+                        const frame_ele = document.getElementById(frame_id);
+                        frame_ele.src = "data:image/jpeg;base64," + frame;
+                    }
+                }
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const hazmats_ele = document.getElementById("found-hazmat");
+                const hazmats = [...new Set(data["hazmats_found"])];
+                hazmats_ele.innerHTML = hazmats.sort().join("<br />");
+
+                const qrs_ele = document.getElementById("found-qr");
+                const qrs = [...new Set(data["qr_found"])];
+                qrs_ele.innerHTML = qrs.sort().join("<br />");
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const ratio = (view_mode == 0 || super_zoom) ? GRID_FRAME_RATIO : ZOOM_FRAME_RATIO;
+
+                const EM = 16; // 1em = 16px (usually)
+                const max_w = window.innerWidth * (show_sidebar ? 3 / 4 : 1) - (show_sidebar ? 3 : 2) * EM;
+                const max_h = window.innerHeight - 2 * EM;
+
+                const w = Math.min(max_w, max_h * ratio);
+                const h = Math.min(max_h, max_w / ratio);
+                
+                const frameholder_ele = document.getElementById("frameholder");
+                frameholder_ele.style.width = w + "px";
+                frameholder_ele.style.height = h + "px";
+
+                const sidebar_w = (window.innerWidth - w - 5 * EM) * (show_sidebar ? 1 : 0);
+                const sidebar_ele = document.getElementById("sidebar");
+                sidebar_ele.style.width = sidebar_w + "px";
+                // -------------------------------------------------- //
+
+                // -------------------------------------------------- //
+                const ms = data["time"] * 1000;
+                const diff = now - ms - ms_offset;
+                const inital_delay = diff.toFixed(0);
+
+                const arm_delay_float = data["arm_delay"] * 1000;
+                const arm_delay = arm_delay_float.toFixed(0);
+
+                delays.push(diff);
+                delays = delays.slice(-MAX_LEN * config_sliders["backend_fps"]);
+                const average = delays.reduce((a, b) => a + b, 0) / delays.length;
+                const average_delay = average.toFixed(0);
+
+                const ping = now - data["ping_time"] * 1000 - ms_offset;
+                const ping_delay = ping.toFixed(0);
+
+                const max_delay = Math.max(inital_delay, average_delay, ping_delay, arm_delay, DELAY_RATIO_BASE);
+                max_delays.push(max_delay);
+                max_delays = max_delays.slice(-MAX_LEN * config_sliders["backend_fps"]);
+                const max_ratio_delay = Math.max(...max_delays);
+
+                if (last_frame != data["frames"]["base_key"]) {
+                    last_frame = data["frames"]["base_key"];
+
+                    const delay_inital_ele = document.getElementById("delay-inital");
+                    delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
+                    const delaybar_inital = document.getElementById("delay-inital-bar");
+                    delaybar_inital.style.width = (inital_delay / max_ratio_delay) * 100 + "%";
+                }
+
+                const delay_ids = ["total", "ping", "arm"];
+                const delay_values = [average_delay, ping_delay, arm_delay];
+                for (let i = 0; i < delay_ids.length; i++) {
+                    const delay_id = delay_ids[i];
+                    const delay_value = delay_values[i];
+
+                    const delay_ele = document.getElementById("delay-" + delay_id);
+                    delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
+                    const delaybar = document.getElementById("delay-" + delay_id + "-bar");
+                    delaybar.style.width = (delay_value / max_ratio_delay) * 100 + "%";
+                }
+                // -------------------------------------------------- //
+            } catch (e) {
+                console.log(e);
+            }
+        }
 
 
         function invertCheckbox() {
             const ele = document.getElementById("invert");
             const value = ele.checked;
             invert = value;
-            fetchAndInfo(FLASK_SERVER + "invert/" + invert);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
             calculate_power();
             calculate_grid();
         }
         
-        function setPower(value) {	
+        function setPowerPercent(value) {	
             const output = document.getElementById("power-ouput");
             output.innerHTML = value + "%";
+
+            const decimal = value / 100;
+            fetchAndInfo(MOTOR_FLASK_SERVER + "power_percent/" + decimal);
+
             calculate_power();
         }
         function powerSlider() {
             const ele = document.getElementById("power");
             const value = parseInt(ele.value);
-            power_state = value;
-            setPower(value);
+            power_percent = value;
+            setPowerPercent(value);
         }
         function clamp(x, min, max) {
             return Math.min(Math.max(x, min), max);
+        }
+
+        function armActiveCheckbox() {
+            const ele = document.getElementById("armActive");
+            const value = ele.checked;
+            arm_active = value;
+
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + value);
+        }
+
+
+        function cameraModeChange(mode) {
+            camera_mode = mode;
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "camera_mode/" + camera_mode);
+        }
+
+        function flipAltKeyCheckbox() {
+            const checkbox_ele = document.getElementById("flipAltKey");
+            const value = checkbox_ele.checked;
+
+            const alt_key_ele = document.getElementById("alt_key");
+            if (value) {
+                alt_key_ele.classList.add("flip");
+            } else {
+                alt_key_ele.classList.remove("flip");
+            }
         }
 
         function diagonalSlider() {
@@ -915,7 +1123,7 @@ input[type="range"] {
             const value = ele.checked;
             write_every_frame = value;
 
-            fetchAndInfo(FLASK_SERVER + "write_every_frame/" + write_every_frame);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "write_every_frame/" + write_every_frame);
         }
 
         function slider(key, float = false) {
@@ -935,7 +1143,7 @@ input[type="range"] {
             }
 
             const type = CONFIG_TYPE[key];
-            fetchAndInfo(FLASK_SERVER + "config/" + type + "/" + key + "/" + config_sliders[key]);
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "config/" + type + "/" + key + "/" + config_sliders[key]);
         }
 
 
@@ -963,17 +1171,16 @@ input[type="range"] {
                 else			return  0;
             }
 
-            const base_speed = power_state / 100;
             let speed_left = 0;
             let speed_right = 0;
 
             if (y_input == 0) {
                 const x_mod = match_x(x_input);
-                speed_left  = 	x_mod * base_speed;
-                speed_right =  -x_mod * base_speed;
+                speed_left  = 	x_mod;
+                speed_right =  -x_mod;
             } else {
-                speed_left  = y_input * base_speed;
-                speed_right = y_input * base_speed;
+                speed_left  = y_input;
+                speed_right = y_input;
                 x_input *= invert_mod;
 
                 if (x_input < 0)		speed_left  *= diagonal_multiplier;
@@ -981,12 +1188,12 @@ input[type="range"] {
             }
 
             const base_path = "power";
-            const path = base_path + "/" + speed_left + "/" + speed_right;
-            fetchAndInfo(FLASK_SERVER + path);
+            const path = base_path + "/" + speed_left + "/" + speed_right + "/";
+            fetchAndInfo(MOTOR_FLASK_SERVER + path);
         }
 
         function calculate_grid() {
-            const ids = ["webcam1", "detection", "webcam2", "ir"];
+            const ids = ["base_key", "alt_key", "ir", "detection"];
             const eles = ids.map(id => document.getElementById(id));
 
             if (view_mode == 0) {
@@ -1016,7 +1223,9 @@ input[type="range"] {
 
             if (e.repeat && key != "z") return;
 
-            if (key == "w" || key == "a" || key == "s" || key == "d") {
+            const motor_keys = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowdown", "arrowright"];
+
+            if (motor_keys.includes(key)) {
                 calculate_power();
             } else if (key == "5") {
                 show_sidebar = !show_sidebar;
@@ -1024,20 +1233,20 @@ input[type="range"] {
                 sidebar.style.display = show_sidebar ? "block" : "none";
             } else if (key == "t") {
                 const mod = Object.keys(keys).includes("shift") ? -1 : 1;
-                if (power_state == 1 && mod == 1) {
-                    power_state = POWER_STATE_STEP;
+                if (power_percent == 1 && mod == 1) {
+                    power_percent = POWER_PERCENT_STEP;
                 } else {
-                    power_state += POWER_STATE_STEP * mod;
-                    power_state = clamp(power_state, 1, 100);	
+                    power_percent += POWER_PERCENT_STEP * mod;
+                    power_percent = clamp(power_percent, 1, 100);	
                 }
                 
-                setPower(power_state);
+                setPowerPercent(power_percent);
 
                 const range_ele = document.getElementById("power");
-                range_ele.value = power_state;
+                range_ele.value = power_percent;
             } else if (key == "h") {
                 run_hazmat = !run_hazmat;
-                fetchAndInfo(FLASK_SERVER + "run/hazmat/" + run_hazmat);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/hazmat/" + run_hazmat);
 
                 const time_bar_ele = document.getElementById("time-hazmat-bar");
                 if (run_hazmat) {
@@ -1049,7 +1258,7 @@ input[type="range"] {
                 }
             } else if (key == "r") {
                 run_qr = !run_qr;
-                fetchAndInfo(FLASK_SERVER + "run/qr/" + run_qr);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/qr/" + run_qr);
 
                 const time_bar_ele = document.getElementById("time-qr-bar");
                 if (run_qr) {
@@ -1061,7 +1270,7 @@ input[type="range"] {
                 }
             } else if (key == "m") {
                 run_motion = !run_motion;
-                fetchAndInfo(FLASK_SERVER + "run/motion/" + run_motion);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/motion/" + run_motion);
 
                 const time_bar_ele = document.getElementById("time-motion-bar");
                 if (run_motion) {
@@ -1072,9 +1281,6 @@ input[type="range"] {
                     time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
-                const ids = ["webcam1", "detection", "webcam2", "ir"];
-                const eles = ids.map(id => document.getElementById(id));
-
                 const new_view_mode = parseInt(key);
                 if (new_view_mode == 0) {
                     super_zoom = false;
@@ -1086,20 +1292,24 @@ input[type="range"] {
                 view_mode = new_view_mode;
                 calculate_grid();
             } else if (key == "c") {
-                fetchAndInfo(FLASK_SERVER + "clear/hazmat");
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "clear/hazmat");
             } else if (key == "x") {
-                fetchAndInfo(FLASK_SERVER + "clear/qr");
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "clear/qr");
             } else if (key == "z") {
                 const base_path = "power";
-                const path = base_path + "/0/0";
-                fetchAndInfo(FLASK_SERVER + path);
+                const path = base_path + "/0/0/";
+                fetchAndInfo(MOTOR_FLASK_SERVER + path);
             } else if (key == "l") {
                 invert = !invert;
                 const ele = document.getElementById("invert");
                 ele.checked = invert;
-                fetchAndInfo(FLASK_SERVER + "invert/" + invert);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
                 calculate_power();
-                calculate_grid();
+            } else if (key == "o") {
+                arm_active = !arm_active;
+                const ele = document.getElementById("armActive");
+                ele.checked = arm_active;
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
             }
 
             display_keys();
@@ -1117,8 +1327,8 @@ input[type="range"] {
 
         function visibilitychange(e) {
             const base_path = "power";
-            const path = base_path + "/0/0";
-            fetchAndInfo(FLASK_SERVER + path);
+            const path = base_path + "/0/0/";
+            fetchAndInfo(MOTOR_FLASK_SERVER + path);
 
             keys = {};
             display_keys();

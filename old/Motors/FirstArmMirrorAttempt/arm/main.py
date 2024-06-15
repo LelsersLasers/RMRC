@@ -105,6 +105,8 @@ def main():
         raise RuntimeError("Not all motors activated successful")
     time.sleep(1)
 
+    set_all_operating_modes(port_handler, packet_handler)
+
     all_to_rest_poses(port_handler, packet_handler)
     time.sleep(1)
 

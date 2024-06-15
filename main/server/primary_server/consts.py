@@ -1,17 +1,26 @@
+import time
+
+TIMES_TO_KEEP = 10
+
+PORT = 5000
+
 STATE_FROM_MASTER = {
     "frames": {
-		"webcam1": "",
-		"detection": "",
-		"webcam2": "",
-		"ir": "",
+        "base_key": "",
+        "alt_key": "",
+        "ir": "",
+        "detection": "",
     },
-	
+	"time": time.time(),
+	"ping_time": time.time(),
+    
     "hazmats_found": [],
     "qr_found": [],
 
-    # webcam1, hazmat, webcam2, ir, master, motor, backend
-    # motor and backend are set in server /get route, rest are sent from master.main.thread
-    "fpses": [-1, -1, -1, -1, -1, -1, -1],
+    # webcam1, detections, webcam2, ir, master, motor, armreader, backend
+    # "webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend"
+    # motor, armreader, backend are set in server /get route, rest are sent from master.main.process
+    "fpses": [-1, -1, -1, -1, -1, -1, -1, -1, -1],
     
     "stats": {
         "ram": 0,
@@ -23,7 +32,6 @@ STATE_FROM_MASTER = {
     "temps": {
         "cpu": -1,
         "gpu": -1,
-        "aux": -1,
     },
 
     "angle": 0,
@@ -31,7 +39,7 @@ STATE_FROM_MASTER = {
         "hazmat": 0,
         "qr": 0,
         "motion": 0,
-    }
+    },
 }
 STATE_FROM_SELF = {
     "run": {
@@ -49,5 +57,6 @@ STATE_FROM_SELF = {
     "motion_new_frame_weight": 0.4,
     "hazmat_levenshtein_thresh": 0.4,
     "hazmat_angle_change": 90,
-	"master_fps": 200,
+    "master_fps": 200,
+    "camera_mode": "1",
 }

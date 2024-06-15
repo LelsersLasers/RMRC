@@ -3,81 +3,171 @@ import time
 import shared_util
 
 import motors.consts
-import motors.dynamixel_controller
+import dynamixel.arm_consts
+import server.motor_server.consts
+
+import dynamixel.jetson_controller
 
 import pickle
 
 
-def thread(server_motor_dq, video_capture_zero):
-    server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
-    last_count = motors.consts.STATE_FROM_SERVER["count"]
+def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, video_capture_zero):
+    primary_server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, motors.consts.STATE_FROM_SELF)
+    last_count = server.motor_server.consts.STATE_FROM_SELF["count"]
     last_velocity_count = motors.consts.STATE_FROM_SERVER["velocity_limit"]["count"]
+
+    motor_server_motor_ds = shared_util.DoubleState(server.motor_server.consts.STATE_FROM_SELF, server.motor_server.consts.STATE_FROM_MOTORS)
+    last_arm_time = server.motor_server.consts.STATE_FROM_SELF["arm_time"]
 
     fps_controller = shared_util.FPSController()
     graceful_killer = shared_util.GracefulKiller()
 
     try:
         if not video_capture_zero:
-            dxl_controller = motors.dynamixel_controller.DynamixelController()
-            dxl_controller.set_torque_status(True)
-
+            velocity_limit = primary_server_motor_ds.s1["velocity_limit"]["value"]
+            min_writes = primary_server_motor_ds.s1["motor_writes"]
+            dxl_controller = dynamixel.jetson_controller.JetsonController(velocity_limit, min_writes)
+            dxl_controller.setup(no_arm_rest_pos)
+        
         while not graceful_killer.kill_now:
-            server_motor_ds.update_s1(server_motor_dq)
+            primary_server_motor_ds.update_s1(primary_server_motor_dq)
+            motor_server_motor_ds.update_s1(motor_server_motor_dq)
 
             fps_controller.update()
-            server_motor_ds.s2["motor_fps"] = fps_controller.fps()
+            primary_server_motor_ds.s2["motor_fps"] = fps_controller.fps()
 
             now = time.time()
 
+            # ---------------------------------------------------------------- #
             if not video_capture_zero:
-                dxl_controller.min_writes = server_motor_ds.s1["motor_writes"]
+                # ------------------------------------------------------------ #
+                dxl_controller.min_writes = primary_server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
-                velocity_limit_changed = server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count
-                idle_shutoff = now - server_motor_ds.s1["last_get"] > motors.consts.MOTOR_SHUTOFF_TIME
-                should_write_velocities = (server_motor_ds.s1["write_every_frame"]
-                                    or server_motor_ds.s1["count"] > last_count
+                velocity_limit_changed = primary_server_motor_ds.s1["velocity_limit"]["count"] > last_velocity_count
+                idle_shutoff = now - primary_server_motor_ds.s1["last_get"] > motors.consts.MOTOR_SHUTOFF_TIME
+                should_write_velocities = (primary_server_motor_ds.s1["write_every_frame"]
+                                    or motor_server_motor_ds.s1["count"] > last_count
                                     or velocity_limit_changed
                                     or idle_shutoff)
 
                 if velocity_limit_changed:
-                    last_velocity_count = server_motor_ds.s1["velocity_limit"]["count"]
-                    dxl_controller.velocity_limit = server_motor_ds.s1["velocity_limit"]["value"]
+                    last_velocity_count = primary_server_motor_ds.s1["velocity_limit"]["count"]
+                    dxl_controller.velocity_limit = primary_server_motor_ds.s1["velocity_limit"]["value"]
                 if should_write_velocities:
-                    last_count = server_motor_ds.s1["count"]
+                    last_count = motor_server_motor_ds.s1["count"]
 
                     if idle_shutoff:
-                        server_motor_ds.s1["left"] = 0
-                        server_motor_ds.s1["right"] = 0
+                        motor_server_motor_ds.s1["left"]  = 0
+                        motor_server_motor_ds.s1["right"] = 0
                     else:
-                        dxl_controller.speeds["left"] = server_motor_ds.s1["left"]
-                        dxl_controller.speeds["right"] = server_motor_ds.s1["right"]
+                        dxl_controller.speeds["left"]  = motor_server_motor_ds.s1["left"]
+                        dxl_controller.speeds["right"] = motor_server_motor_ds.s1["right"]
 
-                    print(f"Writing speeds: {dxl_controller.speeds}")
+                    display_speeds = {
+                        "left":  dxl_controller.speeds["left"]  * motor_server_motor_ds.s1["power_percent"],
+                        "right": dxl_controller.speeds["right"] * motor_server_motor_ds.s1["power_percent"],
+                    }
+                    print(f"Writing speeds: {display_speeds}")
+
+                    dxl_controller.power_percent = motor_server_motor_ds.s1["power_percent"]
                     dxl_controller.update_speeds(dxl_controller.speeds)
                     
                 dxl_controller.try_write_speeds()
-                dxl_controller.update_status_and_check_errors()
+                dxl_controller.update_motor_status_and_check_errors()
 
-                server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
-                server_motor_ds.s2["motors"]["current"] = dxl_controller.statuses
+                primary_server_motor_ds.s2["motors"]["target"]  = dxl_controller.speeds
+                primary_server_motor_ds.s2["motors"]["current"] = dxl_controller.motor_statuses
+                # ------------------------------------------------------------ #
+
+                # ------------------------------------------------------------ #
+                new_data = motor_server_motor_ds.s1["arm_time"] > last_arm_time
+                arm_active = primary_server_motor_ds.s1["arm_active"]
+
+                arm_target_positions = motor_server_motor_ds.s1["arm_target_positions"]
+                arm_cycles = motor_server_motor_ds.s1["cycles"]
+
+                dxl_controller.update_arm_positions(arm_target_positions, arm_cycles, new_data, arm_active)
+
+                arm_target_display = {}
+                for joint in arm_target_positions.keys():
+                    arm_target_display[joint]  = shared_util.adjust_2s_complement(arm_target_positions[joint])
+                    arm_target_display[joint] %= dynamixel.arm_consts.MAX_POSITION
+
+                    dxl_controller.joint_statuses[joint]  = shared_util.adjust_2s_complement(dxl_controller.joint_statuses[joint])
+                    dxl_controller.joint_statuses[joint] %= dynamixel.arm_consts.MAX_POSITION
+                
+                primary_server_motor_ds.s2["arm"]["active"]  = arm_active
+                motor_server_motor_ds.s2["arm_active"]       = arm_active
+
+                motor_server_motor_ds.s2["invert"] = primary_server_motor_ds.s1["invert"]
+                motor_server_motor_ds.s2["high_send_rate"] = primary_server_motor_ds.s1["high_send_rate"]
+
+                primary_server_motor_ds.s2["arm"]["current"] = dxl_controller.joint_statuses
+                
+                if new_data:
+                    primary_server_motor_ds.s2["arm"]["target"]  = arm_target_display
+                    primary_server_motor_ds.s2["arm_reader_fps"] = motor_server_motor_ds.s1["arm_reader_fps"]
+                    primary_server_motor_ds.s2["arm_delay"] = now - motor_server_motor_ds.s1["arm_time"] + primary_server_motor_ds.s1["time_offset"]
+
+                    last_arm_time = motor_server_motor_ds.s1["arm_time"]
+                # ------------------------------------------------------------ #
+            # ---------------------------------------------------------------- #
             else:
-                server_motor_ds.s2["motors"]["target"]["left"]  = server_motor_ds.s1["left"]
-                server_motor_ds.s2["motors"]["target"]["right"] = server_motor_ds.s1["right"]
-
                 # just to test
                 import random
-                ratio_left  = random.random() + 0.5
-                ratio_right = random.random() + 0.5
-                server_motor_ds.s2["motors"]["current"]["left"]  = server_motor_ds.s1["left"] * ratio_left
-                server_motor_ds.s2["motors"]["current"]["right"] = server_motor_ds.s1["right"] * ratio_right
+                def rand_ratio(variance):
+                    return (random.random() - 0.5) * variance + 1
 
-                time.sleep(1 / motors.consts.MOTOR_TEST_FPS)
+                # ------------------------------------------------------------ #
+                primary_server_motor_ds.s2["motors"]["target"]["left"]  = motor_server_motor_ds.s1["left"]
+                primary_server_motor_ds.s2["motors"]["target"]["right"] = motor_server_motor_ds.s1["right"]
 
-            # Note: directly putting pickled dict into q2 instead of using server_motor_ds.put_s2
-            # Solves issue of left motor value being interpreted as 0 in the server thread
-            pickled_server_motor_ds_s2 = pickle.dumps(server_motor_ds.s2)
-            server_motor_dq.put_q2(pickled_server_motor_ds_s2)
+                ratio_left  = rand_ratio(0.4)
+                primary_server_motor_ds.s2["motors"]["current"]["left"]   = motor_server_motor_ds.s1["left"]
+                primary_server_motor_ds.s2["motors"]["current"]["left"]  *= ratio_left
+                primary_server_motor_ds.s2["motors"]["current"]["left"]  *= motor_server_motor_ds.s1["power_percent"]
+
+                ratio_right = rand_ratio(0.4)
+                primary_server_motor_ds.s2["motors"]["current"]["right"]  = motor_server_motor_ds.s1["right"]
+                primary_server_motor_ds.s2["motors"]["current"]["right"] *= ratio_right
+                primary_server_motor_ds.s2["motors"]["current"]["right"] *= motor_server_motor_ds.s1["power_percent"]
+                # ------------------------------------------------------------ #
+
+                # ------------------------------------------------------------ #
+                new_data = motor_server_motor_ds.s1["arm_time"] > last_arm_time
+
+                primary_server_motor_ds.s2["arm"]["active"] = primary_server_motor_ds.s1["arm_active"]
+                motor_server_motor_ds.s2["arm_active"]      = primary_server_motor_ds.s1["arm_active"]
+
+                motor_server_motor_ds.s2["invert"] = primary_server_motor_ds.s1["invert"]
+                motor_server_motor_ds.s2["high_send_rate"] = primary_server_motor_ds.s1["high_send_rate"]
+
+
+                if new_data:
+                    primary_server_motor_ds.s2["arm_reader_fps"] = motor_server_motor_ds.s1["arm_reader_fps"]
+                    primary_server_motor_ds.s2["arm_delay"] = now - motor_server_motor_ds.s1["arm_time"] + primary_server_motor_ds.s1["time_offset"]
+
+                    last_arm_time = motor_server_motor_ds.s1["arm_time"]
+                
+                arm_target_positions = motor_server_motor_ds.s1["arm_target_positions"]
+                primary_server_motor_ds.s2["arm"]["target"]  = arm_target_positions
+
+                for joint in arm_target_positions.keys():
+                    ratio = rand_ratio(0.2)
+                    primary_server_motor_ds.s2["arm"]["current"][joint] =  arm_target_positions[joint] * ratio
+                    primary_server_motor_ds.s2["arm"]["current"][joint] %= dynamixel.arm_consts.MAX_POSITION
+                # ------------------------------------------------------------ #
+
+                time.sleep(1 / motors.consts.MOTOR_TEST_FPS +  + random.uniform(-0.02, 0.02))
+            # ---------------------------------------------------------------- #
+
+            # Note: directly putting pickled dict into q2 instead of using primary_server_motor_ds.put_s2(dq)
+            # Solves issue of left motor value being interpreted as 0 in the server process
+            pickled_server_motor_ds_s2 = pickle.dumps(primary_server_motor_ds.s2)
+            primary_server_motor_dq.put_q2(pickled_server_motor_ds_s2)
+
+            motor_server_motor_ds.put_s2(motor_server_motor_dq)
     finally:
         if not video_capture_zero:
             print("Closing dynamixel controller...")

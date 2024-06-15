@@ -15,11 +15,11 @@ import detection.motion_detect
 
 
 # ---------------------------------------------------------------------------- #
-def thread(detection_dq):
-    detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_SERVER, detection.consts.STATE_FROM_SELF)
+def process(detection_dq):
+    detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_MASTER, detection.consts.STATE_FROM_SELF)
 
-    last_clear = detection.consts.STATE_FROM_SERVER["clear"].copy()
-    hazmat_angle_change = detection.consts.STATE_FROM_SERVER["hazmat_angle_change"]
+    last_clear = detection.consts.STATE_FROM_MASTER["clear"].copy()
+    hazmat_angle_change = detection.consts.STATE_FROM_MASTER["hazmat_angle_change"]
 
     levenshtein_results = {}
 
