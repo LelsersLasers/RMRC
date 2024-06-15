@@ -51,11 +51,11 @@ CAMERA_NONE_GREY = 50
 
 DRY_FPS = 2
 
-CAMERA_MODE_TO_ACTIVE_KEYS = {
-    "1": ["webcam1", "webcam2"],
-    "2": ["webcam1", "arm"],
-    "3": ["arm",     "webcam1"],
-    "4": ["webcam2", "arm"],
+CAMERA_MODE_TO_ACTIVE_KEYS = { # CAMERA_MODE_TO_ACTIVE_KEYS = [base_key, alt_key, "ir"]
+    "1": ["webcam1", "webcam2", "ir"],
+    "2": ["webcam1", "arm",     "ir"],
+    "3": ["arm",     "webcam1", "ir"],
+    "4": ["webcam2", "arm",     "ir"],
 }
 
 

@@ -85,7 +85,7 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
 
             # ---------------------------------------------------------------- #
             active_keys = camera.consts.CAMERA_MODE_TO_ACTIVE_KEYS[primary_server_ds.s2["camera_mode"]]
-            base_key, alt_key = [None, None] if video_capture_zero else active_keys
+            base_key, alt_key, _ir = [None, None] if video_capture_zero else active_keys
 
             base_key_frame = None
             for key, camera_sq in camera_dqs.items():
