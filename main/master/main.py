@@ -54,6 +54,7 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
 
 
     average_frame = None
+    last_frame = None
 
     detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_MASTER, detection.consts.STATE_FROM_SELF)
     primary_server_ds = shared_util.DoubleState(server.primary_server.consts.STATE_FROM_MASTER, server.primary_server.consts.STATE_FROM_SELF)
@@ -86,7 +87,7 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
             active_keys = camera.consts.CAMERA_MODE_TO_ACTIVE_KEYS[primary_server_ds.s2["camera_mode"]]
             base_key, alt_key = [None, None] if video_capture_zero else active_keys
 
-            frames = {}
+            base_key_frame = None
             for key, camera_sq in camera_dqs.items():
                 camera_ds = camera_dses[key]
 
@@ -94,30 +95,32 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
                 camera_ds.put_s1(camera_dqs[key])
 
                 camera_ds.update_s2(camera_sq)
-                frames[key] = camera_ds.s2["frame"]
+                frame = camera_ds.s2["frame"]
 
-                if frames[key] is None:
-                    frames[key]  = np.zeros((camera.consts.CAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
-                    frames[key] += camera.consts.CAMERA_NONE_GREY
+                if frame is None:
+                    frame  = np.zeros((camera.consts.CAMERA_SIZE[1], camera.consts.CAMERA_SIZE[0], 3), dtype=np.uint8)
+                    frame += camera.consts.CAMERA_NONE_GREY
+
+                if key == base_key:
+                    base_key_frame = frame
 
                 if camera_ds.s2["time"] > frame_read_times[key]:
                     frame_read_times[key] = camera_ds.s2["time"]
 
                     if key == base_key:
-                        primary_server_ds.s1["frames"]["base_key"] = to_bs64(frames[key])
+                        primary_server_ds.s1["frames"]["base_key"] = to_bs64(frame)
 
                         if average_frame is None:
-                            average_frame = frames[key].copy().astype("float")
+                            average_frame = frame.copy().astype("float")
                         else:
                             motion_new_frame_weight = primary_server_ds.s2["motion_new_frame_weight"]
-                            cv2.accumulateWeighted(frames[key].copy().astype("float"), average_frame, motion_new_frame_weight)
-                            cv2.imshow("average", average_frame.astype("uint8"))
+                            cv2.accumulateWeighted(last_frame, average_frame, motion_new_frame_weight)
+                        
+                        last_frame = frame.astype("float")
                     elif key == alt_key:
-                        primary_server_ds.s1["frames"]["alt_key"] = to_bs64(frames[key])
+                        primary_server_ds.s1["frames"]["alt_key"] = to_bs64(frame)
                     elif key == "ir":
-                        primary_server_ds.s1["frames"]["ir"] = to_bs64(frames[key])
-
-            frame = frames[base_key]            
+                        primary_server_ds.s1["frames"]["ir"] = to_bs64(frame)
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
@@ -129,7 +132,7 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
                 if detection_ds.s2["frame"] is not None:
                     detection_frame = detection_ds.s2["frame"]
                 else:
-                    detection_frame = np.zeros_like(frame)
+                    detection_frame = np.zeros_like(base_key_frame)
 
                 primary_server_ds.s1["frames"]["detection"] = to_bs64(detection_frame)
             # ---------------------------------------------------------------- #
@@ -145,7 +148,7 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
             detection_ds.s1["motion_threshold"] = primary_server_ds.s2["motion_threshold"]
             detection_ds.s1["motion_new_frame_weight"] = primary_server_ds.s2["motion_new_frame_weight"]
 
-            detection_ds.s1["frame"] = frame
+            detection_ds.s1["frame"] = base_key_frame
             detection_ds.s1["average_frame"] = average_frame.copy()
             detection_ds.put_s1(detection_dq)
             # ---------------------------------------------------------------- #
