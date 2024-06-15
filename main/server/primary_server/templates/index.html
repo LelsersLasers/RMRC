@@ -456,11 +456,11 @@ input[type="range"] {
 
             <h4>Config</h4>
 
-            <h5>Frontend</h5>
+            <h5>Backend</h5>
 
-            <label for="frontend_fps">Frontend Request FPS</label>
-            <output id="frontend_fps-output">30</output>
-            <input type="range" id="frontend_fps" name="frontend_fps" min="5" max="50" step="5" value="30" oninput="frontendFpsSlider()" />
+            <label for="backend_fps">Backend Streaming FPS</label>
+            <output id="backend_fps-output">30</output>
+            <input type="range" id="backend_fps" name="backend_fps" min="5" max="60" step="5" value="30" oninput="slider('backend_fps')" />
 
             <h5>Master</h5>
 
@@ -538,8 +538,6 @@ input[type="range"] {
         const GRID_FRAME_RATIO = 4 / 3;
         const ZOOM_FRAME_RATIO = 1;
 
-        let frontend_fps = 30;
-
         let keys = {}; // keys[key] = true | if key is down
 
         let invert = false;
@@ -571,6 +569,7 @@ input[type="range"] {
             "hazmat_levenshtein_thresh": 0.4,
             "hazmat_angle_change": 90,
             "master_fps": 200,
+            "backend_fps": 30,
         };
         let CONFIG_TYPE = {
             "velocity_limit": "motor",
@@ -582,6 +581,7 @@ input[type="range"] {
             "hazmat_levenshtein_thresh": "detection",
             "hazmat_angle_change": "detection",
             "master_fps": "master",
+            "backend_fps": "backend",
         };
 
         const TIME_SCALES = {
@@ -603,7 +603,7 @@ input[type="range"] {
 
         let t0 = now_ms();
         let t1 = now_ms();
-        let delta = 1000 / frontend_fps;
+        let delta = 1000 / config_sliders["backend_fps"];
 
         let delays = [delta];
         let last_frame = "";
@@ -639,7 +639,7 @@ input[type="range"] {
         function try_calibrate() {
             // recalibrate every X seconds
             if (calibrated) {
-                calibrated = !(frames % (frontend_fps * CALIBRATE_FREQUENCE) == 0);
+                calibrated = !(frames % (config_sliders["backend_fps"] * CALIBRATE_FREQUENCE) == 0);
             }
 
             // if we need to calibrate
@@ -792,7 +792,7 @@ input[type="range"] {
 
                 const max_fps = Math.max(...fps_values);
                 max_fpses.push(max_fps);
-                max_fpses = max_fpses.slice(-MAX_LEN * frontend_fps);
+                max_fpses = max_fpses.slice(-MAX_LEN * config_sliders["backend_fps"]);
                 const max_ratio_fps = Math.min(Math.max(...max_fpses), FPS_RATIO_MAX);
 
                 const fps_ids = ["webcam1", "webcam2", "arm", "detection", "ir", "master", "motor", "armreader", "backend", "frontend"];
@@ -1018,7 +1018,7 @@ input[type="range"] {
                 const arm_delay = arm_delay_float.toFixed(0);
 
                 delays.push(diff);
-                delays = delays.slice(-MAX_LEN * frontend_fps);
+                delays = delays.slice(-MAX_LEN * config_sliders["backend_fps"]);
                 const average = delays.reduce((a, b) => a + b, 0) / delays.length;
                 const average_delay = average.toFixed(0);
 
@@ -1028,7 +1028,7 @@ input[type="range"] {
 
                 const max_delay = Math.max(inital_delay, average_delay, ping_delay, arm_delay, DELAY_RATIO_BASE);
                 max_delays.push(max_delay);
-                max_delays = max_delays.slice(-MAX_LEN * frontend_fps);
+                max_delays = max_delays.slice(-MAX_LEN * config_sliders["backend_fps"]);
                 const max_ratio_delay = Math.max(...max_delays);
 
                 if (last_frame != data["frames"]["base_key"]) {
@@ -1110,14 +1110,6 @@ input[type="range"] {
             } else {
                 alt_key_ele.classList.remove("flip");
             }
-        }
-
-        function frontendFpsSlider() {
-            const ele = document.getElementById("frontend_fps");
-            const value = parseInt(ele.value);
-            const output = document.getElementById("frontend_fps-output");
-            output.innerHTML = value;
-            frontend_fps = value;
         }
 
         function diagonalSlider() {

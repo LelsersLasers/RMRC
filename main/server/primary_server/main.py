@@ -27,6 +27,11 @@ def process(primary_server_dq, primary_server_motor_dq):
     primary_server_ds = shared_util.DoubleState(server.primary_server.consts.STATE_FROM_MASTER, server.primary_server.consts.STATE_FROM_SELF)
     primary_server_motor_ds = shared_util.DoubleState(motors.consts.STATE_FROM_SERVER, pickle.dumps(motors.consts.STATE_FROM_SELF))
 
+    backend_fps_dict = {
+        "backend_fps": 30,
+        "times": [],
+    }
+
     primary_server_s2_lock = threading.Lock()
     primary_server_motor_s1_lock = threading.Lock()
 
@@ -72,6 +77,8 @@ def process(primary_server_dq, primary_server_motor_dq):
                 else:
                     primary_server_motor_ds.s1[key] = int(value)
                     primary_server_motor_ds.put_s1(primary_server_motor_dq)
+        elif type == "backend" and key == "backend_fps":
+            backend_fps_dict["backend_fps"] = int(value)
         else:
             with primary_server_s2_lock:
                 try:
@@ -116,6 +123,7 @@ def process(primary_server_dq, primary_server_motor_dq):
     def get():
         def generate():
             while True:
+                start = time.time()
                 primary_server_ds.update_s1(primary_server_dq)
                 primary_server_motor_ds.update_s2(primary_server_motor_dq)
                 
@@ -144,7 +152,16 @@ def process(primary_server_dq, primary_server_motor_dq):
 
                 # yield response_dict
                 yield json.dumps(response_dict) + "\n"
-                time.sleep(1/30)
+
+                pass_time = time.time() - start
+                backend_fps_dict["times"].append(pass_time)
+                backend_fps_dict["times"] = backend_fps_dict["times"][-server.primary_server.consts.TIMES_TO_KEEP:]
+                avg_time = sum(backend_fps_dict["times"]) / len(backend_fps_dict["times"])
+
+                target_time = 1 / backend_fps_dict["backend_fps"]
+                sleep_target = target_time - avg_time
+                if sleep_target > 0:
+                    time.sleep(sleep_target)
 
         return generate(), {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
 
