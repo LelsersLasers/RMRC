@@ -46,7 +46,6 @@ STATE_FROM_SELF = {
         "qr": 0,
     },
     "invert": False,
-    "show_detections": False,
     "motion_min_area": 500,
     "motion_threshold": 65,
     "motion_new_frame_weight": 0.4,

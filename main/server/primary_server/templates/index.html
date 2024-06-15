@@ -33,17 +33,17 @@ img {
     height: 100%;
 }
 
-.webcam1      { grid-column: 1/ 7; grid-row: 1/ 7; }
-.arm          { grid-column: 7/13; grid-row: 1/ 7; }
-.webcam2      { grid-column: 1/ 7; grid-row: 7/13; }
-.detection_ir { grid-column: 7/13; grid-row: 7/13; }
-.zoom         { grid-column: 1/13; grid-row: 4/13; }
-.slot1        { grid-column: 1/ 5; grid-row: 1/ 4; }
-.slot2        { grid-column: 5/ 9; grid-row: 1/ 4; }
-.slot3        { grid-column: 9/13; grid-row: 1/ 4; }
-.super        { grid-column: 1/13; grid-row: 1/13; }
-.none         { display: none; }
-.flip         { transform: scale(-1); }
+.base_key  { grid-column: 1/ 7; grid-row: 1/ 7; }
+.alt_key   { grid-column: 7/13; grid-row: 1/ 7; }
+.ir        { grid-column: 1/ 7; grid-row: 7/13; }
+.detection { grid-column: 7/13; grid-row: 7/13; }
+.zoom      { grid-column: 1/13; grid-row: 4/13; }
+.slot1     { grid-column: 1/ 5; grid-row: 1/ 4; }
+.slot2     { grid-column: 5/ 9; grid-row: 1/ 4; }
+.slot3     { grid-column: 9/13; grid-row: 1/ 4; }
+.super     { grid-column: 1/13; grid-row: 1/13; }
+.none      { display: none; }
+.flip      { transform: scale(-1); }
 /* .flip         { transform: rotateX(180deg); } */
 
 
@@ -258,10 +258,10 @@ input[type="range"] {
     <div id="main">
         <div id="mainbar">
             <div id="frameholder">
-                <img id="webcam1"      class="webcam1"      />
-                <img id="arm"          class="arm"          />
-                <img id="webcam2"      class="webcam2"      />
-                <img id="detection_ir" class="detection_ir" />
+                <img id="base_key"  class="base_key"      />
+                <img id="alt_key"   class="alt_key"          />
+                <img id="ir"        class="ir"      />
+                <img id="detection" class="detection" />
             </div>
         <div id="sidebar">
             <h4>Delays</h4>
@@ -337,13 +337,8 @@ input[type="range"] {
 
             <h4>FPS's</h4>
 
-            <label class="pointer" for="showDetections">Show Detections Output:</label>
-            <input type="checkbox" id="showDetections" oninput="showDetectionsCheckbox()" />
-
-            <br />
-
-            <label class="pointer" for="flipArmCamera">Flip Arm Camera:</label>
-            <input type="checkbox" id="flipArmCamera" oninput="flipArmCameraCheckbox()" />
+            <label class="pointer" for="flipAltKey">Flip Alt Key:</label>
+            <input type="checkbox" id="flipAltKey" oninput="flipAltKeyCheckbox()" />
 
             <br />
 
@@ -357,7 +352,10 @@ input[type="range"] {
             <label class="pointer"for="cameraMode2">Webcam 1 & Arm</label>
             <br/>  
             <input type="radio" id="cameraMode3" name="cameraMode" value="3" onchange="cameraModeChange(3)">
-            <label class="pointer" for="cameraMode3">Webcam 2 & Arm</label>
+            <label class="pointer"for="cameraMode3">Arm & Webcam 1</label>
+            <br/>  
+            <input type="radio" id="cameraMode4" name="cameraMode" value="4" onchange="cameraModeChange(4)">
+            <label class="pointer" for="cameraMode4">Webcam 2 & Arm</label>
 
             <br />
             <br />
@@ -447,7 +445,6 @@ input[type="range"] {
                 Press <kbd>x</kbd> to clear all found QR codes.<br />
                 
                 Press <kbd>l</kbd> to invert controls.<br />
-                Press <kbd>p</kbd> to toggle between showing detections output and IR.<br />
                 Press <kbd>o</kbd> to toggle arm active.<br />
                 
                 Press <kbd>1-4</kbd> to switched focused feed.<br />
@@ -561,8 +558,6 @@ input[type="range"] {
 
         let arm_active = false;
 
-        let show_detections = false;
-
         let diagonal_multiplier = 0.4;
 
         let write_every_frame = false;
@@ -668,7 +663,6 @@ input[type="range"] {
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "run/motion/" + run_motion);
 
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
-                fetchAndInfo(PRIMARY_FLASK_SERVER + "show_detections/" + show_detections);
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
 
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "camera_mode/" + camera_mode);
@@ -918,7 +912,7 @@ input[type="range"] {
                         // -------------------------------------------------- //
 
                         // -------------------------------------------------- //
-                        const frames_ids = ["webcam1", "arm", "webcam2", "detection_ir"];
+                        const frames_ids = ["base_key", "alt_key", "ir", "detection"];
                         for (let i = 0; i < frames_ids.length; i++) {
                             const frame_id = frames_ids[i];
                             const frame = data["frames"][frame_id];
@@ -980,9 +974,8 @@ input[type="range"] {
                         max_delays = max_delays.slice(-MAX_LEN * frontend_fps);
                         const max_ratio_delay = Math.max(...max_delays);
 
-                        const base_key = invert ? "webcam2" : "webcam1";
-                        if (last_frame != data["frames"][base_key]) {
-                            last_frame = data["frames"][base_key];
+                        if (last_frame != data["frames"]["base_key"]) {
+                            last_frame = data["frames"]["base_key"];
 
                             const delay_inital_ele = document.getElementById("delay-inital");
                             delay_inital_ele.innerHTML = inital_delay + " MS (inital)";
@@ -1028,7 +1021,7 @@ input[type="range"] {
                     display_keys();
                     
                     // Not reset when disconnected, but resent when reconnected
-                    // config_sliders, write_every_frame, invert, arm_active, show_detections
+                    // config_sliders, write_every_frame, invert, arm_active, camera_mode, power_percent
                 });
             setTimeout(main_get, 1000 / frontend_fps);
         }
@@ -1071,33 +1064,21 @@ input[type="range"] {
             fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + value);
         }
 
-        function showDetectionsCheckbox() {
-            const ele = document.getElementById("showDetections");
-            const value = ele.checked;
-            show_detections = value;
-
-            fetchAndInfo(PRIMARY_FLASK_SERVER + "show_detections/" + show_detections);
-        }
-        function setShowDetections(value) {
-            const ele = document.getElementById("showDetections");
-            ele.checked = value;
-            showDetectionsCheckbox();
-        }
 
         function cameraModeChange(mode) {
             camera_mode = mode;
             fetchAndInfo(PRIMARY_FLASK_SERVER + "camera_mode/" + camera_mode);
         }
 
-        function flipArmCameraCheckbox() {
-            const checkbox_ele = document.getElementById("flipArmCamera");
+        function flipAltKeyCheckbox() {
+            const checkbox_ele = document.getElementById("flipAltKey");
             const value = checkbox_ele.checked;
 
-            const arm_camera_ele = document.getElementById("arm");
+            const alt_key_ele = document.getElementById("alt_key");
             if (value) {
-                arm_camera_ele.classList.add("flip");
+                alt_key_ele.classList.add("flip");
             } else {
-                arm_camera_ele.classList.remove("flip");
+                alt_key_ele.classList.remove("flip");
             }
         }
 
@@ -1191,7 +1172,7 @@ input[type="range"] {
         }
 
         function calculate_grid() {
-            const ids = ["webcam1", "arm", "webcam2", "detection_ir"];
+            const ids = ["base_key", "alt_key", "ir", "detection"];
             const eles = ids.map(id => document.getElementById(id));
 
             if (view_mode == 0) {
@@ -1250,7 +1231,6 @@ input[type="range"] {
                 if (run_hazmat) {
                     time_bar_ele.classList.remove("time-bar-idle");
                     time_bar_ele.classList.add("time-bar-active");
-                    setShowDetections(true);
                 } else {
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
@@ -1263,7 +1243,6 @@ input[type="range"] {
                 if (run_qr) {
                     time_bar_ele.classList.remove("time-bar-idle");
                     time_bar_ele.classList.add("time-bar-active");
-                    setShowDetections(true);
                 } else {
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
@@ -1276,15 +1255,11 @@ input[type="range"] {
                 if (run_motion) {
                     time_bar_ele.classList.remove("time-bar-idle");
                     time_bar_ele.classList.add("time-bar-active");
-                    setShowDetections(true);
                 } else {
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
                 }
             } else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
-                const ids = ["webcam1", "arm", "webcam2", "detection_ir"];
-                const eles = ids.map(id => document.getElementById(id));
-
                 const new_view_mode = parseInt(key);
                 if (new_view_mode == 0) {
                     super_zoom = false;
@@ -1309,10 +1284,6 @@ input[type="range"] {
                 ele.checked = invert;
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
                 calculate_power();
-                calculate_grid();
-            } else if (key == "p") {
-                show_detections = !show_detections;
-                setShowDetections(show_detections);
             } else if (key == "o") {
                 arm_active = !arm_active;
                 const ele = document.getElementById("armActive");

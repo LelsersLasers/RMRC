@@ -34,7 +34,6 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
     print("Press 'x' to clear all found QR codes.")
     
     print("Press 'l' to invert controls.")
-    print("Press 'p' to toggle showing detections output and IR.")
     print("Press 'o' to toggle arm active.")
     
     print("Press 1-4 to switched focused feed.")
@@ -55,7 +54,6 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
 
 
     average_frame = None
-    last_frame = None
 
     detection_ds = shared_util.DoubleState(detection.consts.STATE_FROM_MASTER, detection.consts.STATE_FROM_SELF)
     primary_server_ds = shared_util.DoubleState(server.primary_server.consts.STATE_FROM_MASTER, server.primary_server.consts.STATE_FROM_SELF)
@@ -81,17 +79,20 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
             start = time.time()
             fps_controller.update()
 
-            # ---------------------------------------------------------------- #
             primary_server_ds.update_s2(primary_server_dq)
 
-            base_key = None if video_capture_zero else ("webcam1" if not primary_server_ds.s2["invert"] else "webcam2")
-            alt_key  = None if video_capture_zero else ("webcam2" if not primary_server_ds.s2["invert"] else "webcam1")
-            # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
+            active_keys = camera.consts.CAMERA_MODE_TO_ACTIVE_KEYS[primary_server_ds.s2["camera_mode"]]
+            base_key, alt_key = [None, None] if video_capture_zero else active_keys
+
             frames = {}
             for key, camera_sq in camera_dqs.items():
                 camera_ds = camera_dses[key]
+
+                camera_ds.s1["active_keys"] = active_keys
+                camera_ds.put_s1(camera_dqs[key])
+
                 camera_ds.update_s2(camera_sq)
                 frames[key] = camera_ds.s2["frame"]
 
@@ -103,21 +104,18 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
                     frame_read_times[key] = camera_ds.s2["time"]
 
                     if key == base_key:
-                        primary_server_ds.s1["frames"]["webcam1"] = to_bs64(frames[key])
+                        primary_server_ds.s1["frames"]["base_key"] = to_bs64(frames[key])
 
-                        if average_frame is None or last_frame is None:
+                        if average_frame is None:
                             average_frame = frames[key].copy().astype("float")
-                            last_frame = frames[key]
                         else:
                             motion_new_frame_weight = primary_server_ds.s2["motion_new_frame_weight"]
-                            cv2.accumulateWeighted(last_frame.astype("float"), average_frame, motion_new_frame_weight)
-                        last_frame = frames[key]
+                            cv2.accumulateWeighted(frames[key].copy().astype("float"), average_frame, motion_new_frame_weight)
+                            cv2.imshow("average", average_frame.astype("uint8"))
                     elif key == alt_key:
-                        primary_server_ds.s1["frames"]["webcam2"] = to_bs64(frames[key])
-                    elif key == "arm":
-                        primary_server_ds.s1["frames"][key] = to_bs64(frames[key])
-                    elif key == "ir" and not primary_server_ds.s2["show_detections"]:
-                        primary_server_ds.s1["frames"]["detection_ir"] = to_bs64(frames[key])
+                        primary_server_ds.s1["frames"]["alt_key"] = to_bs64(frames[key])
+                    elif key == "ir":
+                        primary_server_ds.s1["frames"]["ir"] = to_bs64(frames[key])
 
             frame = frames[base_key]            
             # ---------------------------------------------------------------- #
@@ -125,7 +123,7 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
             # ---------------------------------------------------------------- #
             detection_ds.update_s2(detection_dq)
 
-            if primary_server_ds.s2["show_detections"] and detection_ds.s2["last_update"] > last_detection_time:
+            if detection_ds.s2["last_update"] > last_detection_time:
                 last_detection_time = detection_ds.s2["last_update"]
 
                 if detection_ds.s2["frame"] is not None:
@@ -133,7 +131,7 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
                 else:
                     detection_frame = np.zeros_like(frame)
 
-                primary_server_ds.s1["frames"]["detection_ir"] = to_bs64(detection_frame)
+                primary_server_ds.s1["frames"]["detection"] = to_bs64(detection_frame)
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
@@ -154,10 +152,8 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
 
             # -----------------------------------------------------------------#
             if video_capture_zero:
-                primary_server_ds.s1["frames"]["webcam2"] = primary_server_ds.s1["frames"]["webcam1"]
-                primary_server_ds.s1["frames"]["arm"]     = primary_server_ds.s1["frames"]["webcam1"]
-                if not primary_server_ds.s2["show_detections"]:
-                    primary_server_ds.s1["frames"]["detection_ir"] = primary_server_ds.s1["frames"]["webcam1"]
+                primary_server_ds.s1["frames"]["alt_key"] = primary_server_ds.s1["frames"]["base_key"]
+                primary_server_ds.s1["frames"]["ir"]      = primary_server_ds.s1["frames"]["base_key"]
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
