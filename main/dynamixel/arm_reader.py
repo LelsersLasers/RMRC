@@ -1,8 +1,9 @@
 # Runs on the Laptop
 
+import serial.serialutil
 import dynamixel.base_controller
 import dynamixel.base_arm
-import time
+import serial
 
 READER_JOINT_IDS = { # READER_JOINT_IDS[joint] = id
     "j1": 5,
@@ -29,13 +30,16 @@ class ArmReader(dynamixel.base_arm.BaseArm):
 
     def update_arm_status(self):
         for joint, joint_id in self.joint_ids.items():
-            pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(
-                self.port_handler,
-                joint_id,
-                dynamixel.base_controller.ADDR_PRESENT_POS
-            )
-            
-            self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
-            self.check_error_and_maybe_reboot(joint_id)
+            try:
+                pos, dxl_comm_result, dxl_error = self.packet_handler.read4ByteTxRx(
+                    self.port_handler,
+                    joint_id,
+                    dynamixel.base_controller.ADDR_PRESENT_POS
+                )
+                
+                self.handle_possible_dxl_issues(joint_id, dxl_comm_result, dxl_error)
+                self.check_error_and_maybe_reboot(joint_id)
 
-            self.joint_statuses[joint] = pos
+                self.joint_statuses[joint] = pos
+            except serial.serialutil.SerialException:
+                print(f"SerialException on joint {joint}")
