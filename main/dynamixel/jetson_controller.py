@@ -168,9 +168,9 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                             output_joint_id,
                             dynamixel.base_controller.ADDR_PRESENT_POS
                         )
+                        self.check_error_and_maybe_reboot(output_joint_id)
+                        self.joint_statuses[joint] = read_pos
                     except IndexError:
                         print(f"IndexError on joint {joint}")
-                    self.check_error_and_maybe_reboot(output_joint_id)
-                    self.joint_statuses[joint] = read_pos
 
                     self.next_joint_index_to_slow_read = (self.next_joint_index_to_slow_read + 1) % len(OUTPUT_JOINT_IDS)
