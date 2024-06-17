@@ -10,7 +10,7 @@ tegrastats --interval 20 --logfile tegrastats.log --start # run in background
 sleep 1
 
 export LD_PRELOAD=/usr/local/lib/python3.8/dist-packages/torch.libs/libgomp-4dbbc2f2.so.1.0.0
-echo "LD_PRELOAD=$LD_PRELOAD\n"
+echo -e "LD_PRELOAD=$LD_PRELOAD\n"
 
 python3 main_jetson.py "$@"
 sleep 1
