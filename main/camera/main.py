@@ -18,9 +18,25 @@ def process(camera_dq, key):
 
             fps_controller.update()
             camera_ds.s2["fps"] = fps_controller.fps()
+
+            is_open = cap is not None
+            should_be_open = key in camera_ds.s1["active_keys"] or key is None
             
-            if cap is None and (key in camera_ds.s1["active_keys"] or key is None):
-                # not open and should be open
+            if is_open and should_be_open:
+                ret, frame = cap.read()
+                if not ret or frame is None:
+                    print(f"Camera {key} read failed.")
+                    print(f"Releasing camera {key}...")
+                    cap.release()
+                    cap = None
+                    time.sleep(camera.consts.CAMERA_WAIT_AFTER_FAIL)
+
+                if key is None:
+                    frame = cv2.resize(frame, camera.consts.CAMERA_SIZE)
+
+                camera_ds.s2["time"] = time.time()
+                camera_ds.s2["frame"] = frame
+            elif not is_open and should_be_open:
                 print(f"Opening camera {key}...")
                 time.sleep(camera.consts.CAMERA_WAIT_AFTER_ACTIVE)
                 if key is not None:
@@ -38,28 +54,11 @@ def process(camera_dq, key):
                 print(f"Camera {key} opened.")
 
                 time.sleep(camera.consts.CAMERA_WAKEUP_TIME)
-            elif cap is not None and (key in camera_ds.s1["active_keys"] or key is None):
-                # open and should be open
-                ret, frame = cap.read()
-                if not ret or frame is None:
-                    print(f"Camera {key} read failed.")
-                    print(f"Releasing camera {key}...")
-                    cap.release()
-                    cap = None
-                    time.sleep(camera.consts.CAMERA_WAIT_AFTER_FAIL)
-
-                if key is None:
-                    frame = cv2.resize(frame, camera.consts.CAMERA_SIZE)
-
-                camera_ds.s2["time"] = time.time()
-                camera_ds.s2["frame"] = frame
-            elif cap is not None and key not in camera_ds.s1["active_keys"]:
-                # open and should be closed
+            elif is_open and not should_be_open:
                 print(f"Releasing camera {key}...")
                 cap.release()
                 cap = None
-            elif cap is None and key not in camera_ds.s1["active_keys"]:
-                # not open and should be closed
+            elif not is_open and not should_be_open:
                 time.sleep(1 / camera.consts.DRY_FPS)
 
             camera_ds.put_s2(camera_dq)
