@@ -100,7 +100,7 @@ def process(detection_dq):
             if detection_ds.s1["run"]["qr"]:
                 start = time.time()
 
-                qr_found_this_frame = detection.qr_detect.qr_detect_and_draw(input_frame)
+                qr_found_this_frame = detection.qr_detect.qr_detect_and_draw(input_frame, output_frame)
                 if len(qr_found_this_frame) > 0:
                     previous_qr_count = len(detection_ds.s2["found"]["qr"])
                     for qr in qr_found_this_frame:

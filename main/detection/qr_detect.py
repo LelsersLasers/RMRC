@@ -3,8 +3,8 @@ import numpy as np
 import pyzbar.pyzbar as pyzbar
 
 
-def qr_detect_and_draw(frame):
-    decoded_objects = pyzbar.decode(frame)
+def qr_detect_and_draw(input_frame, ouput_frame):
+    decoded_objects = pyzbar.decode(input_frame)
 
     links = []
 
@@ -18,11 +18,11 @@ def qr_detect_and_draw(frame):
         links.append(link)
 
         points = decoded_object.polygon
-        cv2.polylines(frame, [np.array(points, np.int32)], True, (0, 255, 0), 2)
+        cv2.polylines(ouput_frame, [np.array(points, np.int32)], True, (0, 255, 0), 2)
 
         x, y, _, _ = decoded_object.rect
         cv2.putText(
-            frame,
+            ouput_frame,
             link,
             (x, y),
             cv2.FONT_HERSHEY_SIMPLEX,
