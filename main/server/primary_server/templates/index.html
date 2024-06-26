@@ -1046,7 +1046,11 @@ input[type="range"] {
                     const delay_value = delay_values[i];
 
                     const delay_ele = document.getElementById("delay-" + delay_id);
-                    delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
+                    if (delay_id == "ping") {
+                        delay_ele.innerHTML = delay_value + " MS (" + lowest_calibrated_ping + " MS) (" + delay_id + ")";
+                    } else {
+                        delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
+                    }
                     const delaybar = document.getElementById("delay-" + delay_id + "-bar");
                     delaybar.style.width = (delay_value / max_ratio_delay) * 100 + "%";
                 }
