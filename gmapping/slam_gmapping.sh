@@ -4,7 +4,7 @@ echo "granting 777 permission to USB0 port, where Lidar should be connected..."
 
 sudo chmod 777 /dev/ttyUSB0
 
-echo "sourcing catkin_ws/deve/setup.bash so all commands are recognized..."
+echo "sourcing catkin_ws/devel/setup.bash so all commands are recognized..."
 
 source /home/student/Desktop/catkin_ws/devel/setup.bash
 
@@ -18,6 +18,4 @@ cat slam_commands.txt | parallel --delay 2
 
 killall -9 rosmaster
 
-echo "all processes should have ended."
-
-
+echo "all ros processes should have ended."
