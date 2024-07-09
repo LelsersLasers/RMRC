@@ -73,6 +73,6 @@ class BaseController:
             
             self.packet_handler.reboot(self.port_handler, id)
             
-            if self.torque_statuses.get(id, False):
-                self.set_torque_status(True, id)
+            if self.torque_statuses.get(id, None) is not None:
+                self.set_torque_status(self.torque_statuses[id], id)
 # ---------------------------------------------------------------------------- #

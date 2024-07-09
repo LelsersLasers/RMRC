@@ -154,7 +154,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                     adjusted_target_pos += (self.cycles[joint] - reader_cycles[joint]) * 4096
                     adjusted_target_pos += dynamixel.arm_consts.ARM_JOINT_OFFSETS[joint]
 
-                    if joint == "j2" or joint == "j1":
+                    if joint == "j1" or joint == "j2":
                         overall_diff = adjusted_target_pos - self.rest_poses[joint]
                         adjusted_target_pos = self.rest_poses[joint] - overall_diff
 
