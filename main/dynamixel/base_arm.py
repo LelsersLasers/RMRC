@@ -19,7 +19,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
         time.sleep(dynamixel.base_controller.SHORT_WAIT)
         super().close()
 
-    def setup_arm(self, no_arm_rest_pos):
+    def setup_arm(self, no_arm_rest_pos, offsets):
         self.set_torque_status_all(False, self.joint_ids.values())
         time.sleep(dynamixel.base_controller.SHORT_WAIT)
 
@@ -46,6 +46,8 @@ class BaseArm(dynamixel.base_controller.BaseController):
 
             self.set_torque_status(True, joint_id)
 
+            if offsets is not None:
+                pos = pos - offsets[joint]
             starting_poses[joint] = (pos, pos % dynamixel.arm_consts.MAX_POSITION)
 
         # Have to make sure joints don't collide with the base plate or robot
@@ -83,6 +85,9 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 rest_pos = 4096 * (starting_poses["j3"][0] // 4096) + base_rest_pos
 
             cycles[joint] = rest_pos // 4096
+
+            if offsets is not None:
+                rest_pos = rest_pos + offsets[joint]
 
             if not no_arm_rest_pos:
                 dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(

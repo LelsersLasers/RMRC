@@ -5,6 +5,7 @@ import shared_util
 import dynamixel.base_arm
 import dynamixel.base_controller
 import dynamixel.motor_consts
+import dynamixel.arm_consts
 
 import motors.consts
 import server.motor_server.consts
@@ -94,7 +95,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 self.set_torque_status(True, motor_id)
         
-        self.cycles = super().setup_arm(no_arm_rest_pos)
+        self.cycles = super().setup_arm(no_arm_rest_pos, dynamixel.arm_consts.ARM_JOINT_OFFSETS)
 
     def update_speeds(self, speeds):
         self.speeds = speeds
@@ -149,7 +150,9 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 output_joint_id = OUTPUT_JOINT_IDS[joint]
 
                 if should_write:
-                    adjusted_target_pos = (self.cycles[joint] - reader_cycles[joint]) * 4096 + target_pos
+                    adjusted_target_pos  = target_pos
+                    adjusted_target_pos += (self.cycles[joint] - reader_cycles[joint]) * 4096
+                    adjusted_target_pos += dynamixel.arm_consts.ARM_JOINT_OFFSETS[joint]
 
                     dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
                         self.port_handler,
@@ -169,7 +172,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                             dynamixel.base_controller.ADDR_PRESENT_POS
                         )
                         self.check_error_and_maybe_reboot(output_joint_id)
-                        self.joint_statuses[joint] = read_pos
+                        self.joint_statuses[joint] = read_pos - dynamixel.arm_consts.ARM_JOINT_OFFSETS[joint]
                     except IndexError:
                         print(f"IndexError on joint {joint}")
 

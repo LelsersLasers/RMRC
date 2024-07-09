@@ -25,7 +25,7 @@ def process(no_arm_rest_pos, video_capture_zero):
     try:
         if not video_capture_zero:
             arm_reader = dynamixel.arm_reader.ArmReader()
-            cycles = arm_reader.setup_arm(no_arm_rest_pos)
+            cycles = arm_reader.setup_arm(no_arm_rest_pos, None)
         else:
             import random
             frames = 0
