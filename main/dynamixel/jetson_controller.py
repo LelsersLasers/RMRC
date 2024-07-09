@@ -154,6 +154,10 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                     adjusted_target_pos += (self.cycles[joint] - reader_cycles[joint]) * 4096
                     adjusted_target_pos += dynamixel.arm_consts.ARM_JOINT_OFFSETS[joint]
 
+                    if joint == "j2" or joint == "j1":
+                        overall_diff = adjusted_target_pos - self.rest_poses[joint]
+                        adjusted_target_pos = self.rest_poses[joint] - overall_diff
+
                     dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
                         self.port_handler,
                         output_joint_id,
