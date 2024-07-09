@@ -14,7 +14,7 @@ STATE_FROM_SELF = {
         "j3": 1200,
     },
     "arm_reader_fps": 20,
-    "arm_time": time.time(),
+    "arm_time": 0,
 
     "left": 0,
     "right": 0,
