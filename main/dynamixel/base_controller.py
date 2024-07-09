@@ -77,5 +77,6 @@ class BaseController:
 
             if self.torque_statuses.get(id, None) is not None:
                 time.sleep(SUPER_SHORT_WAIT)
+                print(f"torque status {id} {self.torque_statuses[id]}")
                 self.set_torque_status(self.torque_statuses[id], id)
 # ---------------------------------------------------------------------------- #
