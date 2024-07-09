@@ -13,6 +13,11 @@ class BaseArm(dynamixel.base_controller.BaseController):
             "j2": 0,
             "j3": 0,
         }
+        self.rest_poses = { # rest_poses[joint] = #
+            "j1": 0,
+            "j2": 0,
+            "j3": 0,
+        }
 
     def close(self):
         self.set_torque_status_all(False, self.joint_ids.values())
@@ -88,6 +93,8 @@ class BaseArm(dynamixel.base_controller.BaseController):
 
             if offsets is not None:
                 rest_pos = rest_pos + offsets[joint]
+
+            self.rest_poses[joint] = rest_pos
 
             if not no_arm_rest_pos:
                 dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(

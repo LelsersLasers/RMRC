@@ -1,4 +1,5 @@
 import dynamixel_sdk
+import time
 
 # ---------------------------------------------------------------------------- #
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w210/
@@ -21,6 +22,7 @@ ADDR_PRESENT_VELOCITY = 128
 ADDR_PRESENT_POS      = 132
 
 SHORT_WAIT = 0.2
+SUPER_SHORT_WAIT = 0.05
 # ---------------------------------------------------------------------------- #
 
 
@@ -72,7 +74,9 @@ class BaseController:
             print(f"rebooting {id}")
             
             self.packet_handler.reboot(self.port_handler, id)
-            
-            if self.torque_statuses.get(id, False):
-                self.set_torque_status(True, id)
+
+            if self.torque_statuses.get(id, None) is not None:
+                time.sleep(SUPER_SHORT_WAIT)
+                print(f"torque status {id} {self.torque_statuses[id]}")
+                self.set_torque_status(self.torque_statuses[id], id)
 # ---------------------------------------------------------------------------- #
