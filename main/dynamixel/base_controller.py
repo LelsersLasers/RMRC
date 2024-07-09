@@ -30,6 +30,8 @@ class BaseController:
         self.port_handler = dynamixel_sdk.PortHandler(DEVICE_NAME)
         self.packet_handler = dynamixel_sdk.PacketHandler(PROTOCOL_VERSION)
 
+        self.torque_statuses = {} # {id: status} # false by default
+
         if self.port_handler.openPort():
             print("Succeeded to open the port")
         else:
@@ -53,6 +55,7 @@ class BaseController:
             return True
 
     def set_torque_status(self, status, id):
+        self.torque_statuses[id] = status
         status_code = 1 if status else 0
         dxl_comm_result, dxl_error = self.packet_handler.write1ByteTxRx(self.port_handler, id, ADDR_TORQUE_ENABLE, status_code)
         self.handle_possible_dxl_issues(id, dxl_comm_result, dxl_error)
@@ -65,6 +68,11 @@ class BaseController:
         if error_code > 0 or force:
             if not force:
                 print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
+            
             print(f"rebooting {id}")
+            
             self.packet_handler.reboot(self.port_handler, id)
+            
+            if self.torque_statuses.get(id, False):
+                self.set_torque_status(True, id)
 # ---------------------------------------------------------------------------- #
