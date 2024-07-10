@@ -42,4 +42,4 @@ class ArmReader(dynamixel.base_arm.BaseArm):
 
                 self.joint_statuses[joint] = pos
             except serial.serialutil.SerialException:
-                print(f"SerialException on joint {joint}")
+                print(f"SerialException joint={joint}")

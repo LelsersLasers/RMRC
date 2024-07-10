@@ -48,10 +48,10 @@ class BaseController:
 
     def handle_possible_dxl_issues(self, id, dxl_comm_result, dxl_error):
         if dxl_comm_result != dynamixel_sdk.COMM_SUCCESS:
-            print(f"dxl_comm_result error {id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
+            print(f"dxl_comm_result error id={id} {self.packet_handler.getTxRxResult(dxl_comm_result)}")
             return False
         elif dxl_error != 0:
-            print(f"dxl_error error {id} {self.packet_handler.getRxPacketError(dxl_error)}")
+            print(f"dxl_error error id={id} {self.packet_handler.getRxPacketError(dxl_error)}")
             return False
         else:
             return True
@@ -69,14 +69,14 @@ class BaseController:
         error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
         if error_code > 0 or force:
             if not force:
-                print(f"error_code {id} {error_code} {self.packet_handler.getRxPacketError(error_code)}")
+                print(f"error_code id={id} error_code={error_code} {self.packet_handler.getRxPacketError(error_code)}")
             
-            print(f"rebooting {id}")
+            print(f"rebooting id={id}")
             
             self.packet_handler.reboot(self.port_handler, id)
 
             if self.torque_statuses.get(id, None) is not None:
                 time.sleep(SUPER_SHORT_WAIT)
-                print(f"torque status {id} {self.torque_statuses[id]}")
+                print(f"torque status id={id} status={self.torque_statuses[id]}")
                 self.set_torque_status(self.torque_statuses[id], id)
 # ---------------------------------------------------------------------------- #
