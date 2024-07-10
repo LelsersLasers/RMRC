@@ -272,7 +272,7 @@ input[type="range"] {
                 <span id="delay-total">100 MS (average)</span>
             </div>
             <div class="bar" id="delay-ping-bar">
-                <span id="delay-ping">20 MS (ping)</span>
+                <span id="delay-ping">20 MS (4 MS) (ping)</span>
             </div>
             <div class="bar" id="delay-arm-bar">
                 <span id="delay-arm">50 MS (arm)</span>
@@ -1055,7 +1055,7 @@ input[type="range"] {
 
                     const delay_ele = document.getElementById("delay-" + delay_id);
                     if (delay_id == "ping") {
-                        delay_ele.innerHTML = delay_value + " MS (" + lowest_calibrated_ping + " MS) (" + delay_id + ")";
+                        delay_ele.innerHTML = delay_value + " MS (" + lowest_calibrated_ping.toFixed(0) + " MS) (" + delay_id + ")";
                     } else {
                         delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
                     }
