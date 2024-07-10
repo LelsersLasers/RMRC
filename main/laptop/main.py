@@ -30,8 +30,8 @@ def process(no_arm_rest_pos, video_capture_zero):
             import random
             frames = 0
             drift = random.randint(-25, 25)
-            joint_values = [random.randint(0, 4096) for _ in range(3)]
-            cycles = { "j1": 0, "j2": 0, "j3": 0 }
+            joint_values = [random.randint(0, 4096) for _ in range(4)]
+            cycles = { "j1": 0, "j2": 0, "j3": 0, "j4": 0 }
 
         print("Arm setup done...")
         
@@ -44,21 +44,22 @@ def process(no_arm_rest_pos, video_capture_zero):
                 j1 = arm_reader.joint_statuses["j1"]
                 j2 = arm_reader.joint_statuses["j2"]
                 j3 = arm_reader.joint_statuses["j3"]
+                j4 = arm_reader.joint_statuses["j4"]
             else:
                 frames += 1
                 if frames % laptop.consts.READER_TEST_DRIFT_RESET == 0:
                     drift = random.randint(-25, 25)
                 joint_values = [(j + random.randint(-10, 10) + drift) % 4096 for j in joint_values]
-                j1, j2, j3 = joint_values
+                j1, j2, j3, j4 = joint_values
 
                 time.sleep(1 / laptop.consts.READER_TEST_FPS + random.uniform(-0.02, 0.02))
 
             now = time.time()
-            joints_url = base_url + f"joints/{j1}/{j2}/{j3}/{fps}/{now}"
+            joints_url = base_url + f"joints/{j1}/{j2}/{j3}/{j4}/{fps}/{now}"
             
             if not have_sent_cycles:
                 try:
-                    cycles_url = base_url + f"cycles/{cycles['j1']}/{cycles['j2']}/{cycles['j3']}"
+                    cycles_url = base_url + f"cycles/{cycles['j1']}/{cycles['j2']}/{cycles['j3']}/{cycles['j4']}"
                     _response = requests.get(cycles_url, timeout=laptop.consts.GET_TIMEOUT)
                     have_sent_cycles = True
                 except requests.exceptions.RequestException as e:

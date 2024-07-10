@@ -7,11 +7,13 @@ STATE_FROM_SELF = {
         "j1": 0,
         "j2": 0,
         "j3": 0,
+        "j4": 0,
     },
     "arm_target_positions": {
         "j1": 1024,
         "j2": 3250,
         "j3": 1200,
+        "j4": 2048,
     },
     "arm_reader_fps": 20,
     "arm_time": 0,

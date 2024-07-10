@@ -17,6 +17,7 @@ OUTPUT_JOINT_IDS = { # OUTPUT_JOINT_IDS[joint] = id
     "j1": 8,
     "j2": 9,
     "j3": 10,
+    "j4": 12,
 }
 
 MOTOR_IDS = { # MOTOR_IDS[side] = [id1, id2]
