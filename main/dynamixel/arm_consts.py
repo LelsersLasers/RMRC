@@ -14,3 +14,6 @@ ARM_JOINT_OFFSETS = { # ARM_JOINT_OFFSETS[joint] = reader_pos - jetson_pos
     "j3": -870,
     "j4": 0,
 }
+
+J4_MIN = 0
+J4_MAX = 4096
