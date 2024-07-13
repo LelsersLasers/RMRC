@@ -6,7 +6,7 @@ ARM_REST_POSES = {
     # "j1": 1024,
     "j2": 3250,
     "j3": 1200,
-    "j4": 2048,
+    "j4": 0,
 }
 
 ARM_JOINT_OFFSETS = { # ARM_JOINT_OFFSETS[joint] = reader_pos - jetson_pos
