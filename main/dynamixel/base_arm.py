@@ -5,8 +5,8 @@ import time
 
 
 class BaseArm(dynamixel.base_controller.BaseController):
-    def __init__(self, joint_ids):
-        super().__init__()
+    def __init__(self, device_name, joint_ids):
+        super().__init__(device_name)
         self.joint_ids = joint_ids # joint_ids[joint] = id
         self.joint_statuses = { # joint_statuses[joint] = #
             "j1": 0,

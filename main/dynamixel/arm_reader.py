@@ -11,11 +11,12 @@ READER_JOINT_IDS = { # READER_JOINT_IDS[joint] = id
     "j3": 7,
     "j4": 11,
 }
+DEVICE_NAME = "/dev/ttyUSB0"
 
 
 class ArmReader(dynamixel.base_arm.BaseArm):
     def __init__(self):
-        super().__init__(READER_JOINT_IDS)
+        super().__init__(DEVICE_NAME, READER_JOINT_IDS)
         self.is_active = False
 
     def maybe_update_torque(self, arm_active):

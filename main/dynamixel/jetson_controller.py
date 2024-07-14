@@ -19,6 +19,7 @@ OUTPUT_JOINT_IDS = { # OUTPUT_JOINT_IDS[joint] = id
     "j3": 10,
     "j4": 12,
 }
+DEVICE_NAME = "/dev/ttyUSB1"
 
 MOTOR_IDS = { # MOTOR_IDS[side] = [id1, id2]
     "left": [1, 3],
@@ -32,7 +33,7 @@ ORIENTATIONS = { # ORIENTATIONS[side] = direction multiplier
 
 class JetsonController(dynamixel.base_arm.BaseArm):
     def __init__(self, velocity_limit, min_writes):
-        super().__init__(OUTPUT_JOINT_IDS)
+        super().__init__(DEVICE_NAME, OUTPUT_JOINT_IDS)
 
         self.power_percent = server.motor_server.consts.STATE_FROM_SELF["power_percent"]
         self.speeds = { # speeds[side] = %

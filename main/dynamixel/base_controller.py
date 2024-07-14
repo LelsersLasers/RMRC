@@ -5,9 +5,7 @@ import time
 # https://emanual.robotis.com/docs/en/dxl/x/xm430-w210/
 # https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/api_reference/python/python_porthandler/#python
 
-DEVICE_NAME = "/dev/ttyUSB1"
 PROTOCOL_VERSION = 2.0
-
 BAUDRATE = 1_000_000
 
 ARM_OPERATING_MODE    = 4 # Extended Position Control Mode
@@ -28,8 +26,8 @@ SUPER_SHORT_WAIT = 0.05
 
 # ---------------------------------------------------------------------------- #
 class BaseController:
-    def __init__(self):
-        self.port_handler = dynamixel_sdk.PortHandler(DEVICE_NAME)
+    def __init__(self, device_name):
+        self.port_handler = dynamixel_sdk.PortHandler(device_name)
         self.packet_handler = dynamixel_sdk.PacketHandler(PROTOCOL_VERSION)
 
         self.torque_statuses = {} # {id: status} # false by default
