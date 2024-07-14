@@ -17,6 +17,7 @@ OUTPUT_JOINT_IDS = { # OUTPUT_JOINT_IDS[joint] = id
     "j1": 8,
     "j2": 9,
     "j3": 10,
+    "j4": 12,
 }
 
 MOTOR_IDS = { # MOTOR_IDS[side] = [id1, id2]
@@ -151,6 +152,12 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 if should_write:
                     adjusted_target_pos  = target_pos
+                    if joint == "j4":
+                        if adjusted_target_pos < dynamixel.arm_consts.J4_MIN:
+                            adjusted_target_pos = dynamixel.arm_consts.J4_MIN
+                        elif adjusted_target_pos > dynamixel.arm_consts.J4_MAX:
+                            adjusted_target_pos = dynamixel.arm_consts.J4_MAX
+                    
                     adjusted_target_pos += (self.cycles[joint] - reader_cycles[joint]) * 4096
                     adjusted_target_pos += dynamixel.arm_consts.ARM_JOINT_OFFSETS[joint]
 

@@ -272,7 +272,7 @@ input[type="range"] {
                 <span id="delay-total">100 MS (average)</span>
             </div>
             <div class="bar" id="delay-ping-bar">
-                <span id="delay-ping">20 MS (ping)</span>
+                <span id="delay-ping">20 MS (4 MS) (ping)</span>
             </div>
             <div class="bar" id="delay-arm-bar">
                 <span id="delay-arm">50 MS (arm)</span>
@@ -331,6 +331,14 @@ input[type="range"] {
                 <div class="threebar-base" id="j3-outer-bar">
                     <div class="threebar-base innerbar" id="j3-inner-bar">
                         <span class="mono" id="arm-j3">   0 ~    0 (j3)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threebar-base blankbar" id="j4-outline-bar">
+                <div class="threebar-base" id="j4-outer-bar">
+                    <div class="threebar-base innerbar" id="j4-inner-bar">
+                        <span class="mono" id="arm-j4">   0 ~    0 (j4)</span>
                     </div>
                 </div>
             </div>
@@ -857,7 +865,7 @@ input[type="range"] {
 
                 // -------------------------------------------------- //
                 const arm = data["arm"];
-                const arm_ids = ["j1", "j2", "j3"];
+                const arm_ids = ["j1", "j2", "j3", "j4"];
                 for (let i = 0; i < arm_ids.length; i++) {
                     const arm_id = arm_ids[i];
 
@@ -1047,7 +1055,7 @@ input[type="range"] {
 
                     const delay_ele = document.getElementById("delay-" + delay_id);
                     if (delay_id == "ping") {
-                        delay_ele.innerHTML = delay_value + " MS (" + lowest_calibrated_ping + " MS) (" + delay_id + ")";
+                        delay_ele.innerHTML = delay_value + " MS (" + lowest_calibrated_ping.toFixed(0) + " MS) (" + delay_id + ")";
                     } else {
                         delay_ele.innerHTML = delay_value + " MS (" + delay_id + ")";
                     }

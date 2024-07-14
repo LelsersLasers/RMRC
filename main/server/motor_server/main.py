@@ -57,26 +57,29 @@ def process(motor_server_motor_dq):
     # ------------------------------------------------------------------------ #
     
     # ------------------------------------------------------------------------ #
-    @app.route("/cycles/<j1>/<j2>/<j3>", methods=["GET"])
-    def cycles(j1, j2, j3):
+    @app.route("/cycles/<j1>/<j2>/<j3>/<j4>", methods=["GET"])
+    def cycles(j1, j2, j3, j4):
         with motor_server_motor_s1_lock:
             motor_server_motor_ds.s1["cycles"]["j1"] = int(j1)
             motor_server_motor_ds.s1["cycles"]["j2"] = int(j2)
             motor_server_motor_ds.s1["cycles"]["j3"] = int(j3)
+            motor_server_motor_ds.s1["cycles"]["j4"] = int(j4)
             motor_server_motor_ds.put_s1(motor_server_motor_dq)
 
             return server.util.create_response({
                 "j1": motor_server_motor_ds.s1["cycles"]["j1"],
                 "j2": motor_server_motor_ds.s1["cycles"]["j2"],
-                "j3": motor_server_motor_ds.s1["cycles"]["j3"]
+                "j3": motor_server_motor_ds.s1["cycles"]["j3"],
+                "j4": motor_server_motor_ds.s1["cycles"]["j4"],
             })
 
-    @app.route("/joints/<j1>/<j2>/<j3>/<fps>/<time>", methods=["GET"])
-    def joints(j1, j2, j3, fps, time):
+    @app.route("/joints/<j1>/<j2>/<j3>/<j4>/<fps>/<time>", methods=["GET"])
+    def joints(j1, j2, j3, j4, fps, time):
         with motor_server_motor_s1_lock:
             motor_server_motor_ds.s1["arm_target_positions"]["j1"] = int(j1)
             motor_server_motor_ds.s1["arm_target_positions"]["j2"] = int(j2)
             motor_server_motor_ds.s1["arm_target_positions"]["j3"] = int(j3)
+            motor_server_motor_ds.s1["arm_target_positions"]["j4"] = int(j4)
             motor_server_motor_ds.s1["arm_reader_fps"] = float(fps)
             motor_server_motor_ds.s1["arm_time"] = float(time)
             motor_server_motor_ds.put_s1(motor_server_motor_dq)

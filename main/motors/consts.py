@@ -1,6 +1,6 @@
 import time
 
-ARM_LOW_READ_RATE = 1 # reads 1 joint a second, every 3 seconds it will have read all 3
+ARM_LOW_READ_RATE = 0.75 # reads 1 joint every 0.75 sec
 
 MOTOR_SHUTOFF_TIME = 1.0
 MOTOR_TEST_FPS = 10
@@ -36,11 +36,13 @@ STATE_FROM_SELF = {
             "j1": 0,
             "j2": 0,
             "j3": 0,
+            "j4": 0,
         },
         "current": {
             "j1": 0,
             "j2": 0,
             "j3": 0,
+            "j4": 0,
         },
         "active": False,
     },

@@ -9,6 +9,7 @@ READER_JOINT_IDS = { # READER_JOINT_IDS[joint] = id
     "j1": 5,
     "j2": 6,
     "j3": 7,
+    "j4": 11,
 }
 
 
