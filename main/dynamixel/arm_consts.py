@@ -6,7 +6,7 @@ ARM_REST_POSES = {
     "j2": 2900,
     # "j3": 1200,
     "j3": 1300,
-    "j4": 0,
+    "j4": 4800,
 }
 
 ARM_JOINT_OFFSETS = { # ARM_JOINT_OFFSETS[joint] = reader_pos - jetson_pos
@@ -16,5 +16,5 @@ ARM_JOINT_OFFSETS = { # ARM_JOINT_OFFSETS[joint] = reader_pos - jetson_pos
     "j4": 0,
 }
 
-J4_MIN = 0
-J4_MAX = 4096
+J4_MIN = 3270 # open
+J4_MAX = 4800 # close
