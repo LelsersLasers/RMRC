@@ -31,7 +31,7 @@ def process(camera_dq, key):
                     cap = None
                     time.sleep(camera.consts.CAMERA_WAIT_AFTER_FAIL)
 
-                if key is None:
+                if key is None or frame.shape[0] != camera.consts.CAMERA_SIZE[1] or frame.shape[1] != camera.consts.CAMERA_SIZE[0]:
                     frame = cv2.resize(frame, camera.consts.CAMERA_SIZE)
 
                 camera_ds.s2["time"] = time.time()
