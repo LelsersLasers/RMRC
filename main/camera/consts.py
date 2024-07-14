@@ -9,6 +9,7 @@ CAP_ARGS = {
     "arm" :    "v4l2src device=/dev/v4l/by-id/usb-Image_Processor_USB_2.0_PC_Cam-video-index0 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! appsink",
 }
 
+
 CAMERA_SIZE = (320, 240)
 
 
