@@ -27,11 +27,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-a", "--no-arm-rest-pos", required=False, help="don't move the arm to default rest position", action="store_true")
     ap.add_argument("-z", "--video-capture-zero", required=False, help="use VideoCapture(0) (testing version)", action="store_true")
-    ap.add_argument("-t", "---tty", required=False, help="tty to use for the dynamixel controller", default="/dev/ttyUSB1")
+    # ap.add_argument("-t", "---tty", required=False, help="tty to use for the dynamixel controller", default="/dev/ttyUSB1")
     args = vars(ap.parse_args())
 
-    subprocess.run(["sudo", "chmod", "777", args["tty"]])
-    subprocess.run(["sudo", "bash", "-c", f"echo 1 > /sys/bus/usb-serial/devices/{args['tty'].split('/')[-1]}/latency_timer"])
+    # subprocess.run(["sudo", "chmod", "777", args["tty"]])
+    # subprocess.run(["sudo", "bash", "-c", f"echo 1 > /sys/bus/usb-serial/devices/{args['tty'].split('/')[-1]}/latency_timer"])
 
     no_arm_rest_pos = args["no_arm_rest_pos"]
     video_capture_zero = args["video_capture_zero"]
