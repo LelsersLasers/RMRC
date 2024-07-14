@@ -152,17 +152,18 @@ class JetsonController(dynamixel.base_arm.BaseArm):
 
                 if should_write:
                     adjusted_target_pos  = target_pos
+                    if joint == "j4":
+                        if adjusted_target_pos < dynamixel.arm_consts.J4_MIN:
+                            adjusted_target_pos = dynamixel.arm_consts.J4_MIN
+                        elif adjusted_target_pos > dynamixel.arm_consts.J4_MAX:
+                            adjusted_target_pos = dynamixel.arm_consts.J4_MAX
+                    
                     adjusted_target_pos += (self.cycles[joint] - reader_cycles[joint]) * 4096
                     adjusted_target_pos += dynamixel.arm_consts.ARM_JOINT_OFFSETS[joint]
 
                     if joint == "j1" or joint == "j2":
                         overall_diff = adjusted_target_pos - self.rest_poses[joint]
                         adjusted_target_pos = self.rest_poses[joint] - overall_diff
-                    elif joint == "j4":
-                        if adjusted_target_pos < dynamixel.arm_consts.J4_MIN:
-                            adjusted_target_pos = dynamixel.arm_consts.J4_MIN
-                        elif adjusted_target_pos > dynamixel.arm_consts.J4_MAX:
-                            adjusted_target_pos = dynamixel.arm_consts.J4_MAX
 
                     dxl_comm_result, dxl_error = self.packet_handler.write4ByteTxRx(
                         self.port_handler,
