@@ -16,7 +16,7 @@ sleep 1
 export LD_PRELOAD=/usr/local/lib/python3.8/dist-packages/torch.libs/libgomp-4dbbc2f2.so.1.0.0
 echo -e "LD_PRELOAD=$LD_PRELOAD\n"
 
-sudo python3 main_jetson.py "$@"
+python3 main_jetson.py "$@"
 sleep 1
 
 tegrastats --stop # close background process
