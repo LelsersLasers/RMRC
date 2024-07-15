@@ -413,7 +413,15 @@ input[type="range"] {
                 <span id="stats-ram">30.0% (0.0%) (ram/swap)</span>
             </div>
 
-            <h4>Master stats</h4>
+            <h4>Temperatues</h4>
+            <div class="bar" id="temp-cpu-bar">
+                <span id="temp-cpu">0 °C (cpu)</span>
+            </div>
+            <div class="bar" id="temp-gpu-bar">
+                <span id="temp-gpu">0 °C (gpu)</span>
+            </div>
+
+            <h4>Detection stats</h4>
             <div class="bar time-bar-idle" id="time-hazmat-bar">
                 <span id="time-hazmat">0 MS (hazmat)</span>
             </div>
@@ -424,22 +432,23 @@ input[type="range"] {
                 <span id="time-motion">0 MS (motion)</span>
             </div>
 
-            <h4>Temperatues</h4>
-            <div class="bar" id="temp-cpu-bar">
-                <span id="temp-cpu">0 °C (cpu)</span>
-            </div>
-            <div class="bar" id="temp-gpu-bar">
-                <span id="temp-gpu">0 °C (gpu)</span>
-            </div>
-
             <h4>Detected Hazmat Labels:</h4>
+            <label class="pointer" for="hazmat">Run hazmat detection:</label>
+            <input type="checkbox" id="hazmat" oninput="runCheckbox('hazmat')" />
+
             <div class="bar" id="angle-bar">
                 <span id="angle">360°</span>
             </div>
             <p id="found-hazmat"></p>
 
             <h4>Detected QR Codes:</h4>
+            <label class="pointer" for="qr">Run QR detection:</label>
+            <input type="checkbox" id="qr" oninput="runCheckbox('qr')" />
             <p id="found-qr"></p>
+
+            <h4>Motion Detection:</h4>
+            <label class="pointer" for="motion">Run motion detection:</label>
+            <input type="checkbox" id="motion" oninput="runCheckbox('motion')" />
 
 
             <h4>Controls</h4>
@@ -554,9 +563,11 @@ input[type="range"] {
         let invert = false;
         let torque = true;
 
-        let run_hazmat = false;
-        let run_qr = false;
-        let run_motion = false;
+        let run = {
+            "hazmat": false,
+            "qr": false,
+            "motion": false,
+        }
 
         let view_mode = 0;
         let super_zoom = false;
@@ -670,9 +681,10 @@ input[type="range"] {
 
             try {
                 powerSlider();
-                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/hazmat/" + run_hazmat);
-                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/qr/" + run_qr);
-                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/motion/" + run_motion);
+                for (const key in run) {
+                    const value = run[key];
+                    fetchAndInfo(PRIMARY_FLASK_SERVER + "run/" + key + "/" + value);
+                }
 
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
@@ -764,16 +776,15 @@ input[type="range"] {
                 calibrated = false;
                 connected = false;
 
-                run_hazmat = false;
-                run_qr = false;
-                run_motion = false;
-
-                const time_bar_ids = ["hazmat", "qr", "motion"];
-                for (let i = 0; i < time_bar_ids.length; i++) {
-                    const time_bar_id = time_bar_ids[i];
-                    const time_bar_ele = document.getElementById("time-" + time_bar_id + "-bar");
+                for (const key in run) {
+                    run[key] = false;
+                    
+                    const time_bar_ele = document.getElementById("time-" + key + "-bar");
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
+
+                    const checkbox_ele = document.getElementById(key);
+                    checkbox_ele.checked = false;
                 }
 
                 keys = {};
@@ -1117,6 +1128,23 @@ input[type="range"] {
             fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + value);
         }
 
+        function runCheckbox(id) {
+            const ele = document.getElementById(id);
+            const value = ele.checked;
+            run[id] = value;
+
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "run/" + id + "/" + value);
+
+            const time_bar_ele = document.getElementById("time-" + id + "-bar");
+            if (value) {
+                time_bar_ele.classList.remove("time-bar-idle");
+                time_bar_ele.classList.add("time-bar-active");
+            } else {
+                time_bar_ele.classList.remove("time-bar-active");
+                time_bar_ele.classList.add("time-bar-idle");
+            }
+        }
+
 
         function cameraModeChange(mode) {
             camera_mode = mode;
@@ -1248,6 +1276,8 @@ input[type="range"] {
             if (e.repeat && key != "z") return;
 
             const motor_keys = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowdown", "arrowright"];
+            const detection_keys = ["h", "r", "m"];
+            const view_mode_keys = ["0", "1", "2", "3", "4"];
 
             if (motor_keys.includes(key)) {
                 calculate_power();
@@ -1268,43 +1298,29 @@ input[type="range"] {
 
                 const range_ele = document.getElementById("power");
                 range_ele.value = power_percent;
-            } else if (key == "h") {
-                run_hazmat = !run_hazmat;
-                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/hazmat/" + run_hazmat);
+            } else if (detection_keys.includes(key)) {
+                const key_to_id = {
+                    "h": "hazmat",
+                    "r": "qr",
+                    "m": "motion",
+                };
+                const id = key_to_id[key];
 
-                const time_bar_ele = document.getElementById("time-hazmat-bar");
-                if (run_hazmat) {
+                run[id] = !run[id];
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/" + id + "/" + run[id]);
+
+                const time_bar_ele = document.getElementById("time-" + id + "-bar");
+                if (run[id]) {
                     time_bar_ele.classList.remove("time-bar-idle");
                     time_bar_ele.classList.add("time-bar-active");
                 } else {
                     time_bar_ele.classList.remove("time-bar-active");
                     time_bar_ele.classList.add("time-bar-idle");
                 }
-            } else if (key == "r") {
-                run_qr = !run_qr;
-                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/qr/" + run_qr);
 
-                const time_bar_ele = document.getElementById("time-qr-bar");
-                if (run_qr) {
-                    time_bar_ele.classList.remove("time-bar-idle");
-                    time_bar_ele.classList.add("time-bar-active");
-                } else {
-                    time_bar_ele.classList.remove("time-bar-active");
-                    time_bar_ele.classList.add("time-bar-idle");
-                }
-            } else if (key == "m") {
-                run_motion = !run_motion;
-                fetchAndInfo(PRIMARY_FLASK_SERVER + "run/motion/" + run_motion);
-
-                const time_bar_ele = document.getElementById("time-motion-bar");
-                if (run_motion) {
-                    time_bar_ele.classList.remove("time-bar-idle");
-                    time_bar_ele.classList.add("time-bar-active");
-                } else {
-                    time_bar_ele.classList.remove("time-bar-active");
-                    time_bar_ele.classList.add("time-bar-idle");
-                }
-            } else if (key == "0" || key == "1" || key == "2" || key == "3" || key == "4") {
+                const checkbox_ele = document.getElementById(id);
+                checkbox_ele.checked = run[id];
+            } else if (view_mode_keys.includes(key)) {
                 const new_view_mode = parseInt(key);
                 if (new_view_mode == 0) {
                     super_zoom = false;
