@@ -67,12 +67,12 @@ def process(primary_server_dq, primary_server_motor_dq):
         
         return server.util.create_response(value)
     
-    @app.route("/camera_mode/<mode>", methods=["GET"])
-    def camera_mode(mode):
+    @app.route("/camera/<base_key>/<alt_Key>", methods=["GET"])
+    def camera(base_key, alt_Key):
         with primary_server_s2_lock:
-            primary_server_ds.s2["camera_mode"] = mode
+            primary_server_ds.s2["active_keys"] = [base_key, alt_Key]
             primary_server_ds.put_s2(primary_server_dq)
-        return server.util.create_response(mode)
+        return server.util.create_response([base_key, alt_Key])
 
     @app.route("/config/<type>/<key>/<value>", methods=["GET"])
     def config(type, key, value):
