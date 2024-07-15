@@ -286,6 +286,9 @@ input[type="range"] {
             <label class="pointer" for="invert">Invert Controls:</label>
             <input type="checkbox" id="invert" oninput="invertCheckbox()" />
 
+            <label class="pointer" for="torque">Jetson Torque:</label>
+            <input type="checkbox" id="torque" oninput="torqueCheckbox()" checked />
+
             <br />
             
             <div class="threebar-base blankbar" id="left-outline-bar">
@@ -549,6 +552,7 @@ input[type="range"] {
         let keys = {}; // keys[key] = true | if key is down
 
         let invert = false;
+        let torque = true;
 
         let run_hazmat = false;
         let run_qr = false;
@@ -672,6 +676,7 @@ input[type="range"] {
 
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "arm_active/" + arm_active);
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
+                fetchAndInfo(PRIMARY_FLASK_SERVER + "torque/" + torque);
 
                 fetchAndInfo(PRIMARY_FLASK_SERVER + "camera_mode/" + camera_mode);
 
@@ -775,7 +780,7 @@ input[type="range"] {
                 display_keys();
                 
                 // Not reset when disconnected, but resent when reconnected
-                // config_sliders, write_every_frame, invert, arm_active, camera_mode, power_percent
+                // config_sliders, write_every_frame, invert, torque, arm_active, camera_mode, power_percent
             }
         }
 
@@ -1076,6 +1081,13 @@ input[type="range"] {
             fetchAndInfo(PRIMARY_FLASK_SERVER + "invert/" + invert);
             calculate_power();
             calculate_grid();
+        }
+
+        function torqueCheckbox() {
+            const ele = document.getElementById("torque");
+            const value = ele.checked;
+            torque = value;
+            fetchAndInfo(PRIMARY_FLASK_SERVER + "torque/" + torque);
         }
         
         function setPowerPercent(value) {	

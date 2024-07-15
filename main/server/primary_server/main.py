@@ -59,6 +59,14 @@ def process(primary_server_dq, primary_server_motor_dq):
         
         return server.util.create_response(value)
     
+    @app.route("/torque/<value>", methods=["GET"])
+    def torque(value):
+        with primary_server_motor_s1_lock:
+            primary_server_motor_ds.s1["torque"] = value == "true"
+            primary_server_motor_ds.put_s1(primary_server_motor_dq)
+        
+        return server.util.create_response(value)
+    
     @app.route("/camera_mode/<mode>", methods=["GET"])
     def camera_mode(mode):
         with primary_server_s2_lock:

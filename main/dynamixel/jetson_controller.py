@@ -61,6 +61,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         self.cycles = {} # cycles[joint] = pos // 4096
         self.last_read_arm = time.time()
         self.next_joint_index_to_slow_read = 0
+        self.torque = True
 
     def close(self):
         self.update_speeds({
@@ -99,6 +100,15 @@ class JetsonController(dynamixel.base_arm.BaseArm):
         
         self.cycles = super().setup_arm(no_arm_rest_pos, dynamixel.arm_consts.ARM_JOINT_OFFSETS)
 
+    def maybe_update_torque(self, new_torque):
+        toggle = new_torque != self.torque
+        if toggle:
+            self.torque = new_torque
+            print(f"Torque: {self.torque}")
+            for motor_ids in MOTOR_IDS.values(): self.set_torque_status_all(self.torque, motor_ids)
+            for joint_id in OUTPUT_JOINT_IDS.values(): self.set_torque_status(self.torque, joint_id)
+            time.sleep(dynamixel.base_controller.SHORT_WAIT)
+
     def update_speeds(self, speeds):
         self.speeds = speeds
         for id in self.to_writes:
@@ -106,6 +116,8 @@ class JetsonController(dynamixel.base_arm.BaseArm):
             self.has_wrote[id] = 0
 
     def try_write_speeds(self):
+        # if not self.torque: return
+
         for side, side_ids in MOTOR_IDS.items():
             speed = self.speeds[side]
             orientation = ORIENTATIONS[side]
@@ -141,7 +153,7 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 self.check_error_and_maybe_reboot(id)
     
     def update_arm_positions(self, target_positions, reader_cycles, new_data, arm_active):
-        should_write = arm_active and new_data 
+        should_write = arm_active and new_data # and self.torque
         should_read_slow = (time.time() - self.last_read_arm > 1 / motors.consts.ARM_LOW_READ_RATE)
         
         joints = list(OUTPUT_JOINT_IDS.keys())
