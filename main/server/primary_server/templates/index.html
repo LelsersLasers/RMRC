@@ -36,7 +36,7 @@ img {
 .base_key  { grid-column: 1/ 7; grid-row: 1/ 7; }
 .alt_key   { grid-column: 7/13; grid-row: 1/ 7; }
 .detection { grid-column: 1/ 7; grid-row: 7/13; }
-.info      { grid-column: 7/13; grid-row: 7/13; padding: 1em; }
+.info      { grid-column: 7/13; grid-row: 7/13; }
 .zoom      { grid-column: 1/13; grid-row: 4/13; }
 .slot1     { grid-column: 1/ 5; grid-row: 1/ 4; font-size: smaller; }
 .slot2     { grid-column: 5/ 9; grid-row: 1/ 4; font-size: smaller; }
@@ -45,6 +45,9 @@ img {
 .none      { display: none; }
 .flip      { transform: scale(-1); }
 /* .flip         { transform: rotateX(180deg); } */
+#info {
+    margin: 1em;
+}
 
 
 #frameholder {
@@ -125,6 +128,10 @@ p {
 .blankbar {
     width: 100%;
     background-color: #4C566A;
+}
+
+.top-header {
+    margin-top: 0;
 }
 
 
@@ -261,9 +268,8 @@ input[type="range"] {
                 <img id="base_key"  class="base_key"  />
                 <img id="alt_key"   class="alt_key"   />
                 <img id="detection" class="detection" />
-                <!-- <img id="info"      class="info"      /> -->
                 <div id="info"      class="info">
-                    <h4>Camera Mode (2 max):</h4>
+                    <h4 class="top-header">Camera Mode (2 max):</h4>
 
                     <input type="radio" id="webcam1" onclick="cameraRadio('webcam1')" checked />
                     <label class="pointer" for="webcam1" onclick="cameraRadio('webcam1')">Webcam1</label>
@@ -292,7 +298,7 @@ input[type="range"] {
                 </div>
             </div>
         <div id="sidebar">
-            <h4>Delays</h4>
+            <h4 class="top-header">Delays</h4>
             <div class="bar" id="delay-inital-bar">
                 <span id="delay-inital">80 MS (inital)</span>
             </div>
