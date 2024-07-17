@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ssh student@192.168.1.6
+ssh student@192.168.1.5
