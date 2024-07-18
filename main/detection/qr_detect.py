@@ -1,7 +1,15 @@
+import json
+import detection.consts
+
 import cv2
 import numpy as np
 import pyzbar.pyzbar as pyzbar
 
+
+
+def write_to_file(qrs):
+    with open(detection.consts.QR_FILENAME, 'w') as qr_file:
+        json.dump(qrs, qr_file, indent=4)
 
 def qr_detect_and_draw(input_frame, ouput_frame):
     decoded_objects = pyzbar.decode(input_frame)
