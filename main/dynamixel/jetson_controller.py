@@ -166,7 +166,8 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                 if should_write:
                     adjusted_target_pos  = target_pos
                     if joint == "j4":
-                        adjusted_target_pos = shared_util.adjust_2s_complement(adjusted_target_pos)
+                        adjusted_target_pos  = shared_util.adjust_2s_complement(adjusted_target_pos)
+                        adjusted_target_pos += self.j4_offset
 
                         j4_min = self.j4_offset - dynamixel.arm_consts.J4_RANGE
 
