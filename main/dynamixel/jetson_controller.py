@@ -196,6 +196,10 @@ class JetsonController(dynamixel.base_arm.BaseArm):
                             dynamixel.base_controller.ADDR_PRESENT_POS
                         )
                         self.check_error_and_maybe_reboot(output_joint_id)
+
+                        if joint == "j1" or joint == "j2":
+                            overall_diff = read_pos - self.rest_poses[joint]
+                            read_pos = self.rest_poses[joint] - overall_diff
                         self.joint_statuses[joint] = read_pos - dynamixel.arm_consts.ARM_JOINT_OFFSETS[joint]
                     except IndexError:
                         print(f"IndexError joint={joint}")
