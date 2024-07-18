@@ -73,14 +73,14 @@ def close_process(p):
     print(f"\nClosing {p.name}...")
 
     print(f"1) {process_str(p)}")
-    time.sleep(1)
-    p.join(1)
+    time.sleep(0.5)
+    p.join(0.5)
     print(f"2) {process_str(p)}")
 
     for i in range(2):
         if p.is_alive():
             p.terminate()
-            time.sleep(1)
+            time.sleep(0.5)
             p.join(1)
             print(f"{3 + i}) {process_str(p)}")
         else:

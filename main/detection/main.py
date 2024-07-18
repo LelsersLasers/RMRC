@@ -42,10 +42,7 @@ def process(detection_dq):
             if value > last_clear[key]:
                 last_clear[key] = value
                 detection_ds.s2["found"][key] = []
-                
-                with open(detection.consts.QR_FILENAME, 'rb') as qr_file:
-                    json.dump(detection_ds.s2["found"]["qr"], qr_file)
-                
+                detection.qr_detect.write_to_file(detection_ds.s2["found"]["qr"])                
                 print(f"Cleared all found {key} labels.")
         # -------------------------------------------------------------------- #
 
@@ -118,8 +115,7 @@ def process(detection_dq):
                         print(qr_found_this_frame)
                         print(detection_ds.s2["found"]["qr"])
 
-                        with open(detection.consts.QR_FILENAME, 'rb') as qr_file:
-                            json.dump(detection_ds.s2["found"]["qr"], qr_file)
+                        detection.qr_detect.write_to_file(detection_ds.s2["found"]["qr"])
 
                 detection_ds.s2["time_bars"]["qr"] = time.time() - start
             else:

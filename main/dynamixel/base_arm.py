@@ -20,6 +20,7 @@ class BaseArm(dynamixel.base_controller.BaseController):
             "j3": 0,
             "j4": 0,
         }
+        self.j4_offset = 0 # also numerical value of closed (literal max value)
 
     def close(self):
         self.set_torque_status_all(False, self.joint_ids.values())
@@ -91,8 +92,11 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 # TODO: does anything need to be done here or does joint_order take care of it?
                 rest_pos = 4096 * (starting_poses["j3"][0] // 4096) + base_rest_pos
             elif joint == "j4":
-                # TODO: Don't worry about cycles?
-                rest_pos = base_rest_pos
+                if offsets is None:
+                    rest_pos = 0
+                else:
+                    rest_pos = starting_poses["j4"][0]
+                    self.j4_offset = starting_poses["j4"][0]
 
             cycles[joint] = rest_pos // 4096
 
