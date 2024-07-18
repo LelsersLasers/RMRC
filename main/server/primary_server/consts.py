@@ -8,7 +8,6 @@ STATE_FROM_MASTER = {
     "frames": {
         "base_key": "",
         "alt_key": "",
-        "ir": "",
         "detection": "",
     },
 	"time": time.time(),
@@ -58,5 +57,5 @@ STATE_FROM_SELF = {
     "hazmat_levenshtein_thresh": 0.4,
     "hazmat_angle_change": 90,
     "master_fps": 200,
-    "camera_mode": "1",
+    "active_keys": ["webcam1", "webcam2"],
 }

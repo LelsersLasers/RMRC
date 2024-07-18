@@ -3,6 +3,8 @@ import time
 # FPS for when not running detection
 DRY_FPS = 2
 
+QR_FILENAME = "qr.txt"
+
 
 STATE_FROM_MASTER = {
     "frame": None, # latest primary camera frame

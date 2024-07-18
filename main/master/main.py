@@ -84,8 +84,8 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
 
 
             # ---------------------------------------------------------------- #
-            active_keys = camera.consts.CAMERA_MODE_TO_ACTIVE_KEYS[primary_server_ds.s2["camera_mode"]]
-            base_key, alt_key, _ir = [None, None, None] if video_capture_zero else active_keys
+            active_keys = primary_server_ds.s2["active_keys"]
+            base_key, alt_key = [None, None] if video_capture_zero else active_keys
 
             base_key_frame = None
             for key, camera_sq in camera_dqs.items():
@@ -119,8 +119,6 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
                         last_frame = frame.astype("float")
                     elif key == alt_key:
                         primary_server_ds.s1["frames"]["alt_key"] = to_bs64(frame)
-                    elif key == "ir":
-                        primary_server_ds.s1["frames"]["ir"] = to_bs64(frame)
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #
@@ -156,7 +154,6 @@ def process(detection_dq, primary_server_dq, camera_dqs, video_capture_zero):
             # -----------------------------------------------------------------#
             if video_capture_zero:
                 primary_server_ds.s1["frames"]["alt_key"] = primary_server_ds.s1["frames"]["base_key"]
-                primary_server_ds.s1["frames"]["ir"]      = primary_server_ds.s1["frames"]["base_key"]
             # ---------------------------------------------------------------- #
 
             # ---------------------------------------------------------------- #

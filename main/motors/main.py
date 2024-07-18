@@ -41,6 +41,8 @@ def process(primary_server_motor_dq, motor_server_motor_dq, no_arm_rest_pos, vid
             # ---------------------------------------------------------------- #
             if not video_capture_zero:
                 # ------------------------------------------------------------ #
+                dxl_controller.maybe_update_torque(primary_server_motor_ds.s1["torque"])
+                
                 dxl_controller.min_writes = primary_server_motor_ds.s1["motor_writes"]
 
                 # speed calulations use velocity_limit
