@@ -60,6 +60,8 @@ class BaseArm(dynamixel.base_controller.BaseController):
 
         # Have to make sure joints don't collide with the base plate or robot
 
+        print("J4:", starting_poses["j4"])
+
         if 1024 < starting_poses["j2"][1] < 3072:
             joint_order = ["j1", "j2", "j3", "j4"]
         else:
@@ -95,8 +97,9 @@ class BaseArm(dynamixel.base_controller.BaseController):
                 if offsets is None:
                     rest_pos = 0
                 else:
-                    rest_pos = starting_poses["j4"][0]
-                    self.j4_offset = starting_poses["j4"][0]
+                    self.j4_offset = starting_poses["j4"][0] + dynamixel.arm_consts.J4_CLOSE
+                    rest_pos = self.j4_offset
+                    print("J4 closed:", self.j4_offset)
 
             cycles[joint] = rest_pos // 4096
 

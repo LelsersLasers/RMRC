@@ -17,4 +17,5 @@ ARM_JOINT_OFFSETS = { # ARM_JOINT_OFFSETS[joint] = reader_pos - jetson_pos
 
 # J4_MIN = -800 # open
 # J4_MAX = 725 # close
-J4_RANGE = 500 # Note: lower = open
+J4_RANGE = 600 # Note: lower = open
+J4_CLOSE = 200
