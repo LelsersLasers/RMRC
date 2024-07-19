@@ -64,17 +64,20 @@ class BaseController:
         for id in ids: self.set_torque_status(status, id)
 
     def check_error_and_maybe_reboot(self, id, force=False):
-        error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
-        if error_code > 0 or force:
-            if not force:
-                print(f"error_code id={id} error_code={error_code} {self.packet_handler.getRxPacketError(error_code)}")
-            
-            print(f"rebooting id={id}")
-            
-            self.packet_handler.reboot(self.port_handler, id)
+        try:
+            error_code, _dxl_comm_result, _dxl_error = self.packet_handler.read1ByteTxRx(self.port_handler, id, ADDR_ERROR_CODE)
+            if error_code > 0 or force:
+                if not force:
+                    print(f"error_code id={id} error_code={error_code} {self.packet_handler.getRxPacketError(error_code)}")
+                
+                print(f"rebooting id={id}")
+                
+                self.packet_handler.reboot(self.port_handler, id)
 
-            if self.torque_statuses.get(id, None) is not None:
-                time.sleep(SUPER_SHORT_WAIT)
-                print(f"torque status id={id} status={self.torque_statuses[id]}")
-                self.set_torque_status(self.torque_statuses[id], id)
+                if self.torque_statuses.get(id, None) is not None:
+                    time.sleep(SUPER_SHORT_WAIT)
+                    print(f"torque status id={id} status={self.torque_statuses[id]}")
+                    self.set_torque_status(self.torque_statuses[id], id)
+        except:
+            print(f"TRY proc-ed in check_error_and_maybe reboot id={id}")
 # ---------------------------------------------------------------------------- #

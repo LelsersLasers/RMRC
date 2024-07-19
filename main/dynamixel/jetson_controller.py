@@ -19,7 +19,7 @@ OUTPUT_JOINT_IDS = { # OUTPUT_JOINT_IDS[joint] = id
     "j3": 10,
     "j4": 12,
 }
-DEVICE_NAME = "/dev/ttyUSB1"
+DEVICE_NAME = "/dev/ttyUSB0"
 
 MOTOR_IDS = { # MOTOR_IDS[side] = [id1, id2]
     "left": [1, 3],
